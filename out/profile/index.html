@@ -1,0 +1,300 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, user-scalable=no"/><link rel="stylesheet" href="/_next/static/css/d9bdc85597fe31ec.css" data-precedence="next"/><link rel="preload" as="script" fetchPriority="low" href="/_next/static/chunks/webpack-ab4c59e3b0fdefe1.js"/><script src="/_next/static/chunks/fd9d1056-d73a754fcc98cb13.js" async=""></script><script src="/_next/static/chunks/23-f82edf4d7f15429c.js" async=""></script><script src="/_next/static/chunks/main-app-07674ff50a2542fe.js" async=""></script><script src="/_next/static/chunks/44530001-ad5bf9d336177563.js" async=""></script><script src="/_next/static/chunks/462-bd91593156d4571a.js" async=""></script><script src="/_next/static/chunks/173-840c66fbc971110d.js" async=""></script><script src="/_next/static/chunks/800-9fa9d48c91ad5e42.js" async=""></script><script src="/_next/static/chunks/876-7cce46ae398d72f3.js" async=""></script><script src="/_next/static/chunks/128-c61dffe4f96a2a2d.js" async=""></script><script src="/_next/static/chunks/app/profile/page-56f530a64a996749.js" async=""></script><script src="/_next/static/chunks/138-68d4317266e88d00.js" async=""></script><script src="/_next/static/chunks/app/layout-06ae47cacbad09d0.js" async=""></script><meta name="theme-color" content="#000000"/><title>STC AutoTrade</title><meta name="description" content="Trading Bot Automation System"/><meta name="generator" content="v0.app"/><link rel="icon" href="/logo.png" media="(prefers-color-scheme: light)"/><link rel="icon" href="/logo.png" media="(prefers-color-scheme: dark)"/><link rel="icon" href="/logo.png" type="image"/><link rel="apple-touch-icon" href="/logo.png"/><style>
+  html, body { margin: 0; padding: 0; }
+  html, body { background: #0a0a0a !important; }
+
+  /* ── Overlay utama ── */
+  #__stc_splash {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #0a0a0a;
+    z-index: 99999;
+    transition: opacity 0.5s ease-out;
+    overflow: hidden;
+  }
+  #__stc_splash.hide {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  /* ── Wrapper: logo + loading dalam satu kolom ── */
+  #__stc_splash .splash-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* ── Logo: muncul besar → tahan 3 detik → mengecil + naik ── */
+  #__stc_splash .splash-logo {
+    width: 160px;
+    height: 160px;
+    object-fit: contain;
+    border-radius: 36px;
+    display: block;
+
+    /* Satu animasi penuh mengurus seluruh lifecycle logo */
+    animation:
+      __stc_logo_seq  4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards,
+      __stc_logo_glow 2.8s ease-in-out 1s infinite;
+  }
+
+  /* ── Loading: slide up dari bawah logo di detik ke-3 ── */
+  #__stc_splash .splash-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    margin-top: 28px;
+
+    animation: __stc_loading_in 0.55s cubic-bezier(0.34, 1.2, 0.64, 1) 3s both;
+  }
+
+  #__stc_splash .splash-text {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.35);
+  }
+
+  #__stc_splash .splash-dots {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  #__stc_splash .splash-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #00d4aa;
+    animation: __stc_dot 1.4s ease-in-out infinite;
+  }
+  #__stc_splash .splash-dot:nth-child(1) { animation-delay: 0s;   }
+  #__stc_splash .splash-dot:nth-child(2) { animation-delay: 0.2s; }
+  #__stc_splash .splash-dot:nth-child(3) { animation-delay: 0.4s; }
+
+  /* ── Keyframes ── */
+
+  /* Logo: fade+scale in → hold → kecilkan + angkat ke atas */
+  @keyframes __stc_logo_seq {
+    0%   { opacity: 0;   transform: scale(0.65) translateY(0);     }
+    15%  { opacity: 1;   transform: scale(1.06) translateY(0);     } /* overshoot */
+    22%  { opacity: 1;   transform: scale(1)    translateY(0);     } /* settle */
+    74%  { opacity: 1;   transform: scale(1)    translateY(0);     } /* tahan */
+    100% { opacity: 1;   transform: scale(0.78) translateY(-32px); } /* mengecil + naik */
+  }
+
+  /* Glow hijau berulang */
+  @keyframes __stc_logo_glow {
+    0%, 100% { filter: drop-shadow(0 0  0px rgba(0,212,170,0.0));  }
+    50%       { filter: drop-shadow(0 0 30px rgba(0,212,170,0.5)); }
+  }
+
+  /* Loading slide up dari bawah */
+  @keyframes __stc_loading_in {
+    from { opacity: 0; transform: translateY(22px); }
+    to   { opacity: 1; transform: translateY(0);    }
+  }
+
+  /* Dot bounce */
+  @keyframes __stc_dot {
+    0%, 80%, 100% { opacity: 0.2;  transform: scale(0.75); }
+    40%           { opacity: 1;    transform: scale(1.3);  }
+  }
+</style><script src="/_next/static/chunks/polyfills-78c92fac7aa8fdd8.js" noModule=""></script></head><body class="font-sans antialiased"><div id="__stc_splash"><div class="splash-inner"><img alt="STC AutoTrade" loading="lazy" width="160" height="160" decoding="async" data-nimg="1" class="splash-logo" style="color:transparent" src="/logo.png"/><div class="splash-loading"><span class="splash-text">Loading</span><div class="splash-dots"><span class="splash-dot"></span><span class="splash-dot"></span><span class="splash-dot"></span></div></div></div></div><main style="display:block;margin:0;padding:0;height:100%;padding-top:env(safe-area-inset-top, 0px);padding-bottom:calc(56px + env(safe-area-inset-bottom, 0px));opacity:0;transition:none"><div class="pf-root" style="height:100dvh;background:var(--bg);font-family:var(--font);-webkit-font-smoothing:antialiased;display:flex;flex-direction:column;overflow:hidden;position:relative"><style>
+  .pf-root, .pf-root * { box-sizing: border-box; }
+  .pf-root {
+    --bg:           #0a0a14;
+    --surface:      rgba(14, 14, 26, 0.92);
+    --surface-2:    rgba(18, 18, 32, 0.75);
+    --border:       rgba(76, 175, 80, 0.18);
+    --border-hi:    rgba(76, 175, 80, 0.35);
+    --text-1:       #ffffff;
+    --text-2:       rgba(255,255,255,0.55);
+    --text-3:       rgba(255,255,255,0.28);
+    --accent:       #4caf50;
+    --accent-dim:   #66bb6a;
+    --error:        #ff453a;
+    --warn:         #ff9f0a;
+    --success:      #30d158;
+    --font:         -apple-system, 'SF Pro Display', BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+  }
+
+  @keyframes pf-skel  { 0%,100%{opacity:.30} 50%{opacity:.65} }
+  @keyframes pf-bd-in { from{opacity:0} to{opacity:1} }
+  @keyframes pf-pop   { from{opacity:0;transform:scale(0.93)} to{opacity:1;transform:scale(1)} }
+  @keyframes pf-up    { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes pf-spin  { to{transform:rotate(360deg)} }
+  @keyframes pf-num   { from{opacity:0;transform:translateY(5px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes pf-drift { 0%{transform:translate(0,0) scale(1)} 50%{transform:translate(3%,4%) scale(1.04)} 100%{transform:translate(-2%,2%) scale(0.97)} }
+  @keyframes pf-pulse { 0%,100%{opacity:0.6} 50%{opacity:1} }
+
+  @keyframes lo-fade  { from{opacity:0} to{opacity:1} }
+  @keyframes lo-icon  { from{opacity:0;transform:scale(0.6)} 70%{transform:scale(1.08)} to{opacity:1;transform:scale(1)} }
+  @keyframes lo-msg   { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes lo-ring  { 0%,100%{transform:scale(1);opacity:0.8} 50%{transform:scale(1.06);opacity:0.35} }
+  @keyframes lo-orb-1 { from{transform:translate(0,0)} to{transform:translate(30px,22px)} }
+  @keyframes lo-orb-2 { from{transform:translate(0,0)} to{transform:translate(-25px,-18px)} }
+  @keyframes lo-bar   { from{width:0%} to{width:100%} }
+
+  .pf-skel {
+    border-radius: 6px;
+    background: rgba(100,120,100,0.14);
+    animation: pf-skel 1.6s ease-in-out infinite;
+  }
+
+  /* Ambient orbs */
+  .pf-orb { position:fixed; border-radius:50%; pointer-events:none; animation:pf-drift 22s ease-in-out infinite alternate; }
+  .pf-orb-1 { width:clamp(260px,65vw,480px); height:clamp(260px,65vw,480px); background:radial-gradient(circle,rgba(20,80,45,0.18) 0%,transparent 65%); bottom:-12%; right:-10%; filter:blur(80px); }
+  .pf-orb-2 { width:clamp(200px,50vw,380px); height:clamp(200px,50vw,380px); background:radial-gradient(circle,rgba(10,25,70,0.20) 0%,transparent 65%); top:-15%; left:-8%; filter:blur(70px); animation-delay:-11s; }
+
+  /* Cards */
+  .pf-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-top: 1px solid var(--border-hi);
+    border-radius: 18px;
+    overflow: hidden;
+    backdrop-filter: saturate(120%) blur(24px);
+    -webkit-backdrop-filter: saturate(120%) blur(24px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.50), 0 0 0 0.5px rgba(76,175,80,0.06), inset 0 1px 0 rgba(76,175,80,0.12);
+  }
+
+  /* Hero card */
+  .pf-hero {
+    background: linear-gradient(160deg, rgba(16,18,30,0.95) 0%, rgba(10,12,22,0.98) 100%);
+    border: 1px solid rgba(76,175,80,0.22);
+    border-top: 1px solid rgba(76,175,80,0.38);
+    border-radius: 22px;
+    overflow: hidden;
+    backdrop-filter: saturate(120%) blur(28px);
+    -webkit-backdrop-filter: saturate(120%) blur(28px);
+    box-shadow: 0 12px 48px rgba(0,0,0,0.55), 0 0 0 0.5px rgba(76,175,80,0.08), inset 0 1px 0 rgba(76,175,80,0.15);
+    position: relative;
+  }
+  .pf-hero::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 50%; transform: translateX(-50%);
+    width: 60%; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(76,175,80,0.50), transparent);
+  }
+
+  /* Section label */
+  .pf-section-label {
+    font-size: 11px; font-weight: 700;
+    color: rgba(102,187,106,0.85);
+    text-transform: uppercase; letter-spacing: 0.10em;
+    padding: 0 2px 0 10px; margin-bottom: 8px;
+    border-left: 2px solid rgba(76,175,80,0.55);
+  }
+
+  /* Info rows */
+  .pf-info-row { border-bottom: 1px solid rgba(255,255,255,0.06); }
+  .pf-info-row:last-child { border-bottom: none; }
+
+  /* Tappable rows */
+  .pf-tap-row {
+    width:100%; background:transparent; border:none; cursor:pointer;
+    display:flex; align-items:center;
+    padding: 13px 16px 13px 14px;
+    gap:12px; text-align:left;
+    -webkit-tap-highlight-color: transparent;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    transition: background 0.12s;
+  }
+  .pf-tap-row:last-child { border-bottom: none; }
+  @media (hover:hover) { .pf-tap-row:hover { background: rgba(76,175,80,0.06) !important; } }
+  .pf-tap-row:active { background: rgba(76,175,80,0.10) !important; }
+
+  /* Balance number */
+  .pf-balance-num { animation: pf-num 0.4s ease both; }
+
+  /* Copy btn */
+  .pf-copy-btn:active { opacity: 0.55; transform: scale(0.95); }
+
+  /* Layout */
+  .pf-body { flex:1; overflow:hidden; display:flex; flex-direction:column; }
+  .pf-mob-header { display:flex; flex-shrink:0; }
+  .pf-desk-header { display:none; }
+  .pf-left { display:none; }
+  .pf-mob-only { display:block; }
+  .pf-right {
+    flex:1; overflow-y:auto;
+    overscroll-behavior-y: contain;
+    -webkit-overflow-scrolling: touch;
+    padding: 20px 16px calc(72px + env(safe-area-inset-bottom,0px) + 20px);
+    display:flex; flex-direction:column; gap:22px;
+    min-height:0;
+  }
+  .pf-right::-webkit-scrollbar { width:0; }
+
+  @media (min-width:768px) {
+    .pf-body { flex-direction:row; }
+    .pf-mob-header { display:none; }
+    .pf-desk-header { display:flex !important; align-items:center; justify-content:space-between; padding-bottom:4px; }
+    .pf-left {
+      display:flex; flex-direction:column; gap:22px;
+      width:280px; min-width:280px;
+      height:100%; overflow-y:auto;
+      padding:28px 22px 100px;
+      background:rgba(7,8,16,0.65);
+      border-right:0.5px solid rgba(76,175,80,0.16);
+    }
+    .pf-left::-webkit-scrollbar { width:0; }
+    .pf-right { padding:28px 32px 100px; gap:22px; overscroll-behavior-y:auto; }
+    .pf-mob-only { display:none; }
+    .pf-left > * { animation:pf-up 0.4s cubic-bezier(0.22,1,0.36,1) both; }
+    .pf-left > *:nth-child(1){ animation-delay:0.05s; }
+    .pf-left > *:nth-child(2){ animation-delay:0.10s; }
+    .pf-left > *:nth-child(3){ animation-delay:0.15s; }
+    .pf-right > * { animation:pf-up 0.4s cubic-bezier(0.22,1,0.36,1) both; }
+    .pf-right > *:nth-child(1){ animation-delay:0.06s; }
+    .pf-right > *:nth-child(2){ animation-delay:0.11s; }
+    .pf-right > *:nth-child(3){ animation-delay:0.16s; }
+    .pf-right > *:nth-child(4){ animation-delay:0.21s; }
+    .pf-right > *:nth-child(5){ animation-delay:0.26s; }
+  }
+
+  /* Logout splash */
+  .lo-splash {
+    position:fixed; inset:0; z-index:9999;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    font-family:var(--font); -webkit-font-smoothing:antialiased;
+    background:linear-gradient(160deg,#070710 0%,#0b0b1c 60%,#0e0e24 100%);
+    overflow:hidden; animation:lo-fade 0.32s cubic-bezier(0.22,1,0.36,1) forwards;
+  }
+  .lo-orb { position:absolute; border-radius:50%; pointer-events:none; }
+  .lo-orb-1 { width:380px;height:380px;background:radial-gradient(circle,rgba(20,80,45,0.18) 0%,transparent 70%);filter:blur(80px);top:-100px;right:-100px;animation:lo-orb-1 7s ease-in-out infinite alternate; }
+  .lo-orb-2 { width:340px;height:340px;background:radial-gradient(circle,rgba(15,30,80,0.18) 0%,transparent 70%);filter:blur(75px);bottom:-80px;left:-80px;animation:lo-orb-2 6s ease-in-out infinite alternate; }
+  .lo-orb-3 { width:260px;height:260px;background:radial-gradient(circle,rgba(50,50,100,0.12) 0%,transparent 70%);filter:blur(70px);top:40%;left:-60px;animation:lo-orb-1 5s ease-in-out infinite alternate; }
+  .lo-icon-wrap { position:relative;width:110px;height:110px;display:flex;align-items:center;justify-content:center;margin-bottom:28px; }
+  .lo-ring       { position:absolute;inset:0;border-radius:50%;border:2px solid rgba(76,175,80,0.22);animation:lo-ring 2.2s ease-in-out infinite; }
+  .lo-ring-2     { inset:-12px;border-color:rgba(76,175,80,0.13);animation-delay:0.4s; }
+  .lo-ring-3     { inset:-24px;border-color:rgba(76,175,80,0.06);animation-delay:0.8s; }
+  .lo-icon       { width:90px;height:90px;border-radius:28px;background:rgba(10,10,22,0.97);border:1px solid rgba(76,175,80,0.22);box-shadow:0 8px 36px rgba(76,175,80,0.15),0 2px 8px rgba(0,0,0,0.30);display:flex;align-items:center;justify-content:center;position:relative;z-index:1;animation:lo-icon 0.55s cubic-bezier(0.34,1.56,0.64,1) 0.12s both;font-size:40px;line-height:1; }
+  .lo-text       { text-align:center;padding:0 32px;animation:lo-msg 0.5s cubic-bezier(0.22,1,0.36,1) 0.24s both; }
+  .lo-title      { font-size:clamp(26px,8vw,32px);font-weight:800;letter-spacing:-1px;line-height:1.1;margin-bottom:8px;color:#fff; }
+  .lo-sub        { font-size:14.5px;color:rgba(255,255,255,0.50);font-weight:400;line-height:1.6; }
+  .lo-bar-wrap   { margin-top:36px;width:120px;height:3px;background:rgba(76,175,80,0.15);border-radius:99px;overflow:hidden;animation:lo-msg 0.5s cubic-bezier(0.22,1,0.36,1) 0.35s both; }
+  .lo-bar        { height:100%;border-radius:99px;background:linear-gradient(90deg,#4caf50,#66bb6a);animation:lo-bar 1.65s cubic-bezier(0.4,0,0.2,1) 0.4s forwards; }
+
+  /* Modals */
+  .pf-modal-overlay  { position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;touch-action:none; }
+  .pf-modal-backdrop { position:absolute;inset:0;background:rgba(0,0,0,0.65);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);animation:pf-bd-in 0.22s ease; }
+  .pf-modal-sheet    { position:relative;z-index:1;background:rgba(10,10,22,0.97);border:1px solid rgba(76,175,80,0.20);border-radius:22px;box-shadow:0 24px 80px rgba(0,0,0,0.60);overflow:hidden;animation:pf-pop 0.28s cubic-bezier(0.22,1,0.36,1); }
+  .pf-modal-close-btn { width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,0.08);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.50);transition:background 0.15s;flex-shrink:0;-webkit-tap-highlight-color:transparent; }
+  .pf-modal-close-btn:hover { background:rgba(255,255,255,0.14); }
+
+  .pf-curr-item { width:100%;background:transparent;border:none;cursor:pointer;display:flex;align-items:center;padding:13px 20px;border-bottom:1px solid rgba(255,255,255,0.07);gap:14px;-webkit-tap-highlight-color:transparent;transition:background 0.12s; }
+  .pf-curr-item:last-child { border-bottom:none; }
+  .pf-curr-item:hover { background:rgba(76,175,80,0.06); }
+
+  .pf-search-input { width:100%;padding:10px 10px 10px 36px;border-radius:11px;border:1px solid rgba(76,175,80,0.20);background:rgba(0,0,0,0.35);outline:none;font-size:15px;color:#fff;font-family:var(--font);-webkit-appearance:none;appearance:none;transition:border-color 0.2s; }
+  .pf-search-input::placeholder { color:rgba(255,255,255,0.28); }
+  .pf-search-input:focus { border-color:rgba(76,175,80,0.50); }
+</style><div class="pf-orb pf-orb-1"></div><div class="pf-orb pf-orb-2"></div><div class="pf-mob-header" style="width:100%;z-index:50;background:rgba(8,8,18,0.90);backdrop-filter:saturate(150%) blur(24px);-webkit-backdrop-filter:saturate(150%) blur(24px);border-bottom:0.5px solid rgba(76,175,80,0.20)"><div style="width:100%;padding:11px 16px;display:flex;align-items:center;justify-content:space-between"><button title="Language" style="width:36px;height:36px;border-radius:10px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;-webkit-tap-highlight-color:transparent">🌐</button><h1 style="font-size:17px;font-weight:700;color:#fff;letter-spacing:-0.4px">Profile</h1><button disabled="" title="Refresh profile" style="width:36px;height:36px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#66bb6a;opacity:0.4;transition:opacity 0.15s;flex-shrink:0;-webkit-tap-highlight-color:transparent"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" style="animation:pf-spin 0.8s linear infinite"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg></button></div></div><div class="pf-body"><div class="pf-left"><div class="pf-hero" style="padding:24px 20px 22px"><div style="position:absolute;top:-40px;left:50%;transform:translateX(-50%);width:200px;height:80px;background:radial-gradient(ellipse, rgba(76,175,80,0.14) 0%, transparent 70%);pointer-events:none"></div><div style="display:flex;flex-direction:column;align-items:center;text-align:center;position:relative"><div style="position:relative;margin-bottom:16px;animation:pf-pop 0.5s cubic-bezier(0.34,1.56,0.64,1) 0.08s both"><div style="position:absolute;inset:-4px;border-radius:50%;background:conic-gradient(from 0deg, rgba(76,175,80,0.50), rgba(102,187,106,0.25), rgba(76,175,80,0.50));animation:pf-spin 8s linear infinite;z-index:0"></div><div style="position:absolute;inset:-2px;border-radius:50%;background:var(--bg);z-index:1"></div><div style="width:88px;height:88px;border-radius:50%;background:linear-gradient(145deg, #2e7d32, #4caf50, #66bb6a);display:flex;align-items:center;justify-content:center;font-size:34px;font-weight:800;color:#fff;position:relative;z-index:2;overflow:hidden"></div></div><div style="display:flex;flex-direction:column;align-items:center;gap:8px;width:100%"><div class="pf-skel" style="width:55%;height:20px;border-radius:6px"></div><div class="pf-skel" style="width:70%;height:13px;border-radius:5px"></div></div></div></div><div style="height:0.5px;background:rgba(76,175,80,0.12);margin:0 4px"></div><div><p class="pf-section-label">Balance</p><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div style="background:rgba(10,10,22,0.80);border:1px solid rgba(48,209,88,0.22);border-top:1px solid #30d15830;border-radius:16px;padding:15px 14px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 4px 20px rgba(0,0,0,0.35)"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><span style="font-size:10px;font-weight:700;color:#30d158;text-transform:uppercase;letter-spacing:0.07em">Real</span><div style="width:28px;height:28px;border-radius:8px;background:rgba(48,209,88,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#30d158" stroke-width="2" stroke-linecap="round"><rect x="1" y="4" width="22" height="16" rx="2"></rect><path d="M1 10h22"></path></svg></div></div><div class="pf-skel" style="width:80%;height:20px;border-radius:4px"></div><p style="font-size:11px;color:rgba(255,255,255,0.32);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Rp</p></div><div style="background:rgba(10,10,22,0.80);border:1px solid rgba(255,159,10,0.22);border-top:1px solid #ff9f0a30;border-radius:16px;padding:15px 14px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 4px 20px rgba(0,0,0,0.35)"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><span style="font-size:10px;font-weight:700;color:#ff9f0a;text-transform:uppercase;letter-spacing:0.07em">Demo</span><div style="width:28px;height:28px;border-radius:8px;background:rgba(255,159,10,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#ff9f0a" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 8v4l3 3"></path></svg></div></div><div class="pf-skel" style="width:80%;height:20px;border-radius:4px"></div><p style="font-size:11px;color:rgba(255,255,255,0.32);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Virtual</p></div></div></div><div style="margin-top:auto;display:flex;flex-direction:column;gap:10px"><div class="pf-card"><button class="pf-tap-row" style="border-bottom:none"><div style="width:34px;height:34px;border-radius:9px;background:rgba(255,69,58,0.85);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 2px 8px rgba(255,69,58,0.20)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg></div><span style="flex:1;font-size:15px;color:#ff453a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500">Logout</span><svg width="6" height="11" viewBox="0 0 7 12" fill="none" style="flex-shrink:0;opacity:0.6"><path d="M1 1l5 5-5 5" stroke="#ff453a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg></button></div><p style="text-align:center;font-size:11px;color:rgba(255,255,255,0.20);margin-top:6px">STC AutoTrade · v2.0.0</p></div></div><div class="pf-right"><div class="pf-desk-header"><div><h1 style="font-size:24px;font-weight:800;color:#fff;letter-spacing:-0.6px;margin-bottom:2px">Profile</h1><p style="font-size:13px;color:rgba(255,255,255,0.38)">STC AutoTrade</p></div><div style="display:flex;align-items:center;gap:8px"><button style="width:38px;height:38px;border-radius:10px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px" title="Language">🌐</button><button disabled="" style="width:38px;height:38px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#66bb6a;opacity:0.4;transition:opacity 0.15s"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" style="animation:pf-spin 0.8s linear infinite"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg></button></div></div><div class="pf-mob-only" style="display:flex;flex-direction:column;gap:18px"><div class="pf-hero" style="padding:24px 20px 22px"><div style="position:absolute;top:-40px;left:50%;transform:translateX(-50%);width:200px;height:80px;background:radial-gradient(ellipse, rgba(76,175,80,0.14) 0%, transparent 70%);pointer-events:none"></div><div style="display:flex;flex-direction:column;align-items:center;text-align:center;position:relative"><div style="position:relative;margin-bottom:16px;animation:pf-pop 0.5s cubic-bezier(0.34,1.56,0.64,1) 0.08s both"><div style="position:absolute;inset:-4px;border-radius:50%;background:conic-gradient(from 0deg, rgba(76,175,80,0.50), rgba(102,187,106,0.25), rgba(76,175,80,0.50));animation:pf-spin 8s linear infinite;z-index:0"></div><div style="position:absolute;inset:-2px;border-radius:50%;background:var(--bg);z-index:1"></div><div style="width:88px;height:88px;border-radius:50%;background:linear-gradient(145deg, #2e7d32, #4caf50, #66bb6a);display:flex;align-items:center;justify-content:center;font-size:34px;font-weight:800;color:#fff;position:relative;z-index:2;overflow:hidden"></div></div><div style="display:flex;flex-direction:column;align-items:center;gap:8px;width:100%"><div class="pf-skel" style="width:55%;height:20px;border-radius:6px"></div><div class="pf-skel" style="width:70%;height:13px;border-radius:5px"></div></div></div></div><div><p class="pf-section-label">Balance</p><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div style="background:rgba(10,10,22,0.80);border:1px solid rgba(48,209,88,0.22);border-top:1px solid #30d15830;border-radius:16px;padding:15px 14px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 4px 20px rgba(0,0,0,0.35)"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><span style="font-size:10px;font-weight:700;color:#30d158;text-transform:uppercase;letter-spacing:0.07em">Real</span><div style="width:28px;height:28px;border-radius:8px;background:rgba(48,209,88,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#30d158" stroke-width="2" stroke-linecap="round"><rect x="1" y="4" width="22" height="16" rx="2"></rect><path d="M1 10h22"></path></svg></div></div><div class="pf-skel" style="width:80%;height:20px;border-radius:4px"></div><p style="font-size:11px;color:rgba(255,255,255,0.32);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Rp</p></div><div style="background:rgba(10,10,22,0.80);border:1px solid rgba(255,159,10,0.22);border-top:1px solid #ff9f0a30;border-radius:16px;padding:15px 14px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 4px 20px rgba(0,0,0,0.35)"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><span style="font-size:10px;font-weight:700;color:#ff9f0a;text-transform:uppercase;letter-spacing:0.07em">Demo</span><div style="width:28px;height:28px;border-radius:8px;background:rgba(255,159,10,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#ff9f0a" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 8v4l3 3"></path></svg></div></div><div class="pf-skel" style="width:80%;height:20px;border-radius:4px"></div><p style="font-size:11px;color:rgba(255,255,255,0.32);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Virtual</p></div></div></div></div><div><p class="pf-section-label">Account Information</p><div class="pf-card"><div style="padding:12px 16px;display:flex;flex-direction:column;gap:14px"><div style="display:flex;align-items:center;gap:12px"><div class="pf-skel" style="width:32px;height:32px;border-radius:9px"></div><div style="flex:1;display:flex;flex-direction:column;gap:5px"><div class="pf-skel" style="width:40%;height:11px;border-radius:6px"></div><div class="pf-skel" style="width:65%;height:14px;border-radius:6px"></div></div></div><div style="display:flex;align-items:center;gap:12px"><div class="pf-skel" style="width:32px;height:32px;border-radius:9px"></div><div style="flex:1;display:flex;flex-direction:column;gap:5px"><div class="pf-skel" style="width:40%;height:11px;border-radius:6px"></div><div class="pf-skel" style="width:65%;height:14px;border-radius:6px"></div></div></div><div style="display:flex;align-items:center;gap:12px"><div class="pf-skel" style="width:32px;height:32px;border-radius:9px"></div><div style="flex:1;display:flex;flex-direction:column;gap:5px"><div class="pf-skel" style="width:40%;height:11px;border-radius:6px"></div><div class="pf-skel" style="width:65%;height:14px;border-radius:6px"></div></div></div><div style="display:flex;align-items:center;gap:12px"><div class="pf-skel" style="width:32px;height:32px;border-radius:9px"></div><div style="flex:1;display:flex;flex-direction:column;gap:5px"><div class="pf-skel" style="width:40%;height:11px;border-radius:6px"></div><div class="pf-skel" style="width:65%;height:14px;border-radius:6px"></div></div></div></div></div></div><div><p class="pf-section-label">Settings</p><div class="pf-card"><button class="pf-tap-row"><div style="width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,#10B981,#34D399);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,0.20)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"></circle><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg></div><span style="flex:1;font-size:15px;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500">Language</span><span style="font-size:13px;color:rgba(255,255,255,0.38);margin-right:6px;flex-shrink:0;max-width:40vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">english</span><svg width="6" height="11" viewBox="0 0 7 12" fill="none" style="flex-shrink:0;opacity:0.6"><path d="M1 1l5 5-5 5" stroke="rgba(255,255,255,0.50)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg></button><button class="pf-tap-row" style="border-bottom:none"><div style="width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,#4caf50,#66bb6a);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,0.20)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 8v4l3 3"></path></svg></div><span style="flex:1;font-size:15px;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500">Currency</span><span style="font-size:13px;color:rgba(255,255,255,0.38);margin-right:6px;flex-shrink:0;max-width:40vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">IDR (Rp)</span></button></div></div><div><p class="pf-section-label">Help &amp; Legal</p><div class="pf-card"><button class="pf-tap-row"><div style="width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,#5ac8fa,#007AFF);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,0.20)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3m.08 4h.01"></path></svg></div><span style="flex:1;font-size:15px;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500">Terms of Service</span><svg width="6" height="11" viewBox="0 0 7 12" fill="none" style="flex-shrink:0;opacity:0.6"><path d="M1 1l5 5-5 5" stroke="rgba(255,255,255,0.50)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg></button><button class="pf-tap-row" style="border-bottom:none"><div style="width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,#34c759,#30d158);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,0.20)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg></div><span style="flex:1;font-size:15px;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500">Privacy Policy</span><svg width="6" height="11" viewBox="0 0 7 12" fill="none" style="flex-shrink:0;opacity:0.6"><path d="M1 1l5 5-5 5" stroke="rgba(255,255,255,0.50)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg></button></div></div><div class="pf-mob-only" style="display:flex;flex-direction:column;gap:14px"><div class="pf-card"><button class="pf-tap-row" style="border-bottom:none"><div style="width:34px;height:34px;border-radius:9px;background:rgba(255,69,58,0.85);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 2px 8px rgba(255,69,58,0.20)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg></div><span style="flex:1;font-size:15px;color:#ff453a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500">Logout</span><svg width="6" height="11" viewBox="0 0 7 12" fill="none" style="flex-shrink:0;opacity:0.6"><path d="M1 1l5 5-5 5" stroke="#ff453a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg></button></div><p style="text-align:center;font-size:12px;color:rgba(255,255,255,0.22);padding-bottom:4px">STC AutoTrade · v2.0.0</p></div></div></div></div></main><script src="/_next/static/chunks/webpack-ab4c59e3b0fdefe1.js" async=""></script><script>(self.__next_f=self.__next_f||[]).push([0]);self.__next_f.push([2,null])</script><script>self.__next_f.push([1,"1:HL[\"/_next/static/css/d9bdc85597fe31ec.css\",\"style\"]\n"])</script><script>self.__next_f.push([1,"2:I[5751,[],\"\"]\n4:I[6513,[],\"ClientPageRoot\"]\n5:I[6600,[\"762\",\"static/chunks/44530001-ad5bf9d336177563.js\",\"462\",\"static/chunks/462-bd91593156d4571a.js\",\"173\",\"static/chunks/173-840c66fbc971110d.js\",\"800\",\"static/chunks/800-9fa9d48c91ad5e42.js\",\"876\",\"static/chunks/876-7cce46ae398d72f3.js\",\"128\",\"static/chunks/128-c61dffe4f96a2a2d.js\",\"178\",\"static/chunks/app/profile/page-56f530a64a996749.js\"],\"default\"]\n6:I[9275,[],\"\"]\n7:I[1343,[],\"\"]\n9:I[8173,[\"762\",\"static/chunks/44530001-ad5bf9d336177563.js\",\"462\",\"static/chunks/462-bd91593156d4571a.js\",\"173\",\"static/chunks/173-840c66fbc971110d.js\",\"138\",\"static/chunks/138-68d4317266e88d00.js\",\"800\",\"static/chunks/800-9fa9d48c91ad5e42.js\",\"876\",\"static/chunks/876-7cce46ae398d72f3.js\",\"128\",\"static/chunks/128-c61dffe4f96a2a2d.js\",\"185\",\"static/chunks/app/layout-06ae47cacbad09d0.js\"],\"Image\"]\na:I[4921,[\"762\",\"static/chunks/44530001-ad5bf9d336177563.js\",\"462\",\"static/chunks/462-bd91593156d4571a.js\",\"173\",\"static/chunks/173-840c66fbc971110d.js\",\"138\",\"static/chunks/138-68d4317266e88d00.js\",\"800\",\"static/chunks/800-9fa9d48c91ad5e42.js\",\"876\",\"static/chunks/876-7cce46ae398d72f3.js\",\"128\",\"static/chunks/128-c61dffe4f96a2a2d.js\",\"185\",\"static/chunks/app/layout-06ae47cacbad09d0.js\"],\"ClientLayout\"]\nc:I[6130,[],\"\"]\n8:Tc73,"])</script><script>self.__next_f.push([1,"\n  html, body { margin: 0; padding: 0; }\n  html, body { background: #0a0a0a !important; }\n\n  /* ── Overlay utama ── */\n  #__stc_splash {\n    position: fixed;\n    inset: 0;\n    display: flex;\n    flex-direction: column;\n    align-items: center;\n    justify-content: center;\n    background: #0a0a0a;\n    z-index: 99999;\n    transition: opacity 0.5s ease-out;\n    overflow: hidden;\n  }\n  #__stc_splash.hide {\n    opacity: 0;\n    pointer-events: none;\n  }\n\n  /* ── Wrapper: logo + loading dalam satu kolom ── */\n  #__stc_splash .splash-inner {\n    display: flex;\n    flex-direction: column;\n    align-items: center;\n  }\n\n  /* ── Logo: muncul besar → tahan 3 detik → mengecil + naik ── */\n  #__stc_splash .splash-logo {\n    width: 160px;\n    height: 160px;\n    object-fit: contain;\n    border-radius: 36px;\n    display: block;\n\n    /* Satu animasi penuh mengurus seluruh lifecycle logo */\n    animation:\n      __stc_logo_seq  4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards,\n      __stc_logo_glow 2.8s ease-in-out 1s infinite;\n  }\n\n  /* ── Loading: slide up dari bawah logo di detik ke-3 ── */\n  #__stc_splash .splash-loading {\n    display: flex;\n    flex-direction: column;\n    align-items: center;\n    gap: 10px;\n    margin-top: 28px;\n\n    animation: __stc_loading_in 0.55s cubic-bezier(0.34, 1.2, 0.64, 1) 3s both;\n  }\n\n  #__stc_splash .splash-text {\n    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;\n    font-size: 11px;\n    font-weight: 600;\n    letter-spacing: 0.28em;\n    text-transform: uppercase;\n    color: rgba(255,255,255,0.35);\n  }\n\n  #__stc_splash .splash-dots {\n    display: flex;\n    align-items: center;\n    gap: 8px;\n  }\n  #__stc_splash .splash-dot {\n    width: 6px;\n    height: 6px;\n    border-radius: 50%;\n    background: #00d4aa;\n    animation: __stc_dot 1.4s ease-in-out infinite;\n  }\n  #__stc_splash .splash-dot:nth-child(1) { animation-delay: 0s;   }\n  #__stc_splash .splash-dot:nth-child(2) { animation-delay: 0.2s; }\n  #__stc_splash .splash-dot:nth-child(3) { animation-delay: 0.4s; }\n\n  /* ── Keyframes ── */\n\n  /* Logo: fade+scale in → hold → kecilkan + angkat ke atas */\n  @keyframes __stc_logo_seq {\n    0%   { opacity: 0;   transform: scale(0.65) translateY(0);     }\n    15%  { opacity: 1;   transform: scale(1.06) translateY(0);     } /* overshoot */\n    22%  { opacity: 1;   transform: scale(1)    translateY(0);     } /* settle */\n    74%  { opacity: 1;   transform: scale(1)    translateY(0);     } /* tahan */\n    100% { opacity: 1;   transform: scale(0.78) translateY(-32px); } /* mengecil + naik */\n  }\n\n  /* Glow hijau berulang */\n  @keyframes __stc_logo_glow {\n    0%, 100% { filter: drop-shadow(0 0  0px rgba(0,212,170,0.0));  }\n    50%       { filter: drop-shadow(0 0 30px rgba(0,212,170,0.5)); }\n  }\n\n  /* Loading slide up dari bawah */\n  @keyframes __stc_loading_in {\n    from { opacity: 0; transform: translateY(22px); }\n    to   { opacity: 1; transform: translateY(0);    }\n  }\n\n  /* Dot bounce */\n  @keyframes __stc_dot {\n    0%, 80%, 100% { opacity: 0.2;  transform: scale(0.75); }\n    40%           { opacity: 1;    transform: scale(1.3);  }\n  }\n"])</script><script>self.__next_f.push([1,"d:[]\n"])</script><script>self.__next_f.push([1,"0:[[[\"$\",\"link\",\"0\",{\"rel\":\"stylesheet\",\"href\":\"/_next/static/css/d9bdc85597fe31ec.css\",\"precedence\":\"next\",\"crossOrigin\":\"$undefined\"}]],[\"$\",\"$L2\",null,{\"buildId\":\"n-iYDEzGa6hZNQSmppXig\",\"assetPrefix\":\"\",\"initialCanonicalUrl\":\"/profile/\",\"initialTree\":[\"\",{\"children\":[\"profile\",{\"children\":[\"__PAGE__\",{}]}]},\"$undefined\",\"$undefined\",true],\"initialSeedData\":[\"\",{\"children\":[\"profile\",{\"children\":[\"__PAGE__\",{},[[\"$L3\",[\"$\",\"$L4\",null,{\"props\":{\"params\":{},\"searchParams\":{}},\"Component\":\"$5\"}]],null],null]},[\"$\",\"$L6\",null,{\"parallelRouterKey\":\"children\",\"segmentPath\":[\"children\",\"profile\",\"children\"],\"error\":\"$undefined\",\"errorStyles\":\"$undefined\",\"errorScripts\":\"$undefined\",\"template\":[\"$\",\"$L7\",null,{}],\"templateStyles\":\"$undefined\",\"templateScripts\":\"$undefined\",\"notFound\":\"$undefined\",\"notFoundStyles\":\"$undefined\",\"styles\":null}],null]},[[\"$\",\"html\",null,{\"lang\":\"en\",\"children\":[[\"$\",\"head\",null,{\"children\":[\"$\",\"style\",null,{\"dangerouslySetInnerHTML\":{\"__html\":\"$8\"}}]}],[\"$\",\"body\",null,{\"className\":\"font-sans antialiased\",\"children\":[[\"$\",\"div\",null,{\"id\":\"__stc_splash\",\"children\":[\"$\",\"div\",null,{\"className\":\"splash-inner\",\"children\":[[\"$\",\"$L9\",null,{\"src\":\"/logo.png\",\"alt\":\"STC AutoTrade\",\"className\":\"splash-logo\",\"width\":160,\"height\":160}],[\"$\",\"div\",null,{\"className\":\"splash-loading\",\"children\":[[\"$\",\"span\",null,{\"className\":\"splash-text\",\"children\":\"Loading\"}],[\"$\",\"div\",null,{\"className\":\"splash-dots\",\"children\":[[\"$\",\"span\",null,{\"className\":\"splash-dot\"}],[\"$\",\"span\",null,{\"className\":\"splash-dot\"}],[\"$\",\"span\",null,{\"className\":\"splash-dot\"}]]}]]}]]}]}],[\"$\",\"$La\",null,{\"children\":[\"$\",\"$L6\",null,{\"parallelRouterKey\":\"children\",\"segmentPath\":[\"children\"],\"error\":\"$undefined\",\"errorStyles\":\"$undefined\",\"errorScripts\":\"$undefined\",\"template\":[\"$\",\"$L7\",null,{}],\"templateStyles\":\"$undefined\",\"templateScripts\":\"$undefined\",\"notFound\":[[\"$\",\"title\",null,{\"children\":\"404: This page could not be found.\"}],[\"$\",\"div\",null,{\"style\":{\"fontFamily\":\"system-ui,\\\"Segoe UI\\\",Roboto,Helvetica,Arial,sans-serif,\\\"Apple Color Emoji\\\",\\\"Segoe UI Emoji\\\"\",\"height\":\"100vh\",\"textAlign\":\"center\",\"display\":\"flex\",\"flexDirection\":\"column\",\"alignItems\":\"center\",\"justifyContent\":\"center\"},\"children\":[\"$\",\"div\",null,{\"children\":[[\"$\",\"style\",null,{\"dangerouslySetInnerHTML\":{\"__html\":\"body{color:#000;background:#fff;margin:0}.next-error-h1{border-right:1px solid rgba(0,0,0,.3)}@media (prefers-color-scheme:dark){body{color:#fff;background:#000}.next-error-h1{border-right:1px solid rgba(255,255,255,.3)}}\"}}],[\"$\",\"h1\",null,{\"className\":\"next-error-h1\",\"style\":{\"display\":\"inline-block\",\"margin\":\"0 20px 0 0\",\"padding\":\"0 23px 0 0\",\"fontSize\":24,\"fontWeight\":500,\"verticalAlign\":\"top\",\"lineHeight\":\"49px\"},\"children\":\"404\"}],[\"$\",\"div\",null,{\"style\":{\"display\":\"inline-block\"},\"children\":[\"$\",\"h2\",null,{\"style\":{\"fontSize\":14,\"fontWeight\":400,\"lineHeight\":\"49px\",\"margin\":0},\"children\":\"This page could not be found.\"}]}]]}]}]],\"notFoundStyles\":[],\"styles\":null}]}]]}]]}],null],null],\"couldBeIntercepted\":false,\"initialHead\":[false,\"$Lb\"],\"globalErrorComponent\":\"$c\",\"missingSlots\":\"$Wd\"}]]\n"])</script><script>self.__next_f.push([1,"b:[[\"$\",\"meta\",\"0\",{\"name\":\"viewport\",\"content\":\"width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, user-scalable=no\"}],[\"$\",\"meta\",\"1\",{\"name\":\"theme-color\",\"content\":\"#000000\"}],[\"$\",\"meta\",\"2\",{\"charSet\":\"utf-8\"}],[\"$\",\"title\",\"3\",{\"children\":\"STC AutoTrade\"}],[\"$\",\"meta\",\"4\",{\"name\":\"description\",\"content\":\"Trading Bot Automation System\"}],[\"$\",\"meta\",\"5\",{\"name\":\"generator\",\"content\":\"v0.app\"}],[\"$\",\"link\",\"6\",{\"rel\":\"icon\",\"href\":\"/logo.png\",\"media\":\"(prefers-color-scheme: light)\"}],[\"$\",\"link\",\"7\",{\"rel\":\"icon\",\"href\":\"/logo.png\",\"media\":\"(prefers-color-scheme: dark)\"}],[\"$\",\"link\",\"8\",{\"rel\":\"icon\",\"href\":\"/logo.png\",\"type\":\"image\"}],[\"$\",\"link\",\"9\",{\"rel\":\"apple-touch-icon\",\"href\":\"/logo.png\"}]]\n3:null\n"])</script></body></html>
