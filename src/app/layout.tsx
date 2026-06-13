@@ -4,9 +4,42 @@ import { ClientLayout } from '@/components/ClientLayout'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'STC AutoTrade',
-  description: 'Trading Bot Automation System',
-  generator: 'v0.app',
+  metadataBase: new URL('https://stcautotradepro.id'),
+  title: {
+    default: 'STC AutoTrade Pro — Bot Auto Trading & Sinyal Stockity',
+    template: '%s | STC AutoTrade Pro',
+  },
+  description:
+    'STC AutoTrade Pro: bot auto trading & sinyal otomatis untuk Stockity. Atur jadwal trading, eksekusi order otomatis, dan pantau saldo serta profit real-time dari satu dashboard.',
+  applicationName: 'STC AutoTrade Pro',
+  generator: 'Next.js',
+  keywords: [
+    'STC AutoTrade', 'STC AutoTrade Pro', 'auto trade stockity', 'bot trading stockity',
+    'robot stockity', 'sinyal trading stockity', 'auto trading otomatis',
+    'bot binary option', 'robot trading stockity', 'stockity indonesia',
+  ],
+  authors: [{ name: 'STC AutoTrade' }],
+  creator: 'STC AutoTrade',
+  publisher: 'STC AutoTrade',
+  alternates: { canonical: '/' },
+  openGraph: {
+    type: 'website',
+    locale: 'id_ID',
+    url: 'https://stcautotradepro.id',
+    siteName: 'STC AutoTrade Pro',
+    title: 'STC AutoTrade Pro — Bot Auto Trading & Sinyal Stockity',
+    description:
+      'Bot auto trading & sinyal otomatis untuk Stockity. Jadwal trading, eksekusi order otomatis, pantau saldo & profit real-time.',
+    images: [{ url: '/headerdark.png', alt: 'STC AutoTrade Pro' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'STC AutoTrade Pro — Bot Auto Trading & Sinyal Stockity',
+    description:
+      'Bot auto trading & sinyal otomatis untuk Stockity. Pantau saldo & profit real-time dari satu dashboard.',
+    images: ['/headerdark.png'],
+  },
+  robots: { index: true, follow: true },
   icons: {
     icon: [
       { url: '/logo.png', media: '(prefers-color-scheme: light)' },
@@ -146,7 +179,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
+    <html lang="id">
       <head>
         <style dangerouslySetInnerHTML={{ __html: initialSplashStyles }} />
       </head>
