@@ -1504,9 +1504,8 @@ export default function AdminPage() {
       `}</style>
 
       {/* ── HEADER ───────────────────────────────────────────────────────── */}
-      <div className="bg-white border-b border-slate-100 shadow-sm relative z-40"
-        style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}
-      >
+      {/* Safe-area inset atas ditangani sekali oleh <body> (globals.css), jangan tambah lagi di sini */}
+      <div className="bg-white border-b border-slate-100 shadow-sm relative z-40">
         <div className="flex items-center gap-3 px-4 py-3">
           <button
             onClick={() => router.back()}
