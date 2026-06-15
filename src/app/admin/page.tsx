@@ -1735,6 +1735,7 @@ export default function AdminPage() {
         />
       )}
       {waUrlOpen  && <UrlDialog field="whatsappHelpUrl" currentValue={regConfig.whatsappHelpUrl ?? ''} onClose={() => setWaUrlOpen(false)} onSave={v => handleUpdateUrl('whatsappHelpUrl', v)} loading={isActing} />}
+      {referralOpen && <UrlDialog field="stockityReferral" currentValue={regConfig.stockityReferral ?? ''} onClose={() => setReferralOpen(false)} onSave={v => handleUpdateUrl('stockityReferral', v)} loading={isActing} />}
     </div>
   );
 }
