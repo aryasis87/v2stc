@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { api } from '@/lib/api';
-import { storage, isSessionValid } from '@/lib/storage';
+import { storage, isSessionValid, SESSION_KEYS } from '@/lib/storage';
 import { isWhitelistedByUserId, updateLastLogin, getRegistrationConfig } from '@/lib/supabaseRepository';
 import { LanguageProvider, useLanguage, AVAILABLE_LANGUAGES, COUNTRY_ENTRIES, Language, isWindows } from '@/lib';
 
@@ -700,11 +700,16 @@ function LoginPageContent() {
       const res = await api.login(emailVal, passVal);
 
       setLoginStep('whitelist');
-      const allowed = await isWhitelistedByUserId(res.userId);
+      // Admin & super-admin bypass cek whitelist (status dari backend, pakai token baru).
+      const role = await api.admin.me(res.accessToken).catch(() => ({ isAdmin: false, isSuperAdmin: false }));
+      const privileged = role.isAdmin || role.isSuperAdmin;
+      const allowed = privileged || await isWhitelistedByUserId(res.userId);
       if (!allowed) {
         setIsWhitelistError(true);
         throw new Error(t('login.notWhitelisted'));
       }
+      // Simpan flag agar guard berkala juga melewati admin/super-admin.
+      await storage.set(SESSION_KEYS.IS_PRIVILEGED, privileged ? 'true' : 'false');
 
       setLoginStep('saving');
       if (remember) {

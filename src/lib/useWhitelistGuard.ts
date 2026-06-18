@@ -73,7 +73,9 @@ export function useWhitelistGuard(
     }
 
     try {
-      const allowed = await isWhitelistedByUserId(userIdRef.current!);
+      // Admin & super-admin tidak tunduk whitelist (flag diset saat login).
+      const priv = await storage.get(SESSION_KEYS.IS_PRIVILEGED);
+      const allowed = priv === 'true' || await isWhitelistedByUserId(userIdRef.current!);
 
       if (!mountedRef.current) return;
 

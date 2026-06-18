@@ -24,8 +24,8 @@ function emitUnauthorized() {
   }, 50); // sedikit delay agar semua request selesai dulu
 }
 
-async function req<T>(method: string, path: string, body?: unknown): Promise<T> {
-  const token = await getToken();
+async function req<T>(method: string, path: string, body?: unknown, tokenOverride?: string): Promise<T> {
+  const token = tokenOverride ?? await getToken();
   const res = await fetch(`${getBase()}/api/v1${path}`, {
     method,
     headers: {
@@ -899,7 +899,7 @@ export const api = {
 
   // ── Admin (C2 — semua operasi privileged via backend service_role) ──────────
   admin: {
-    me:              () => req<{ isAdmin: boolean; isSuperAdmin: boolean }>('GET', '/admin/me'),
+    me:              (token?: string) => req<{ isAdmin: boolean; isSuperAdmin: boolean }>('GET', '/admin/me', undefined, token),
     listWhitelist:   () => req<any[]>('GET', '/admin/whitelist'),
     stats:           () => req<{ total: number; active: number; inactive: number; recent: number; recentAdded: number }>('GET', '/admin/stats'),
     addWhitelist:    (b: { email: string; name?: string; userId?: string; deviceId?: string; isPrimary?: boolean; addedBy?: string }) => req<void>('POST', '/admin/whitelist', b),

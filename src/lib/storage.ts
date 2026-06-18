@@ -16,6 +16,7 @@ export const SESSION_KEYS = {
   CURRENCY:      'stc_currency',
   CURRENCY_ISO:  'stc_currency_iso',
   IS_LOGGED_IN:  'stc_is_logged_in',
+  IS_PRIVILEGED: 'stc_is_privileged',
 } as const;
 
 // ── UserSession type ──────────────────────────────────────────────────────────
