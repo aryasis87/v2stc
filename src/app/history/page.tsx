@@ -1,9 +1,10 @@
 'use client';
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { api, type ExecutionLog, type FastradeLog, type IndicatorLog, type MomentumLog } from '@/lib/api';
 import { storage } from '@/lib/storage';
 import { LanguageProvider, useLanguage, formatDate, formatTime, Language } from '@/lib';
+import { useDarkMode } from '@/lib/DarkModeContext';
 import {
   TrendingUp, TrendingDown, Filter, History, RotateCcw,
   ArrowUpRight, ArrowDownRight, BarChart3, ChevronRight,
@@ -31,11 +32,47 @@ interface CombinedLog {
 }
 
 // ─────────────────────────────────────────────
-// SKELETON
+// THEME PALETTE — selaras dashboard (dark) & iOS (light)
+// History dulunya hardcode light-only; kini ikut dark mode aplikasi.
 // ─────────────────────────────────────────────
-const Skel: React.FC<{ w?: number | string; h?: number; r?: number }> = ({ w = '100%', h = 14, r = 6 }) => (
-  <div style={{ width: w, height: h, borderRadius: r, background: 'rgba(60,60,67,0.08)', animation: 'skel-pulse 1.6s ease-in-out infinite' }} />
-);
+function getP(dark: boolean) {
+  return dark
+    ? {
+        bg:     '#0B0C0E',
+        header: 'rgba(11,12,14,0.88)',
+        card:   '#141518',
+        card2:  '#1B1D21',
+        hair:   'rgba(255,255,255,0.06)',
+        bdr:    'rgba(255,255,255,0.10)',
+        text:   '#F4F5F7',
+        sub:    '#C6CBD3',
+        muted:  '#A1A8B3',
+        faint:  'rgba(161,168,179,0.55)',
+        press:  'rgba(255,255,255,0.06)',
+        skel:   'rgba(255,255,255,0.07)',
+        shadow: 'inset 0 1px 0 rgba(255,255,255,0.03), 0 8px 24px -16px rgba(0,0,0,0.6)',
+        green:  '#30D158', red: '#FF453A', amber: '#FF9F0A',
+        blue:   '#0A84FF', purple: '#BF5AF2', pink: '#FF375F', grey: '#98989F',
+      }
+    : {
+        bg:     '#F2F2F7',
+        header: 'rgba(242,242,247,0.92)',
+        card:   '#FFFFFF',
+        card2:  '#F2F2F7',
+        hair:   'rgba(60,60,67,0.07)',
+        bdr:    'rgba(60,60,67,0.12)',
+        text:   '#1C1C1E',
+        sub:    '#3C3C43',
+        muted:  '#6E6E73',
+        faint:  '#AEAEB2',
+        press:  'rgba(0,0,0,0.05)',
+        skel:   'rgba(60,60,67,0.08)',
+        shadow: '0 1px 0 rgba(0,0,0,0.04), 0 2px 12px rgba(0,0,0,0.04)',
+        green:  '#34C759', red: '#FF3B30', amber: '#FF9500',
+        blue:   '#007AFF', purple: '#AF52DE', pink: '#FF2D55', grey: '#8E8E93',
+      };
+}
+type Palette = ReturnType<typeof getP>;
 
 // ─────────────────────────────────────────────
 // MAIN CONTENT
@@ -43,6 +80,8 @@ const Skel: React.FC<{ w?: number | string; h?: number; r?: number }> = ({ w = '
 function HistoryPageContent() {
   const router = useRouter();
   const { t, language } = useLanguage();
+  const { isDarkMode } = useDarkMode();
+  const P = useMemo(() => getP(isDarkMode), [isDarkMode]);
   const [isLoading, setIsLoading]       = useState(true);
   const [logs, setLogs]                 = useState<CombinedLog[]>([]);
   const [filteredLogs, setFilteredLogs] = useState<CombinedLog[]>([]);
@@ -239,29 +278,33 @@ function HistoryPageContent() {
   // ─────────────────────────────────────────────
   // SUB-COMPONENTS
   // ─────────────────────────────────────────────
+  const Skel: React.FC<{ w?: number | string; h?: number; r?: number }> = ({ w = '100%', h = 14, r = 6 }) => (
+    <div style={{ width: w, height: h, borderRadius: r, background: P.skel, animation: 'skel-pulse 1.6s ease-in-out infinite' }} />
+  );
+
   const TYPE_META: Record<string, { label: string; color: string; bg: string }> = {
-    schedule:  { label: t('history.signal'),    color: '#34c759', bg: 'rgba(52,199,89,0.10)'  },
-    fastrade:  { label: t('history.fastTrade'), color: '#007aff', bg: 'rgba(0,122,255,0.10)'  },
-    ctc:       { label: t('history.ctc'),       color: '#af52de', bg: 'rgba(175,82,222,0.10)' },
-    indicator: { label: t('history.indicator'), color: '#ff9500', bg: 'rgba(255,149,0,0.10)'  },
-    momentum:  { label: t('history.momentum'),  color: '#ff2d55', bg: 'rgba(255,45,85,0.10)'  },
+    schedule:  { label: t('history.signal'),    color: P.green,  bg: `${P.green}1A`  },
+    fastrade:  { label: t('history.fastTrade'), color: P.blue,   bg: `${P.blue}1A`   },
+    ctc:       { label: t('history.ctc'),       color: P.purple, bg: `${P.purple}1A` },
+    indicator: { label: t('history.indicator'), color: P.amber,  bg: `${P.amber}1A`  },
+    momentum:  { label: t('history.momentum'),  color: P.pink,   bg: `${P.pink}1A`   },
   };
 
   const RESULT_META = {
-    WIN:  { label: t('history.profit'), color: '#34c759', bg: 'rgba(52,199,89,0.10)',   icon: <CheckCircle  size={11} /> },
-    LOSE: { label: t('history.loss'),   color: '#ff3b30', bg: 'rgba(255,59,48,0.10)',   icon: <XCircle      size={11} /> },
-    LOSS: { label: t('history.loss'),   color: '#ff3b30', bg: 'rgba(255,59,48,0.10)',   icon: <XCircle      size={11} /> },
-    DRAW: { label: t('history.draw'),   color: '#ff9500', bg: 'rgba(255,149,0,0.10)',   icon: <MinusCircle  size={11} /> },
+    WIN:  { label: t('history.profit'), color: P.green, bg: `${P.green}1A`, icon: <CheckCircle  size={11} /> },
+    LOSE: { label: t('history.loss'),   color: P.red,   bg: `${P.red}1A`,   icon: <XCircle      size={11} /> },
+    LOSS: { label: t('history.loss'),   color: P.red,   bg: `${P.red}1A`,   icon: <XCircle      size={11} /> },
+    DRAW: { label: t('history.draw'),   color: P.amber, bg: `${P.amber}1A`, icon: <MinusCircle  size={11} /> },
   };
 
   const Chip: React.FC<{ label: string; active: boolean; color?: string; onClick: () => void }> = ({
-    label, active, color = '#007aff', onClick,
+    label, active, color = P.blue, onClick,
   }) => (
     <button onClick={onClick} style={{
       padding: '6px 14px', borderRadius: 99, fontSize: 12, fontWeight: active ? 600 : 400,
-      background: active ? `${color}12` : 'transparent',
-      border: `1px solid ${active ? color : 'rgba(60,60,67,0.14)'}`,
-      color: active ? color : '#6e6e73',
+      background: active ? `${color}17` : 'transparent',
+      border: `1px solid ${active ? color : P.bdr}`,
+      color: active ? color : P.muted,
       cursor: 'pointer', transition: 'all 0.18s', whiteSpace: 'nowrap',
       WebkitTapHighlightColor: 'transparent',
       flexShrink: 0,
@@ -275,17 +318,18 @@ function HistoryPageContent() {
     color: string; icon: React.ReactNode;
   }> = ({ label, value, sub, color, icon }) => (
     <div style={{
-      background: '#fff', borderRadius: 14, padding: '14px 16px',
-      boxShadow: '0 1px 0 rgba(0,0,0,0.04), 0 2px 12px rgba(0,0,0,0.04)',
+      background: P.card, borderRadius: 14, padding: '14px 16px',
+      border: `1px solid ${P.hair}`,
+      boxShadow: P.shadow,
       display: 'flex', flexDirection: 'column', gap: 6,
       minWidth: 0,
     }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', minWidth: 0 }}>
-        <span style={{ fontSize: 11, fontWeight: 500, color: '#6e6e73', textTransform: 'uppercase', letterSpacing: '0.05em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{label}</span>
-        <div style={{ width: 28, height: 28, borderRadius: 8, background: `${color}14`, display: 'flex', alignItems: 'center', justifyContent: 'center', color, flexShrink: 0 }}>{icon}</div>
+        <span style={{ fontSize: 11, fontWeight: 500, color: P.muted, textTransform: 'uppercase', letterSpacing: '0.05em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{label}</span>
+        <div style={{ width: 28, height: 28, borderRadius: 8, background: `${color}17`, display: 'flex', alignItems: 'center', justifyContent: 'center', color, flexShrink: 0 }}>{icon}</div>
       </div>
-      <p style={{ fontSize: 22, fontWeight: 700, color: '#1c1c1e', letterSpacing: -0.5, lineHeight: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{value}</p>
-      {sub && <p style={{ fontSize: 11, color: '#aeaeb2', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{sub}</p>}
+      <p style={{ fontSize: 22, fontWeight: 700, color: P.text, letterSpacing: -0.5, lineHeight: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{value}</p>
+      {sub && <p style={{ fontSize: 11, color: P.faint, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{sub}</p>}
     </div>
   );
 
@@ -297,15 +341,15 @@ function HistoryPageContent() {
     const pending   = !log.result;
 
     const accentGrad = res
-      ? res.color === '#34c759'
-        ? 'linear-gradient(180deg,#34c759,#2aad4e)'
-        : res.color === '#ff3b30'
-          ? 'linear-gradient(180deg,#ff3b30,#d93025)'
-          : 'linear-gradient(180deg,#ff9500,#e08500)'
-      : 'rgba(60,60,67,0.12)';
+      ? res.color === P.green
+        ? `linear-gradient(180deg,${P.green},${P.green}CC)`
+        : res.color === P.red
+          ? `linear-gradient(180deg,${P.red},${P.red}CC)`
+          : `linear-gradient(180deg,${P.amber},${P.amber}CC)`
+      : P.bdr;
 
     return (
-      <div style={{ display: 'flex', alignItems: 'stretch', borderBottom: last ? 'none' : '1px solid rgba(60,60,67,0.07)', position: 'relative' }}>
+      <div style={{ display: 'flex', alignItems: 'stretch', borderBottom: last ? 'none' : `1px solid ${P.hair}`, position: 'relative' }}>
         {/* Left accent stripe */}
         <div style={{ width: 3, flexShrink: 0, borderRadius: '0 2px 2px 0', background: accentGrad, margin: '8px 0' }} />
 
@@ -314,10 +358,10 @@ function HistoryPageContent() {
           {/* Icon bubble */}
           <div style={{
             width: 38, height: 38, borderRadius: 11, flexShrink: 0,
-            background: isCall ? 'rgba(52,199,89,0.10)' : 'rgba(255,59,48,0.10)',
-            border: `1px solid ${isCall ? 'rgba(52,199,89,0.18)' : 'rgba(255,59,48,0.18)'}`,
+            background: isCall ? `${P.green}17` : `${P.red}17`,
+            border: `1px solid ${isCall ? `${P.green}2E` : `${P.red}2E`}`,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: isCall ? '#34c759' : '#ff3b30',
+            color: isCall ? P.green : P.red,
           }}>
             {isCall ? <TrendingUp size={17} strokeWidth={2.2} /> : <TrendingDown size={17} strokeWidth={2.2} />}
           </div>
@@ -329,31 +373,31 @@ function HistoryPageContent() {
               <span style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: type.color, background: type.bg, padding: '2px 7px', borderRadius: 5, border: `1px solid ${type.color}22`, flexShrink: 0 }}>
                 {type.label}
               </span>
-              <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.03em', color: isCall ? '#34c759' : '#ff3b30', flexShrink: 0 }}>
+              <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.03em', color: isCall ? P.green : P.red, flexShrink: 0 }}>
                 {isCall ? `↑ ${t('history.buy')}` : `↓ ${t('history.sell')}`}
               </span>
               {log.martingaleStep !== undefined && log.martingaleStep > 0 && (
-                <span style={{ fontSize: 9.5, fontWeight: 700, color: '#ff9500', background: 'rgba(255,149,0,0.10)', border: '1px solid rgba(255,149,0,0.20)', padding: '1px 6px', borderRadius: 4, flexShrink: 0 }}>
+                <span style={{ fontSize: 9.5, fontWeight: 700, color: P.amber, background: `${P.amber}1A`, border: `1px solid ${P.amber}33`, padding: '1px 6px', borderRadius: 4, flexShrink: 0 }}>
                   MG ×{log.martingaleStep}
                 </span>
               )}
               {pending && (
-                <span style={{ fontSize: 9.5, fontWeight: 600, color: '#8e8e93', background: 'rgba(142,142,147,0.10)', border: '1px solid rgba(142,142,147,0.20)', padding: '1px 6px', borderRadius: 4, flexShrink: 0 }}>
+                <span style={{ fontSize: 9.5, fontWeight: 600, color: P.grey, background: `${P.grey}1A`, border: `1px solid ${P.grey}33`, padding: '1px 6px', borderRadius: 4, flexShrink: 0 }}>
                   {t('history.pending')}
                 </span>
               )}
             </div>
             {/* Row 2: time + date + note */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap' }}>
-              <span style={{ fontSize: 11.5, fontWeight: 600, color: '#3c3c43', fontFamily: "'SF Mono','Fira Mono',monospace", letterSpacing: '0.01em', background: 'rgba(60,60,67,0.06)', borderRadius: 5, padding: '1px 6px', flexShrink: 0 }}>
+              <span style={{ fontSize: 11.5, fontWeight: 600, color: P.sub, fontFamily: "'SF Mono','Fira Mono',monospace", letterSpacing: '0.01em', background: P.press, borderRadius: 5, padding: '1px 6px', flexShrink: 0 }}>
                 {log.time}
               </span>
-              <span style={{ fontSize: 10, color: '#c7c7cc', flexShrink: 0 }}>•</span>
-              <span style={{ fontSize: 11, color: '#8e8e93', flexShrink: 0 }}>{fmtDate(log.executedAt)}</span>
+              <span style={{ fontSize: 10, color: P.faint, flexShrink: 0 }}>•</span>
+              <span style={{ fontSize: 11, color: P.muted, flexShrink: 0 }}>{fmtDate(log.executedAt)}</span>
               {log.note && (
                 <>
-                  <span style={{ fontSize: 10, color: '#c7c7cc', flexShrink: 0 }}>•</span>
-                  <span style={{ fontSize: 10.5, color: '#8e8e93', fontStyle: 'italic', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 'min(90px, 25vw)' }}>
+                  <span style={{ fontSize: 10, color: P.faint, flexShrink: 0 }}>•</span>
+                  <span style={{ fontSize: 10.5, color: P.muted, fontStyle: 'italic', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 'min(90px, 25vw)' }}>
                     {log.note}
                   </span>
                 </>
@@ -363,7 +407,7 @@ function HistoryPageContent() {
 
           {/* Right: amount + result + profit */}
           <div style={{ textAlign: 'right', flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, minWidth: 0 }}>
-            <span style={{ fontSize: 13.5, fontWeight: 700, color: '#1c1c1e', letterSpacing: -0.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 'min(110px, 28vw)' }}>
+            <span style={{ fontSize: 13.5, fontWeight: 700, color: P.text, letterSpacing: -0.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 'min(110px, 28vw)' }}>
               {currencyUnit} {fmt(log.amount)}
             </span>
             {res ? (
@@ -371,10 +415,10 @@ function HistoryPageContent() {
                 {res.icon} {res.label}
               </span>
             ) : (
-              <span style={{ fontSize: 10, color: '#aeaeb2', background: 'rgba(60,60,67,0.06)', padding: '3px 8px', borderRadius: 99, border: '1px solid rgba(60,60,67,0.10)', flexShrink: 0, whiteSpace: 'nowrap' }}>—</span>
+              <span style={{ fontSize: 10, color: P.faint, background: P.press, padding: '3px 8px', borderRadius: 99, border: `1px solid ${P.hair}`, flexShrink: 0, whiteSpace: 'nowrap' }}>—</span>
             )}
             {log.profit != null && log.result && (
-              <span style={{ fontSize: 11.5, fontWeight: 700, color: profitPos ? '#34c759' : '#ff3b30', letterSpacing: -0.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 'min(100px, 28vw)' }}>
+              <span style={{ fontSize: 11.5, fontWeight: 700, color: profitPos ? P.green : P.red, letterSpacing: -0.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 'min(100px, 28vw)' }}>
                 {profitPos ? '+' : '−'}{currencyUnit} {fmt(log.profit)}
               </span>
             )}
@@ -391,9 +435,10 @@ function HistoryPageContent() {
     //    yang handle scroll. Root cukup minHeight:'100%' agar background penuh.
     <div style={{
       minHeight: '100%',
-      background: '#f2f2f7',
+      background: P.bg,
       fontFamily: "-apple-system,'SF Pro Display',BlinkMacSystemFont,'Helvetica Neue',sans-serif",
       WebkitFontSmoothing: 'antialiased',
+      transition: 'background 0.3s ease',
     }}>
       <style>{`
         @keyframes skel-pulse { 0%,100%{opacity:.5} 50%{opacity:1} }
@@ -415,7 +460,7 @@ function HistoryPageContent() {
 
         /* ✅ FIX: Only apply hover on devices that support it (prevents stuck hover on mobile) */
         @media (hover: hover) {
-          .hist-sidebar button:hover { background: rgba(0,0,0,0.02) !important; }
+          .hist-sidebar button:hover { background: ${P.press} !important; }
         }
 
         @media (min-width: 768px) {
@@ -432,23 +477,23 @@ function HistoryPageContent() {
         position: 'relative',
         width: '100%',
         zIndex: 50,
-        background: 'rgba(242,242,247,0.92)',
+        background: P.header,
         backdropFilter: 'saturate(180%) blur(20px)',
         WebkitBackdropFilter: 'saturate(180%) blur(20px)',
-        borderBottom: '0.5px solid rgba(60,60,67,0.16)',
+        borderBottom: `0.5px solid ${P.bdr}`,
       }}>
         <div style={{ maxWidth: 1120, margin: '0 auto', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
-          <h1 style={{ flex: 1, fontSize: 17, fontWeight: 600, color: '#1c1c1e', letterSpacing: -0.4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t('history.title')}</h1>
+          <h1 style={{ flex: 1, fontSize: 17, fontWeight: 600, color: P.text, letterSpacing: -0.4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t('history.title')}</h1>
 
           <button onClick={() => loadHistory(true)} disabled={refreshing || isLoading} className="hist-tap"
-            style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(0,0,0,0.05)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#007aff', cursor: 'pointer', opacity: (refreshing || isLoading) ? 0.4 : 1, flexShrink: 0 }}>
+            style={{ width: 32, height: 32, borderRadius: 8, background: P.press, border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', color: P.blue, cursor: 'pointer', opacity: (refreshing || isLoading) ? 0.4 : 1, flexShrink: 0 }}>
             <RotateCcw size={15} style={{ animation: (refreshing || isLoading) ? 'spin 0.8s linear infinite' : 'none' }} />
           </button>
           <button onClick={() => setShowFilters(v => !v)} className="hist-tap"
-            style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 13px', borderRadius: 99, background: showFilters ? 'rgba(0,122,255,0.10)' : 'rgba(0,0,0,0.05)', border: `1px solid ${showFilters ? 'rgba(0,122,255,0.22)' : 'rgba(60,60,67,0.12)'}`, color: showFilters ? '#007aff' : '#3c3c43', fontSize: 13, fontWeight: 500, cursor: 'pointer', flexShrink: 0, WebkitTapHighlightColor: 'transparent' }}>
+            style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 13px', borderRadius: 99, background: showFilters ? `${P.blue}1A` : P.press, border: `1px solid ${showFilters ? `${P.blue}38` : P.bdr}`, color: showFilters ? P.blue : P.sub, fontSize: 13, fontWeight: 500, cursor: 'pointer', flexShrink: 0, WebkitTapHighlightColor: 'transparent' }}>
             <Filter size={13} />
             <span style={{ whiteSpace: 'nowrap' }}>{t('common.filter')}</span>
-            {hasActiveFilter && <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#007aff', marginLeft: 1, flexShrink: 0 }} />}
+            {hasActiveFilter && <span style={{ width: 6, height: 6, borderRadius: '50%', background: P.blue, marginLeft: 1, flexShrink: 0 }} />}
           </button>
         </div>
       </div>
@@ -467,61 +512,61 @@ function HistoryPageContent() {
 
           {/* ══ SIDEBAR (desktop) ══ */}
           <div className="hist-sidebar" style={{ display: 'none', flexDirection: 'column', gap: 16 }}>
-            <div style={{ background: '#fff', borderRadius: 14, overflow: 'hidden', boxShadow: '0 1px 0 rgba(0,0,0,0.04), 0 2px 12px rgba(0,0,0,0.04)' }}>
-              <div style={{ padding: '14px 16px 10px', borderBottom: '1px solid rgba(60,60,67,0.07)' }}>
-                <p style={{ fontSize: 11, fontWeight: 500, color: '#6e6e73', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>{t('history.summary')}</p>
+            <div style={{ background: P.card, borderRadius: 14, overflow: 'hidden', border: `1px solid ${P.hair}`, boxShadow: P.shadow }}>
+              <div style={{ padding: '14px 16px 10px', borderBottom: `1px solid ${P.hair}` }}>
+                <p style={{ fontSize: 11, fontWeight: 500, color: P.muted, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>{t('history.summary')}</p>
                 {isLoading ? <Skel w={100} h={28} r={6} /> : (
-                  <p style={{ fontSize: 26, fontWeight: 700, color: '#1c1c1e', letterSpacing: -0.6, lineHeight: 1 }}>{stats.totalTrades} <span style={{ fontSize: 13, fontWeight: 400, color: '#6e6e73' }}>{t('history.trades')}</span></p>
+                  <p style={{ fontSize: 26, fontWeight: 700, color: P.text, letterSpacing: -0.6, lineHeight: 1 }}>{stats.totalTrades} <span style={{ fontSize: 13, fontWeight: 400, color: P.muted }}>{t('history.trades')}</span></p>
                 )}
               </div>
               {[
-                { label: t('history.profit'), value: stats.wins,   color: '#34c759' },
-                { label: t('history.loss'),   value: stats.losses, color: '#ff3b30' },
-                { label: t('history.draw'),   value: stats.draws,  color: '#ff9500' },
+                { label: t('history.profit'), value: stats.wins,   color: P.green },
+                { label: t('history.loss'),   value: stats.losses, color: P.red   },
+                { label: t('history.draw'),   value: stats.draws,  color: P.amber },
               ].map(({ label, value, color }, i, arr) => (
-                <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 16px', borderBottom: i < arr.length - 1 ? '1px solid rgba(60,60,67,0.07)' : 'none' }}>
-                  <span style={{ fontSize: 14, color: '#3c3c43' }}>{label}</span>
+                <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 16px', borderBottom: i < arr.length - 1 ? `1px solid ${P.hair}` : 'none' }}>
+                  <span style={{ fontSize: 14, color: P.sub }}>{label}</span>
                   {isLoading ? <Skel w={30} h={13} r={4} /> : <span style={{ fontSize: 14, fontWeight: 600, color }}>{value}</span>}
                 </div>
               ))}
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-              <div style={{ background: '#fff', borderRadius: 14, padding: '12px', boxShadow: '0 1px 0 rgba(0,0,0,0.04), 0 2px 12px rgba(0,0,0,0.04)' }}>
-                <p style={{ fontSize: 10, fontWeight: 500, color: '#6e6e73', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 6 }}>{t('history.winRate')}</p>
-                {isLoading ? <Skel w="70%" h={22} r={5} /> : <p style={{ fontSize: 20, fontWeight: 700, color: stats.winRate >= 50 ? '#34c759' : '#ff3b30', letterSpacing: -0.4 }}>{stats.winRate}%</p>}
+              <div style={{ background: P.card, borderRadius: 14, padding: '12px', border: `1px solid ${P.hair}`, boxShadow: P.shadow }}>
+                <p style={{ fontSize: 10, fontWeight: 500, color: P.muted, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 6 }}>{t('history.winRate')}</p>
+                {isLoading ? <Skel w="70%" h={22} r={5} /> : <p style={{ fontSize: 20, fontWeight: 700, color: stats.winRate >= 50 ? P.green : P.red, letterSpacing: -0.4 }}>{stats.winRate}%</p>}
               </div>
-              <div style={{ background: '#fff', borderRadius: 14, padding: '12px', boxShadow: '0 1px 0 rgba(0,0,0,0.04), 0 2px 12px rgba(0,0,0,0.04)' }}>
-                <p style={{ fontSize: 10, fontWeight: 500, color: '#6e6e73', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 6 }}>{t('history.profitLoss')}</p>
-                {isLoading ? <Skel w="80%" h={22} r={5} /> : <p style={{ fontSize: 14, fontWeight: 700, color: pnlPos ? '#34c759' : '#ff3b30', letterSpacing: -0.3, lineHeight: 1.2 }}>{pnlPos ? '+' : '-'}{currencyUnit} {fmt(stats.totalPnL)}</p>}
+              <div style={{ background: P.card, borderRadius: 14, padding: '12px', border: `1px solid ${P.hair}`, boxShadow: P.shadow }}>
+                <p style={{ fontSize: 10, fontWeight: 500, color: P.muted, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 6 }}>{t('history.profitLoss')}</p>
+                {isLoading ? <Skel w="80%" h={22} r={5} /> : <p style={{ fontSize: 14, fontWeight: 700, color: pnlPos ? P.green : P.red, letterSpacing: -0.3, lineHeight: 1.2 }}>{pnlPos ? '+' : '-'}{currencyUnit} {fmt(stats.totalPnL)}</p>}
               </div>
             </div>
 
-            <div style={{ background: '#fff', borderRadius: 14, overflow: 'hidden', boxShadow: '0 1px 0 rgba(0,0,0,0.04), 0 2px 12px rgba(0,0,0,0.04)' }}>
-              <p style={{ fontSize: 11, fontWeight: 500, color: '#6e6e73', textTransform: 'uppercase', letterSpacing: '0.05em', padding: '12px 16px 8px' }}>{t('history.type')}</p>
+            <div style={{ background: P.card, borderRadius: 14, overflow: 'hidden', border: `1px solid ${P.hair}`, boxShadow: P.shadow }}>
+              <p style={{ fontSize: 11, fontWeight: 500, color: P.muted, textTransform: 'uppercase', letterSpacing: '0.05em', padding: '12px 16px 8px' }}>{t('history.type')}</p>
               {(['all', 'schedule', 'fastrade', 'ctc', 'indicator', 'momentum'] as LogType[]).map((val, i, arr) => {
                 const active = typeFilter === val;
                 const colors: Record<LogType, string> = {
-                  all: '#007aff', schedule: '#34c759', fastrade: '#007aff',
-                  ctc: '#af52de', indicator: '#ff9500', momentum: '#ff2d55'
+                  all: P.blue, schedule: P.green, fastrade: P.blue,
+                  ctc: P.purple, indicator: P.amber, momentum: P.pink
                 };
                 return (
-                  <button key={val} onClick={() => setTypeFilter(val)} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 16px', background: active ? `${colors[val]}08` : 'transparent', border: 'none', borderBottom: i < arr.length - 1 ? '1px solid rgba(60,60,67,0.07)' : 'none', borderLeft: active ? `2px solid ${colors[val]}` : '2px solid transparent', cursor: 'pointer', textAlign: 'left', WebkitTapHighlightColor: 'transparent' }}>
-                    <span style={{ fontSize: 14, color: active ? colors[val] : '#1c1c1e', fontWeight: active ? 600 : 400 }}>{getTypeLabel(val)}</span>
+                  <button key={val} onClick={() => setTypeFilter(val)} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 16px', background: active ? `${colors[val]}0D` : 'transparent', border: 'none', borderBottom: i < arr.length - 1 ? `1px solid ${P.hair}` : 'none', borderLeft: active ? `2px solid ${colors[val]}` : '2px solid transparent', cursor: 'pointer', textAlign: 'left', WebkitTapHighlightColor: 'transparent' }}>
+                    <span style={{ fontSize: 14, color: active ? colors[val] : P.text, fontWeight: active ? 600 : 400 }}>{getTypeLabel(val)}</span>
                     {active && <ChevronRight size={13} color={colors[val]} />}
                   </button>
                 );
               })}
             </div>
 
-            <div style={{ background: '#fff', borderRadius: 14, overflow: 'hidden', boxShadow: '0 1px 0 rgba(0,0,0,0.04), 0 2px 12px rgba(0,0,0,0.04)' }}>
-              <p style={{ fontSize: 11, fontWeight: 500, color: '#6e6e73', textTransform: 'uppercase', letterSpacing: '0.05em', padding: '12px 16px 8px' }}>{t('history.period')}</p>
+            <div style={{ background: P.card, borderRadius: 14, overflow: 'hidden', border: `1px solid ${P.hair}`, boxShadow: P.shadow }}>
+              <p style={{ fontSize: 11, fontWeight: 500, color: P.muted, textTransform: 'uppercase', letterSpacing: '0.05em', padding: '12px 16px 8px' }}>{t('history.period')}</p>
               {(['all', 'today', 'week', 'month'] as DateFilter[]).map((val, i, arr) => {
                 const active = dateFilter === val;
                 return (
-                  <button key={val} onClick={() => setDateFilter(val)} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 16px', background: active ? 'rgba(0,122,255,0.06)' : 'transparent', border: 'none', borderBottom: i < arr.length - 1 ? '1px solid rgba(60,60,67,0.07)' : 'none', borderLeft: active ? '2px solid #007aff' : '2px solid transparent', cursor: 'pointer', textAlign: 'left', WebkitTapHighlightColor: 'transparent' }}>
-                    <span style={{ fontSize: 14, color: active ? '#007aff' : '#1c1c1e', fontWeight: active ? 600 : 400 }}>{getPeriodLabel(val)}</span>
-                    {active && <ChevronRight size={13} color="#007aff" />}
+                  <button key={val} onClick={() => setDateFilter(val)} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 16px', background: active ? `${P.blue}0D` : 'transparent', border: 'none', borderBottom: i < arr.length - 1 ? `1px solid ${P.hair}` : 'none', borderLeft: active ? `2px solid ${P.blue}` : '2px solid transparent', cursor: 'pointer', textAlign: 'left', WebkitTapHighlightColor: 'transparent' }}>
+                    <span style={{ fontSize: 14, color: active ? P.blue : P.text, fontWeight: active ? 600 : 400 }}>{getPeriodLabel(val)}</span>
+                    {active && <ChevronRight size={13} color={P.blue} />}
                   </button>
                 );
               })}
@@ -537,41 +582,41 @@ function HistoryPageContent() {
                   label={t('history.totalTrades')}
                   value={isLoading ? '—' : stats.totalTrades}
                   sub={isLoading ? '' : `${stats.wins}P · ${stats.losses}L${stats.draws > 0 ? ` · ${stats.draws}${t('history.draw')[0]}` : ''}`}
-                  color="#007aff"
+                  color={P.blue}
                   icon={<BarChart3 size={14} />}
                 />
                 <StatTile
                   label={t('history.winRate')}
                   value={isLoading ? '—' : `${stats.winRate}%`}
                   sub={isLoading ? '' : `${pnlPos ? '+' : '-'}${currencyUnit} ${fmt(stats.totalPnL)}`}
-                  color={stats.winRate >= 50 ? '#34c759' : '#ff3b30'}
+                  color={stats.winRate >= 50 ? P.green : P.red}
                   icon={stats.winRate >= 50 ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
                 />
               </div>
             </div>
 
             {showFilters && (
-              <div style={{ background: '#fff', borderRadius: 14, boxShadow: '0 1px 0 rgba(0,0,0,0.04), 0 2px 12px rgba(0,0,0,0.04)', padding: '14px 16px', animation: 'fade-up 0.22s ease both' }}>
+              <div style={{ background: P.card, borderRadius: 14, border: `1px solid ${P.hair}`, boxShadow: P.shadow, padding: '14px 16px', animation: 'fade-up 0.22s ease both' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, minWidth: 0 }}>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: '#1c1c1e', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t('common.filter')}</span>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: P.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t('common.filter')}</span>
                   {hasActiveFilter && (
                     <button onClick={() => { setTypeFilter('all'); setResultFilter('all'); setDateFilter('all'); }}
-                      style={{ fontSize: 13, color: '#ff3b30', background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap', flexShrink: 0, WebkitTapHighlightColor: 'transparent' }}>{t('history.resetFilters')}</button>
+                      style={{ fontSize: 13, color: P.red, background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap', flexShrink: 0, WebkitTapHighlightColor: 'transparent' }}>{t('history.resetFilters')}</button>
                   )}
                 </div>
-                <p style={{ fontSize: 11, color: '#6e6e73', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('history.filterByType')}</p>
+                <p style={{ fontSize: 11, color: P.muted, marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('history.filterByType')}</p>
                 <div className="hist-chip-scroll" style={{ marginBottom: 14 }}>
                   {(['all','schedule','fastrade','ctc','indicator','momentum'] as LogType[]).map((v) => (
-                    <Chip key={v} label={getTypeLabel(v)} active={typeFilter===v} color={TYPE_META[v]?.color || '#007aff'} onClick={() => setTypeFilter(v)} />
+                    <Chip key={v} label={getTypeLabel(v)} active={typeFilter===v} color={TYPE_META[v]?.color || P.blue} onClick={() => setTypeFilter(v)} />
                   ))}
                 </div>
-                <p style={{ fontSize: 11, color: '#6e6e73', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('history.filterByResult')}</p>
+                <p style={{ fontSize: 11, color: P.muted, marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('history.filterByResult')}</p>
                 <div className="hist-chip-scroll" style={{ marginBottom: 14 }}>
                   {(['all','win','loss','draw'] as ResultFilter[]).map((v) => (
-                    <Chip key={v} label={getResultLabel(v)} active={resultFilter===v} color={v==='win'?'#34c759':v==='loss'?'#ff3b30':v==='draw'?'#ff9500':'#007aff'} onClick={() => setResultFilter(v)} />
+                    <Chip key={v} label={getResultLabel(v)} active={resultFilter===v} color={v==='win'?P.green:v==='loss'?P.red:v==='draw'?P.amber:P.blue} onClick={() => setResultFilter(v)} />
                   ))}
                 </div>
-                <p style={{ fontSize: 11, color: '#6e6e73', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('history.filterByPeriod')}</p>
+                <p style={{ fontSize: 11, color: P.muted, marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('history.filterByPeriod')}</p>
                 <div className="hist-chip-scroll">
                   {(['all','today','week','month'] as DateFilter[]).map((v) => (
                     <Chip key={v} label={getPeriodLabel(v)} active={dateFilter===v} onClick={() => setDateFilter(v)} />
@@ -582,20 +627,22 @@ function HistoryPageContent() {
 
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, padding: '0 4px' }}>
-                <p style={{ fontSize: 11.5, fontWeight: 500, color: '#6e6e73', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('history.trades')}</p>
-                <p style={{ fontSize: 11.5, color: '#aeaeb2', whiteSpace: 'nowrap', flexShrink: 0 }}>{filteredLogs.length} {t('history.records')}</p>
+                <p style={{ fontSize: 11.5, fontWeight: 500, color: P.muted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('history.trades')}</p>
+                <p style={{ fontSize: 11.5, color: P.faint, whiteSpace: 'nowrap', flexShrink: 0 }}>{filteredLogs.length} {t('history.records')}</p>
               </div>
-              <div style={{ background: '#fff', borderRadius: 14, overflow: 'hidden', boxShadow: '0 1px 0 rgba(0,0,0,0.04), 0 2px 12px rgba(0,0,0,0.04)' }}>
+              <div style={{ background: P.card, borderRadius: 14, overflow: 'hidden', border: `1px solid ${P.hair}`, boxShadow: P.shadow }}>
                 {isLoading ? (
                   <div style={{ padding: '40px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
-                    <div style={{ width: 28, height: 28, borderRadius: '50%', border: '2px solid rgba(0,122,255,0.15)', borderTopColor: '#007aff', animation: 'spin 0.8s linear infinite' }} />
-                    <p style={{ fontSize: 13, color: '#6e6e73' }}>{t('history.loading')}</p>
+                    <div style={{ width: 28, height: 28, borderRadius: '50%', border: `2px solid ${P.blue}26`, borderTopColor: P.blue, animation: 'spin 0.8s linear infinite' }} />
+                    <p style={{ fontSize: 13, color: P.muted }}>{t('history.loading')}</p>
                   </div>
                 ) : filteredLogs.length === 0 ? (
                   <div style={{ padding: '60px 20px', textAlign: 'center' }}>
-                    <History size={36} style={{ color: '#c7c7cc', margin: '0 auto 12px', display: 'block' }} />
-                    <p style={{ fontSize: 15, fontWeight: 500, color: '#3c3c43', marginBottom: 4 }}>{t('history.noTransactions')}</p>
-                    <p style={{ fontSize: 13, color: '#aeaeb2' }}>{logs.length > 0 ? t('history.noTransactionsFilter') : t('history.startTrading')}</p>
+                    <div style={{ width: 64, height: 64, borderRadius: 20, background: P.press, border: `1px solid ${P.hair}`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}>
+                      <History size={28} style={{ color: P.faint, display: 'block' }} />
+                    </div>
+                    <p style={{ fontSize: 15, fontWeight: 500, color: P.sub, marginBottom: 4 }}>{t('history.noTransactions')}</p>
+                    <p style={{ fontSize: 13, color: P.faint }}>{logs.length > 0 ? t('history.noTransactionsFilter') : t('history.startTrading')}</p>
                   </div>
                 ) : (
                   <div>

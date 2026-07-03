@@ -16,33 +16,48 @@ export function BottomNav() {
   const pathname = usePathname();
   const { isDarkMode } = useDarkMode();
   const [mounted, setMounted] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(false);
 
   useEffect(() => { setMounted(true); }, []);
+
+  // Deteksi lebar desktop — profile di desktop (≥768px) tetap bertema gelap
+  // (pf-root tidak punya override light di desktop), jadi nav ikut gelap di sana.
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 768px)');
+    const sync = () => setIsDesktop(mq.matches);
+    sync();
+    mq.addEventListener('change', sync);
+    return () => mq.removeEventListener('change', sync);
+  }, []);
+
   if (!mounted) return null;
 
   // Sembunyikan nav di halaman webview agar konten full-screen
   if (pathname === '/webview') return null;
 
-  const isDashboard = pathname === '/dashboard' || pathname.startsWith('/dashboard/');
-  const isProfile   = pathname === '/profile'   || pathname.startsWith('/profile/');
-  // Profile page hardcodes dark theme, so we always use dark nav there.
-  // Dashboard respects the user's dark mode preference as before.
-  const useDarkNav  = isProfile || (isDashboard && isDarkMode);
+  const isProfile = pathname === '/profile' || pathname.startsWith('/profile/');
+  // Nav mengikuti tema aplikasi di SEMUA halaman (dashboard, history, profile),
+  // sehingga tidak ada lagi nav terang di atas halaman gelap atau sebaliknya.
+  // Pengecualian: profile versi desktop selalu gelap → nav ikut gelap.
+  const useDarkNav = isDarkMode || (isProfile && isDesktop);
 
+  // Accent emerald + inactive grey, sinkron dgn palet dashboard (getColors).
   const theme = useDarkNav
     ? {
-        navBg:      'rgb(28,28,30)',
-        navBorder:  '0.5px solid rgba(255,255,255,0.10)',
-        itemColor:  'rgba(235,235,245,0.40)',
-        activeColor:'#0A84FF',
-        labelColor: (active: boolean) => active ? '#0A84FF' : 'rgba(235,235,245,0.40)',
+        navBg:      'rgba(15,16,18,0.92)',
+        navBorder:  '0.5px solid rgba(255,255,255,0.08)',
+        itemColor:  'rgba(161,168,179,0.55)',
+        activeColor:'#2DD4A7',
+        activePill: 'rgba(45,212,167,0.14)',
+        labelColor: (active: boolean) => active ? '#2DD4A7' : 'rgba(161,168,179,0.55)',
       }
     : {
-        navBg:      'rgb(249,249,251)',
-        navBorder:  '0.5px solid rgba(60,60,67,0.14)',
-        itemColor:  'rgba(60,60,67,0.45)',
-        activeColor:'#007AFF',
-        labelColor: (active: boolean) => active ? '#007AFF' : 'rgba(60,60,67,0.45)',
+        navBg:      'rgba(255,255,255,0.92)',
+        navBorder:  '0.5px solid #E6E8EB',
+        itemColor:  '#94A3B8',
+        activeColor:'#059669',
+        activePill: 'rgba(5,150,105,0.10)',
+        labelColor: (active: boolean) => active ? '#059669' : '#94A3B8',
       };
 
   // ── Dispatch loading event — hanya jika berpindah ke halaman berbeda ──────
@@ -62,7 +77,7 @@ export function BottomNav() {
           flex-direction: column;
           align-items: center;
           justify-content: center;
-          gap: 4px;
+          gap: 5px;
           flex: 1;
           padding: 8px 4px 6px;
           text-decoration: none;
@@ -71,21 +86,21 @@ export function BottomNav() {
           position: relative;
         }
         .bnav-item:active { opacity: 0.6; }
+        .bnav-icon-wrap {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          height: 30px;
+          padding: 0 18px;
+          border-radius: 999px;
+          transition: background 0.22s ease, transform 0.22s ease;
+        }
         .bnav-label {
           font-size: 10px;
           font-weight: 600;
-          letter-spacing: 0.01em;
+          letter-spacing: 0.02em;
           line-height: 1;
-        }
-        .bnav-indicator {
-          position: absolute;
-          top: 0;
-          left: 50%;
-          transform: translateX(-50%);
-          width: 32px;
-          height: 2.5px;
-          border-radius: 0 0 3px 3px;
-          transition: opacity 0.2s ease;
+          transition: color 0.2s ease;
         }
       `}</style>
 
@@ -98,11 +113,13 @@ export function BottomNav() {
           right: 0,
           zIndex: 50,
           background: theme.navBg,
+          backdropFilter: 'blur(18px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(18px) saturate(180%)',
           borderTop: theme.navBorder,
           paddingBottom: 'env(safe-area-inset-bottom, 0px)',
           boxShadow: useDarkNav
-            ? '0 -0.5px 0 rgba(255,255,255,0.08)'
-            : '0 -0.5px 0 rgba(60,60,67,0.12)',
+            ? '0 -0.5px 0 rgba(255,255,255,0.06)'
+            : '0 -0.5px 0 rgba(2,6,23,0.06)',
           transition: 'background 0.3s ease',
         }}
       >
@@ -119,11 +136,15 @@ export function BottomNav() {
                 style={{ color: col }}
                 onClick={() => handleNavClick(href)}
               >
-                <div
-                  className="bnav-indicator"
-                  style={{ background: theme.activeColor, opacity: isActive ? 1 : 0 }}
-                />
-                <Icon size={22} strokeWidth={isActive ? 2.2 : 1.7} />
+                <span
+                  className="bnav-icon-wrap"
+                  style={{
+                    background: isActive ? theme.activePill : 'transparent',
+                    transform: isActive ? 'translateY(-1px)' : 'none',
+                  }}
+                >
+                  <Icon size={21} strokeWidth={isActive ? 2.2 : 1.8} />
+                </span>
                 <span className="bnav-label" style={{ color: theme.labelColor(isActive) }}>
                   {label}
                 </span>
