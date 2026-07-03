@@ -35,37 +35,73 @@ interface UserProfileData {
 interface CurrencyOption { iso: string; name?: string; symbol?: string; }
 
 // ─────────────────────────────────────────────
-// STYLES
+// STYLES — Redesign 2026: theme-aware penuh (dark & light, mobile & desktop).
+// Palet selaras dashboard (emerald minimalis-modern, Linear/Vercel-style).
+// Dark = body TANPA data-theme; light = body[data-theme="light"].
 // ─────────────────────────────────────────────
 const PROFILE_STYLES = `
   .pf-root, .pf-root * { box-sizing: border-box; }
   .pf-root {
-    --bg:           #0a0a14;
-    --surface:      rgba(14, 14, 26, 0.92);
-    --surface-2:    rgba(18, 18, 32, 0.75);
-    --border:       rgba(76, 175, 80, 0.18);
-    --border-hi:    rgba(76, 175, 80, 0.35);
-    --text-1:       #ffffff;
-    --text-2:       rgba(255,255,255,0.55);
-    --text-3:       rgba(255,255,255,0.28);
-    --accent:       #4caf50;
-    --accent-dim:   #66bb6a;
-    --hairline:     rgba(255,255,255,0.06);
-    --chip-bg:      rgba(76,175,80,0.09);
-    --error:        #ff453a;
-    --warn:         #ff9f0a;
-    --success:      #30d158;
-    --font:         -apple-system, 'SF Pro Display', BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+    --bg:          #0B0C0E;
+    --surface:     #141518;
+    --surface-2:   #1B1D21;
+    --border:      rgba(255,255,255,0.08);
+    --hairline:    rgba(255,255,255,0.06);
+    --text-1:      #F4F5F7;
+    --text-2:      #A1A8B3;
+    --text-3:      rgba(161,168,179,0.55);
+    --accent:      #2DD4A7;
+    --accent-dim:  rgba(45,212,167,0.13);
+    --accent-bdr:  rgba(45,212,167,0.30);
+    --error:       #FB7185;
+    --error-dim:   rgba(251,113,133,0.12);
+    --warn:        #FBBF24;
+    --warn-dim:    rgba(251,191,36,0.12);
+    --success:     #2DD4A7;
+    --success-dim: rgba(45,212,167,0.12);
+    --modal:       #17181C;
+    --modal-hair:  rgba(255,255,255,0.08);
+    --backdrop:    rgba(0,0,0,0.65);
+    --input-bg:    rgba(255,255,255,0.05);
+    --press:       rgba(255,255,255,0.06);
+    --hero-grad:   linear-gradient(135deg, rgba(45,212,167,0.22) 0%, rgba(45,212,167,0.05) 55%, rgba(96,165,250,0.08) 100%);
+    --card-shadow: inset 0 1px 0 rgba(255,255,255,0.03), 0 8px 24px -16px rgba(0,0,0,0.6);
+    --font:        -apple-system, 'SF Pro Display', BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
   }
 
-  @keyframes pf-skel  { 0%,100%{opacity:.30} 50%{opacity:.65} }
+  body[data-theme="light"] .pf-root {
+    --bg:          #F6F7F9;
+    --surface:     #FFFFFF;
+    --surface-2:   #F1F3F5;
+    --border:      #E6E8EB;
+    --hairline:    rgba(2,6,23,0.06);
+    --text-1:      #0F172A;
+    --text-2:      #475569;
+    --text-3:      #94A3B8;
+    --accent:      #059669;
+    --accent-dim:  rgba(5,150,105,0.09);
+    --accent-bdr:  rgba(5,150,105,0.30);
+    --error:       #E11D48;
+    --error-dim:   rgba(225,29,72,0.08);
+    --warn:        #B45309;
+    --warn-dim:    rgba(180,83,9,0.10);
+    --success:     #059669;
+    --success-dim: rgba(5,150,105,0.10);
+    --modal:       #FFFFFF;
+    --modal-hair:  rgba(2,6,23,0.08);
+    --backdrop:    rgba(15,23,42,0.40);
+    --input-bg:    #F1F3F5;
+    --press:       rgba(2,6,23,0.045);
+    --hero-grad:   linear-gradient(135deg, rgba(5,150,105,0.14) 0%, rgba(5,150,105,0.03) 55%, rgba(37,99,235,0.06) 100%);
+    --card-shadow: 0 1px 0 rgba(2,6,23,0.03), 0 2px 12px rgba(2,6,23,0.04);
+  }
+
+  @keyframes pf-skel  { 0%,100%{opacity:.35} 50%{opacity:.75} }
   @keyframes pf-bd-in { from{opacity:0} to{opacity:1} }
   @keyframes pf-pop   { from{opacity:0;transform:scale(0.93)} to{opacity:1;transform:scale(1)} }
   @keyframes pf-up    { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
   @keyframes pf-spin  { to{transform:rotate(360deg)} }
   @keyframes pf-num   { from{opacity:0;transform:translateY(5px)} to{opacity:1;transform:translateY(0)} }
-  @keyframes pf-drift { 0%{transform:translate(0,0) scale(1)} 50%{transform:translate(3%,4%) scale(1.04)} 100%{transform:translate(-2%,2%) scale(0.97)} }
-  @keyframes pf-pulse { 0%,100%{opacity:0.6} 50%{opacity:1} }
 
   @keyframes lo-fade  { from{opacity:0} to{opacity:1} }
   @keyframes lo-icon  { from{opacity:0;transform:scale(0.6)} 70%{transform:scale(1.08)} to{opacity:1;transform:scale(1)} }
@@ -77,58 +113,72 @@ const PROFILE_STYLES = `
 
   .pf-skel {
     border-radius: 6px;
-    background: rgba(100,120,100,0.14);
+    background: var(--press);
     animation: pf-skel 1.6s ease-in-out infinite;
   }
-
-  /* Ambient orbs */
-  .pf-orb { position:fixed; border-radius:50%; pointer-events:none; animation:pf-drift 22s ease-in-out infinite alternate; }
-  .pf-orb-1 { width:clamp(260px,65vw,480px); height:clamp(260px,65vw,480px); background:radial-gradient(circle,rgba(20,80,45,0.18) 0%,transparent 65%); bottom:-12%; right:-10%; filter:blur(80px); }
-  .pf-orb-2 { width:clamp(200px,50vw,380px); height:clamp(200px,50vw,380px); background:radial-gradient(circle,rgba(10,25,70,0.20) 0%,transparent 65%); top:-15%; left:-8%; filter:blur(70px); animation-delay:-11s; }
 
   /* Cards */
   .pf-card {
     background: var(--surface);
-    border: 1px solid var(--border);
-    border-top: 1px solid var(--border-hi);
+    border: 1px solid var(--hairline);
     border-radius: 18px;
     overflow: hidden;
-    backdrop-filter: saturate(120%) blur(24px);
-    -webkit-backdrop-filter: saturate(120%) blur(24px);
-    box-shadow: 0 8px 32px rgba(0,0,0,0.50), 0 0 0 0.5px rgba(76,175,80,0.06), inset 0 1px 0 rgba(76,175,80,0.12);
+    box-shadow: var(--card-shadow);
+    transition: background 0.3s ease, border-color 0.3s ease;
   }
 
-  /* Hero card */
+  /* Hero card — banner gradient + avatar overlap */
   .pf-hero {
-    background: linear-gradient(160deg, rgba(16,18,30,0.95) 0%, rgba(10,12,22,0.98) 100%);
-    border: 1px solid rgba(76,175,80,0.22);
-    border-top: 1px solid rgba(76,175,80,0.38);
-    border-radius: 22px;
+    background: var(--surface);
+    border: 1px solid var(--hairline);
+    border-radius: 20px;
     overflow: hidden;
-    backdrop-filter: saturate(120%) blur(28px);
-    -webkit-backdrop-filter: saturate(120%) blur(28px);
-    box-shadow: 0 12px 48px rgba(0,0,0,0.55), 0 0 0 0.5px rgba(76,175,80,0.08), inset 0 1px 0 rgba(76,175,80,0.15);
+    box-shadow: var(--card-shadow);
+    position: relative;
+    transition: background 0.3s ease;
+  }
+  .pf-hero-banner {
+    height: 86px;
+    background: var(--hero-grad);
     position: relative;
   }
-  .pf-hero::before {
+  .pf-hero-banner::after {
     content: '';
     position: absolute;
-    top: 0; left: 50%; transform: translateX(-50%);
-    width: 60%; height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(76,175,80,0.50), transparent);
+    left: 0; right: 0; bottom: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent-bdr), transparent);
+    opacity: 0.6;
+  }
+
+  /* Avatar ring */
+  .pf-avatar-wrap { position: relative; width: 92px; height: 92px; }
+  .pf-avatar-ring {
+    position: absolute; inset: -4px; border-radius: 50%;
+    background: conic-gradient(from 0deg, var(--accent), transparent 30%, var(--accent) 55%, transparent 80%, var(--accent));
+    animation: pf-spin 9s linear infinite;
+    opacity: 0.85;
+  }
+  .pf-avatar-hole { position: absolute; inset: -1px; border-radius: 50%; background: var(--surface); }
+  .pf-avatar {
+    position: relative; z-index: 2;
+    width: 92px; height: 92px; border-radius: 50%;
+    background: linear-gradient(145deg, #0E9F6E, #2DD4A7);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 34px; font-weight: 800; color: #fff;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.25);
   }
 
   /* Section label */
   .pf-section-label {
     font-size: 11px; font-weight: 700;
-    color: rgba(102,187,106,0.85);
-    text-transform: uppercase; letter-spacing: 0.10em;
-    padding: 0 2px 0 10px; margin-bottom: 8px;
-    border-left: 2px solid rgba(76,175,80,0.55);
+    color: var(--text-3);
+    text-transform: uppercase; letter-spacing: 0.09em;
+    padding: 0 4px; margin-bottom: 8px;
   }
 
   /* Info rows */
-  .pf-info-row { border-bottom: 1px solid rgba(255,255,255,0.06); }
+  .pf-info-row { border-bottom: 1px solid var(--hairline); }
   .pf-info-row:last-child { border-bottom: none; }
 
   /* Tappable rows */
@@ -137,13 +187,14 @@ const PROFILE_STYLES = `
     display:flex; align-items:center;
     padding: 13px 16px 13px 14px;
     gap:12px; text-align:left;
+    font-family: var(--font);
     -webkit-tap-highlight-color: transparent;
-    border-bottom: 1px solid rgba(255,255,255,0.06);
+    border-bottom: 1px solid var(--hairline);
     transition: background 0.12s;
   }
   .pf-tap-row:last-child { border-bottom: none; }
-  @media (hover:hover) { .pf-tap-row:hover { background: rgba(76,175,80,0.06) !important; } }
-  .pf-tap-row:active { background: rgba(76,175,80,0.10) !important; }
+  @media (hover:hover) { .pf-tap-row:hover { background: var(--press) !important; } }
+  .pf-tap-row:active { background: var(--press) !important; }
 
   /* Balance number */
   .pf-balance-num { animation: pf-num 0.4s ease both; }
@@ -176,10 +227,13 @@ const PROFILE_STYLES = `
       width:280px; min-width:280px;
       height:100%; overflow-y:auto;
       padding:28px 22px 100px;
-      background:rgba(7,8,16,0.65);
-      border-right:0.5px solid rgba(76,175,80,0.16);
+      background: var(--surface-2);
+      border-right: 1px solid var(--hairline);
+      transition: background 0.3s ease;
     }
     .pf-left::-webkit-scrollbar { width:0; }
+    .pf-left .pf-hero, .pf-left .pf-card, .pf-left .pf-avatar-hole { --surface: var(--surface-2); }
+    .pf-left .pf-hero, .pf-left .pf-card { background: var(--surface); border-color: var(--border); }
     .pf-right { padding:28px 32px 100px; gap:22px; overscroll-behavior-y:auto; }
     .pf-mob-only { display:none; }
     .pf-left > * { animation:pf-up 0.4s cubic-bezier(0.22,1,0.36,1) both; }
@@ -194,117 +248,40 @@ const PROFILE_STYLES = `
     .pf-right > *:nth-child(5){ animation-delay:0.26s; }
   }
 
-  /* Logout splash */
+  /* Logout splash — sengaja selalu gelap & sinematik di kedua tema */
   .lo-splash {
     position:fixed; inset:0; z-index:9999;
     display:flex; flex-direction:column; align-items:center; justify-content:center;
     font-family:var(--font); -webkit-font-smoothing:antialiased;
-    background:linear-gradient(160deg,#070710 0%,#0b0b1c 60%,#0e0e24 100%);
+    background:linear-gradient(160deg,#07090C 0%,#0B0F13 60%,#0D1418 100%);
     overflow:hidden; animation:lo-fade 0.32s cubic-bezier(0.22,1,0.36,1) forwards;
   }
   .lo-orb { position:absolute; border-radius:50%; pointer-events:none; }
-  .lo-orb-1 { width:380px;height:380px;background:radial-gradient(circle,rgba(20,80,45,0.18) 0%,transparent 70%);filter:blur(80px);top:-100px;right:-100px;animation:lo-orb-1 7s ease-in-out infinite alternate; }
-  .lo-orb-2 { width:340px;height:340px;background:radial-gradient(circle,rgba(15,30,80,0.18) 0%,transparent 70%);filter:blur(75px);bottom:-80px;left:-80px;animation:lo-orb-2 6s ease-in-out infinite alternate; }
-  .lo-orb-3 { width:260px;height:260px;background:radial-gradient(circle,rgba(50,50,100,0.12) 0%,transparent 70%);filter:blur(70px);top:40%;left:-60px;animation:lo-orb-1 5s ease-in-out infinite alternate; }
+  .lo-orb-1 { width:380px;height:380px;background:radial-gradient(circle,rgba(45,212,167,0.14) 0%,transparent 70%);filter:blur(80px);top:-100px;right:-100px;animation:lo-orb-1 7s ease-in-out infinite alternate; }
+  .lo-orb-2 { width:340px;height:340px;background:radial-gradient(circle,rgba(96,165,250,0.12) 0%,transparent 70%);filter:blur(75px);bottom:-80px;left:-80px;animation:lo-orb-2 6s ease-in-out infinite alternate; }
+  .lo-orb-3 { width:260px;height:260px;background:radial-gradient(circle,rgba(45,212,167,0.08) 0%,transparent 70%);filter:blur(70px);top:40%;left:-60px;animation:lo-orb-1 5s ease-in-out infinite alternate; }
   .lo-icon-wrap { position:relative;width:110px;height:110px;display:flex;align-items:center;justify-content:center;margin-bottom:28px; }
-  .lo-ring       { position:absolute;inset:0;border-radius:50%;border:2px solid rgba(76,175,80,0.22);animation:lo-ring 2.2s ease-in-out infinite; }
-  .lo-ring-2     { inset:-12px;border-color:rgba(76,175,80,0.13);animation-delay:0.4s; }
-  .lo-ring-3     { inset:-24px;border-color:rgba(76,175,80,0.06);animation-delay:0.8s; }
-  .lo-icon       { width:90px;height:90px;border-radius:28px;background:rgba(10,10,22,0.97);border:1px solid rgba(76,175,80,0.22);box-shadow:0 8px 36px rgba(76,175,80,0.15),0 2px 8px rgba(0,0,0,0.30);display:flex;align-items:center;justify-content:center;position:relative;z-index:1;animation:lo-icon 0.55s cubic-bezier(0.34,1.56,0.64,1) 0.12s both;font-size:40px;line-height:1; }
+  .lo-ring       { position:absolute;inset:0;border-radius:50%;border:2px solid rgba(45,212,167,0.25);animation:lo-ring 2.2s ease-in-out infinite; }
+  .lo-ring-2     { inset:-12px;border-color:rgba(45,212,167,0.14);animation-delay:0.4s; }
+  .lo-ring-3     { inset:-24px;border-color:rgba(45,212,167,0.06);animation-delay:0.8s; }
+  .lo-icon       { width:90px;height:90px;border-radius:28px;background:rgba(13,16,19,0.97);border:1px solid rgba(45,212,167,0.25);box-shadow:0 8px 36px rgba(45,212,167,0.15),0 2px 8px rgba(0,0,0,0.30);display:flex;align-items:center;justify-content:center;position:relative;z-index:1;animation:lo-icon 0.55s cubic-bezier(0.34,1.56,0.64,1) 0.12s both;font-size:40px;line-height:1; }
   .lo-text       { text-align:center;padding:0 32px;animation:lo-msg 0.5s cubic-bezier(0.22,1,0.36,1) 0.24s both; }
   .lo-title      { font-size:clamp(26px,8vw,32px);font-weight:800;letter-spacing:-1px;line-height:1.1;margin-bottom:8px;color:#fff; }
   .lo-sub        { font-size:14.5px;color:rgba(255,255,255,0.50);font-weight:400;line-height:1.6; }
-  .lo-bar-wrap   { margin-top:36px;width:120px;height:3px;background:rgba(76,175,80,0.15);border-radius:99px;overflow:hidden;animation:lo-msg 0.5s cubic-bezier(0.22,1,0.36,1) 0.35s both; }
-  .lo-bar        { height:100%;border-radius:99px;background:linear-gradient(90deg,#4caf50,#66bb6a);animation:lo-bar 1.65s cubic-bezier(0.4,0,0.2,1) 0.4s forwards; }
+  .lo-bar-wrap   { margin-top:36px;width:120px;height:3px;background:rgba(45,212,167,0.15);border-radius:99px;overflow:hidden;animation:lo-msg 0.5s cubic-bezier(0.22,1,0.36,1) 0.35s both; }
+  .lo-bar        { height:100%;border-radius:99px;background:linear-gradient(90deg,#0E9F6E,#2DD4A7);animation:lo-bar 1.65s cubic-bezier(0.4,0,0.2,1) 0.4s forwards; }
 
-  /* Modals */
-  .pf-modal-overlay  { position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;touch-action:none; }
-  .pf-modal-backdrop { position:absolute;inset:0;background:rgba(0,0,0,0.65);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);animation:pf-bd-in 0.22s ease; }
-  .pf-modal-sheet    { position:relative;z-index:1;background:rgba(10,10,22,0.97);border:1px solid rgba(76,175,80,0.20);border-radius:22px;box-shadow:0 24px 80px rgba(0,0,0,0.60);overflow:hidden;animation:pf-pop 0.28s cubic-bezier(0.22,1,0.36,1); }
-  .pf-modal-close-btn { width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,0.08);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.50);transition:background 0.15s;flex-shrink:0;-webkit-tap-highlight-color:transparent; }
-  .pf-modal-close-btn:hover { background:rgba(255,255,255,0.14); }
+  /* Modals — theme-aware */
+  .pf-modal-close-btn { width:30px;height:30px;border-radius:50%;background:var(--press);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text-2);transition:background 0.15s;flex-shrink:0;-webkit-tap-highlight-color:transparent; }
+  .pf-modal-close-btn:hover { background:var(--input-bg); }
 
-  .pf-curr-item { width:100%;background:transparent;border:none;cursor:pointer;display:flex;align-items:center;padding:13px 20px;border-bottom:1px solid rgba(255,255,255,0.07);gap:14px;-webkit-tap-highlight-color:transparent;transition:background 0.12s; }
+  .pf-curr-item { width:100%;background:transparent;border:none;cursor:pointer;display:flex;align-items:center;padding:13px 20px;border-bottom:1px solid var(--hairline);gap:14px;-webkit-tap-highlight-color:transparent;transition:background 0.12s;font-family:var(--font); }
   .pf-curr-item:last-child { border-bottom:none; }
-  .pf-curr-item:hover { background:rgba(76,175,80,0.06); }
+  .pf-curr-item:hover { background:var(--press); }
 
-  .pf-search-input { width:100%;padding:10px 10px 10px 36px;border-radius:11px;border:1px solid rgba(76,175,80,0.20);background:rgba(0,0,0,0.35);outline:none;font-size:15px;color:#fff;font-family:var(--font);-webkit-appearance:none;appearance:none;transition:border-color 0.2s; }
-  .pf-search-input::placeholder { color:rgba(255,255,255,0.28); }
-  .pf-search-input:focus { border-color:rgba(76,175,80,0.50); }
-
-  /* ============================================================
-     MOBILE — tampilan Apple-like (seperti panel admin), theme-aware.
-     Hanya aktif < 768px; desktop tetap desain lama. Aksen hijau dipertahankan.
-     ============================================================ */
-  @media (max-width: 767px) {
-    /* Dark (default app) — kartu netral gelap */
-    .pf-root {
-      --bg:        #000000;
-      --surface:   #1c1c1e;
-      --surface-2: #2c2c2e;
-      --border:    rgba(255,255,255,0.10);
-      --border-hi: rgba(255,255,255,0.10);
-      --text-1:    #f2f2f7;
-      --text-2:    rgba(235,235,245,0.60);
-      --text-3:    rgba(235,235,245,0.32);
-      --hairline:  rgba(255,255,255,0.08);
-      --chip-bg:   rgba(76,175,80,0.16);
-    }
-
-    /* Kartu bersih: tanpa glow/blur berat, border halus, sudut lembut */
-    .pf-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-top: 1px solid var(--border);
-      border-radius: 16px;
-      backdrop-filter: none; -webkit-backdrop-filter: none;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.06);
-    }
-    .pf-hero {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-top: 1px solid var(--border);
-      border-radius: 18px;
-      backdrop-filter: none; -webkit-backdrop-filter: none;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.06);
-    }
-    .pf-hero::before { display: none; }
-
-    /* Section label netral ala admin (tanpa garis hijau) */
-    .pf-section-label {
-      color: var(--text-3);
-      border-left: none;
-      padding: 0 4px;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-    }
-
-    .pf-info-row { border-bottom: 1px solid var(--hairline); }
-    .pf-tap-row  { border-bottom: 1px solid var(--hairline); }
-    @media (hover:hover) { .pf-tap-row:hover { background: var(--surface-2) !important; } }
-    .pf-tap-row:active { background: var(--surface-2) !important; }
-
-    /* Hilangkan ambient orbs gelap di mobile */
-    .pf-orb { display: none; }
-  }
-
-  /* Light mode di mobile — kartu putih ala iOS */
-  @media (max-width: 767px) {
-    body[data-theme="light"] .pf-root {
-      --bg:        #f2f2f7;
-      --surface:   #ffffff;
-      --surface-2: #f2f2f7;
-      --border:    rgba(0,0,0,0.08);
-      --border-hi: rgba(0,0,0,0.06);
-      --text-1:    #1c1c1e;
-      --text-2:    rgba(60,60,67,0.62);
-      --text-3:    rgba(60,60,67,0.34);
-      --hairline:  rgba(0,0,0,0.06);
-      --chip-bg:   rgba(76,175,80,0.12);
-    }
-    body[data-theme="light"] .pf-card,
-    body[data-theme="light"] .pf-hero { box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-  }
+  .pf-search-input { width:100%;padding:10px 10px 10px 36px;border-radius:11px;border:1px solid var(--border);background:var(--input-bg);outline:none;font-size:15px;color:var(--text-1);font-family:var(--font);-webkit-appearance:none;appearance:none;transition:border-color 0.2s; }
+  .pf-search-input::placeholder { color:var(--text-3); }
+  .pf-search-input:focus { border-color:var(--accent-bdr); }
 `;
 
 // ─────────────────────────────────────────────
@@ -345,12 +322,12 @@ const CurrencySheet: React.FC<{
 
   return (
     <div className="pf-root" style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, touchAction: 'none' }}>
-      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', animation: 'pf-bd-in 0.25s ease' }} />
-      <div style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: 420, maxHeight: '72dvh', display: 'flex', flexDirection: 'column', background: 'rgba(10,10,22,0.97)', border: '1px solid rgba(76,175,80,0.22)', borderRadius: 22, boxShadow: '0 24px 64px rgba(0,0,0,0.60)', animation: 'pf-pop 0.28s cubic-bezier(0.32,0.72,0,1)', overflow: 'hidden' }}>
-        <div style={{ flexShrink: 0, padding: '18px 20px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(76,175,80,0.12)' }}>
+      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'var(--backdrop)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', animation: 'pf-bd-in 0.25s ease' }} />
+      <div style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: 420, maxHeight: '72dvh', display: 'flex', flexDirection: 'column', background: 'var(--modal)', border: '1px solid var(--modal-hair)', borderRadius: 22, boxShadow: '0 24px 64px rgba(0,0,0,0.35)', animation: 'pf-pop 0.28s cubic-bezier(0.32,0.72,0,1)', overflow: 'hidden' }}>
+        <div style={{ flexShrink: 0, padding: '18px 20px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--hairline)' }}>
           <div>
-            <p style={{ fontSize: 17, fontWeight: 700, color: '#fff', letterSpacing: -0.4, marginBottom: 2 }}>{t('profile.selectCurrency')}</p>
-            <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.40)' }}>{t('common.currency')}: <span style={{ color: '#66bb6a' }}>{current}</span></p>
+            <p style={{ fontSize: 17, fontWeight: 700, color: 'var(--text-1)', letterSpacing: -0.4, marginBottom: 2 }}>{t('profile.selectCurrency')}</p>
+            <p style={{ fontSize: 12, color: 'var(--text-3)' }}>{t('common.currency')}: <span style={{ color: 'var(--accent)' }}>{current}</span></p>
           </div>
           <button onClick={onClose} className="pf-modal-close-btn" aria-label={t('common.close')}>
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1 1l10 10M11 1L1 11" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>
@@ -358,29 +335,29 @@ const CurrencySheet: React.FC<{
         </div>
         <div style={{ flexShrink: 0, padding: '12px 16px 8px' }}>
           <div style={{ position: 'relative' }}>
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(76,175,80,0.50)" strokeWidth="2.2" strokeLinecap="round" style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2.2" strokeLinecap="round" style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', opacity: 0.6 }}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
             <input ref={inputRef} value={q} onChange={e => setQ(e.target.value)} placeholder={t('common.search')} className="pf-search-input" />
           </div>
         </div>
         <div style={{ overflowY: 'auto', flex: 1, overscrollBehaviorY: 'contain' }}>
           {filtered.length === 0
-            ? <div style={{ padding: '48px 0', textAlign: 'center', color: 'rgba(255,255,255,0.28)', fontSize: 14, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" style={{ opacity: 0.3 }}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            ? <div style={{ padding: '48px 0', textAlign: 'center', color: 'var(--text-3)', fontSize: 14, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" style={{ opacity: 0.4 }}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
                 {t('common.notFound')}
               </div>
             : filtered.map(c => {
                 const sel = c.iso === current;
                 return (
                   <button key={c.iso} onClick={() => onSelect(c.iso).then(onClose)} disabled={loading} className="pf-curr-item" style={{ opacity: loading ? 0.6 : 1 }}>
-                    <div style={{ width: 38, height: 38, borderRadius: 10, background: sel ? 'rgba(76,175,80,0.15)' : 'rgba(255,255,255,0.06)', border: `1px solid ${sel ? 'rgba(76,175,80,0.35)' : 'rgba(255,255,255,0.10)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <span style={{ fontSize: 13, fontWeight: 700, color: sel ? '#66bb6a' : 'rgba(255,255,255,0.60)' }}>{c.iso.slice(0,3)}</span>
+                    <div style={{ width: 38, height: 38, borderRadius: 10, background: sel ? 'var(--accent-dim)' : 'var(--input-bg)', border: `1px solid ${sel ? 'var(--accent-bdr)' : 'var(--border)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: sel ? 'var(--accent)' : 'var(--text-2)' }}>{c.iso.slice(0,3)}</span>
                     </div>
                     <div style={{ flex: 1, textAlign: 'left', minWidth: 0 }}>
-                      <p style={{ fontSize: 15, color: sel ? '#66bb6a' : '#fff', fontWeight: sel ? 700 : 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.iso}</p>
-                      {c.name && <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.40)', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name}</p>}
+                      <p style={{ fontSize: 15, color: sel ? 'var(--accent)' : 'var(--text-1)', fontWeight: sel ? 700 : 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.iso}</p>
+                      {c.name && <p style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name}</p>}
                     </div>
-                    {c.symbol && <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.32)', flexShrink: 0 }}>{c.symbol}</span>}
-                    {sel && <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#66bb6a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M20 6L9 17l-5-5"/></svg>}
+                    {c.symbol && <span style={{ fontSize: 14, color: 'var(--text-3)', flexShrink: 0 }}>{c.symbol}</span>}
+                    {sel && <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M20 6L9 17l-5-5"/></svg>}
                   </button>
                 );
               })}
@@ -407,21 +384,21 @@ const LogoutAlert: React.FC<{ open: boolean; onCancel: () => void; onConfirm: ()
   if (!open) return null;
   return (
     <div className="pf-root" style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 20px', touchAction: 'none' }}>
-      <div onClick={onCancel} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', animation: 'pf-bd-in 0.2s ease' }} />
+      <div onClick={onCancel} style={{ position: 'absolute', inset: 0, background: 'var(--backdrop)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', animation: 'pf-bd-in 0.2s ease' }} />
       <div style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: 320, animation: 'pf-pop 0.28s cubic-bezier(0.32,0.72,0,1)' }}>
-        <div style={{ background: 'rgba(12,12,24,0.98)', border: '1px solid rgba(76,175,80,0.18)', backdropFilter: 'blur(40px)', WebkitBackdropFilter: 'blur(40px)', borderRadius: 22, overflow: 'hidden', boxShadow: '0 24px 60px rgba(0,0,0,0.60)' }}>
+        <div style={{ background: 'var(--modal)', border: '1px solid var(--modal-hair)', borderRadius: 22, overflow: 'hidden', boxShadow: '0 24px 60px rgba(0,0,0,0.35)' }}>
           <div style={{ padding: '28px 24px 20px', textAlign: 'center' }}>
-            <div style={{ width: 60, height: 60, borderRadius: '50%', background: 'rgba(255,69,58,0.12)', border: '1.5px solid rgba(255,69,58,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ff453a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <div style={{ width: 60, height: 60, borderRadius: '50%', background: 'var(--error-dim)', border: '1.5px solid var(--error-dim)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--error)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
               </svg>
             </div>
-            <p style={{ fontSize: 18, fontWeight: 700, color: '#fff', marginBottom: 8, letterSpacing: -0.4 }}>{t('profile.logoutConfirm')}</p>
-            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.45)', lineHeight: 1.6 }}>{t('profile.logoutMessage')}</p>
+            <p style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-1)', marginBottom: 8, letterSpacing: -0.4 }}>{t('profile.logoutConfirm')}</p>
+            <p style={{ fontSize: 14, color: 'var(--text-2)', lineHeight: 1.6 }}>{t('profile.logoutMessage')}</p>
           </div>
-          <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', display: 'flex' }}>
-            <button onClick={onCancel} style={{ flex: 1, padding: '17px', background: 'transparent', border: 'none', borderRight: '1px solid rgba(255,255,255,0.08)', cursor: 'pointer', fontSize: 16, fontWeight: 600, color: '#66bb6a', fontFamily: 'inherit', WebkitTapHighlightColor: 'transparent' }}>{t('common.cancel')}</button>
-            <button onClick={onConfirm} style={{ flex: 1, padding: '17px', background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 16, fontWeight: 400, color: '#ff453a', fontFamily: 'inherit', WebkitTapHighlightColor: 'transparent' }}>{t('profile.logout')}</button>
+          <div style={{ borderTop: '1px solid var(--hairline)', display: 'flex' }}>
+            <button onClick={onCancel} style={{ flex: 1, padding: '17px', background: 'transparent', border: 'none', borderRight: '1px solid var(--hairline)', cursor: 'pointer', fontSize: 16, fontWeight: 600, color: 'var(--accent)', fontFamily: 'inherit', WebkitTapHighlightColor: 'transparent' }}>{t('common.cancel')}</button>
+            <button onClick={onConfirm} style={{ flex: 1, padding: '17px', background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 16, fontWeight: 400, color: 'var(--error)', fontFamily: 'inherit', WebkitTapHighlightColor: 'transparent' }}>{t('profile.logout')}</button>
           </div>
         </div>
       </div>
@@ -510,32 +487,32 @@ const EmailComposer: React.FC<{ open: boolean; onClose: () => void }> = ({ open,
   };
 
   const inputStyle: React.CSSProperties = {
-    width: '100%', boxSizing: 'border-box', background: 'rgba(255,255,255,0.05)',
-    border: '1px solid rgba(255,255,255,0.10)', borderRadius: 12, padding: '12px 14px',
-    fontSize: 14, color: '#fff', fontFamily: 'inherit', outline: 'none', marginTop: 6,
+    width: '100%', boxSizing: 'border-box', background: 'var(--input-bg)',
+    border: '1px solid var(--border)', borderRadius: 12, padding: '12px 14px',
+    fontSize: 14, color: 'var(--text-1)', fontFamily: 'inherit', outline: 'none', marginTop: 6,
   };
-  const labelStyle: React.CSSProperties = { fontSize: 12, color: 'rgba(255,255,255,0.5)', fontWeight: 600 };
+  const labelStyle: React.CSSProperties = { fontSize: 12, color: 'var(--text-2)', fontWeight: 600 };
   const initial = (u: WLUser) => (u.name || u.email).charAt(0).toUpperCase();
   const Avatar = ({ u, size = 30 }: { u: WLUser; size?: number }) => (
-    <div style={{ width: size, height: size, borderRadius: '50%', flexShrink: 0, background: 'linear-gradient(135deg,#2faa4d,#34c759)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: size * 0.42, fontWeight: 700, color: '#fff' }}>{initial(u)}</div>
+    <div style={{ width: size, height: size, borderRadius: '50%', flexShrink: 0, background: 'linear-gradient(135deg,#0E9F6E,#2DD4A7)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: size * 0.42, fontWeight: 700, color: '#fff' }}>{initial(u)}</div>
   );
 
   const pickUser = (u: WLUser) => { setSelected(u); setQuery(''); };
 
   return (
     <div className="pf-root" style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 16px' }}>
-      <div onClick={sending ? undefined : onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', animation: 'pf-bd-in 0.2s ease' }} />
+      <div onClick={sending ? undefined : onClose} style={{ position: 'absolute', inset: 0, background: 'var(--backdrop)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', animation: 'pf-bd-in 0.2s ease' }} />
       <div style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: 430, animation: 'pf-pop 0.28s cubic-bezier(0.32,0.72,0,1)' }}>
-        <div style={{ background: 'rgba(12,12,24,0.98)', border: '1px solid rgba(76,175,80,0.18)', borderRadius: 22, overflow: 'hidden', boxShadow: '0 24px 60px rgba(0,0,0,0.60)' }}>
-          <div style={{ padding: '20px 22px', borderBottom: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div style={{ width: 38, height: 38, borderRadius: 11, background: 'linear-gradient(135deg,#34c759,#30d158)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <div style={{ background: 'var(--modal)', border: '1px solid var(--modal-hair)', borderRadius: 22, overflow: 'hidden', boxShadow: '0 24px 60px rgba(0,0,0,0.35)' }}>
+          <div style={{ padding: '20px 22px', borderBottom: '1px solid var(--hairline)', display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ width: 38, height: 38, borderRadius: 11, background: 'linear-gradient(135deg,#0E9F6E,#2DD4A7)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 5L2 7"/></svg>
             </div>
             <div style={{ flex: 1 }}>
-              <p style={{ fontSize: 16, fontWeight: 700, color: '#fff', letterSpacing: -0.3 }}>Kirim Email</p>
-              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>{target === 'all' ? `ke ${users.length} user whitelist` : target === 'custom' ? `ke ${customEmails.length} email custom` : selected ? `ke ${selected.name || selected.email}` : 'pilih penerima'}</p>
+              <p style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-1)', letterSpacing: -0.3 }}>Kirim Email</p>
+              <p style={{ fontSize: 12, color: 'var(--text-3)' }}>{target === 'all' ? `ke ${users.length} user whitelist` : target === 'custom' ? `ke ${customEmails.length} email custom` : selected ? `ke ${selected.name || selected.email}` : 'pilih penerima'}</p>
             </div>
-            <button onClick={sending ? undefined : onClose} style={{ width: 30, height: 30, borderRadius: '50%', background: 'rgba(255,255,255,0.08)', border: 'none', cursor: sending ? 'default' : 'pointer', color: 'rgba(255,255,255,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <button onClick={sending ? undefined : onClose} style={{ width: 30, height: 30, borderRadius: '50%', background: 'var(--press)', border: 'none', cursor: sending ? 'default' : 'pointer', color: 'var(--text-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
           </div>
@@ -546,9 +523,9 @@ const EmailComposer: React.FC<{ open: boolean; onClose: () => void }> = ({ open,
               {([['one', 'Whitelist'], ['custom', 'Custom'], ['all', `Semua${users.length ? ` (${users.length})` : ''}`]] as const).map(([val, lbl]) => (
                 <button key={val} onClick={() => setTarget(val)} style={{
                   flex: 1, padding: '9px 4px', borderRadius: 11, cursor: 'pointer', fontSize: 13, fontWeight: 600, fontFamily: 'inherit',
-                  border: `1px solid ${target === val ? 'rgba(76,175,80,0.5)' : 'rgba(255,255,255,0.10)'}`,
-                  background: target === val ? 'rgba(76,175,80,0.15)' : 'rgba(255,255,255,0.04)',
-                  color: target === val ? '#5cc763' : 'rgba(255,255,255,0.6)',
+                  border: `1px solid ${target === val ? 'var(--accent-bdr)' : 'var(--border)'}`,
+                  background: target === val ? 'var(--accent-dim)' : 'var(--input-bg)',
+                  color: target === val ? 'var(--accent)' : 'var(--text-2)',
                 }}>{lbl}</button>
               ))}
             </div>
@@ -558,43 +535,43 @@ const EmailComposer: React.FC<{ open: boolean; onClose: () => void }> = ({ open,
               <div>
                 <span style={labelStyle}>Penerima</span>
                 {selected ? (
-                  <div style={{ marginTop: 6, display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 12, background: 'rgba(76,175,80,0.10)', border: '1px solid rgba(76,175,80,0.28)' }}>
+                  <div style={{ marginTop: 6, display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 12, background: 'var(--accent-dim)', border: '1px solid var(--accent-bdr)' }}>
                     <Avatar u={selected} size={34} />
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      {selected.name && <p style={{ fontSize: 14, color: '#fff', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{selected.name}</p>}
-                      <p style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.55)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{selected.email}</p>
+                      {selected.name && <p style={{ fontSize: 14, color: 'var(--text-1)', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{selected.name}</p>}
+                      <p style={{ fontSize: 12.5, color: 'var(--text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{selected.email}</p>
                     </div>
-                    <button onClick={() => setSelected(null)} style={{ background: 'rgba(255,255,255,0.10)', border: 'none', borderRadius: '50%', width: 26, height: 26, cursor: 'pointer', color: 'rgba(255,255,255,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <button onClick={() => setSelected(null)} style={{ background: 'var(--press)', border: 'none', borderRadius: '50%', width: 26, height: 26, cursor: 'pointer', color: 'var(--text-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                       <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                     </button>
                   </div>
                 ) : (
                   <>
                     <div style={{ position: 'relative', marginTop: 6 }}>
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" strokeLinecap="round" style={{ position: 'absolute', left: 13, top: '50%', transform: 'translateY(-50%)' }}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" strokeWidth="2" strokeLinecap="round" style={{ position: 'absolute', left: 13, top: '50%', transform: 'translateY(-50%)' }}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
                       <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Cari nama atau email…" autoCapitalize="none" style={{ ...inputStyle, marginTop: 0, paddingLeft: 38 }} />
                     </div>
                     <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 4, maxHeight: 184, overflowY: 'auto' }}>
-                      {loadingUsers && <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', padding: '8px 4px' }}>Memuat user…</p>}
+                      {loadingUsers && <p style={{ fontSize: 13, color: 'var(--text-3)', padding: '8px 4px' }}>Memuat user…</p>}
                       {!loadingUsers && filtered.map(u => (
-                        <button key={u.email} onClick={() => pickUser(u)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', borderRadius: 10, background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left', width: '100%' }}
-                          onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.05)')}
+                        <button key={u.email} onClick={() => pickUser(u)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', borderRadius: 10, background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left', width: '100%', fontFamily: 'inherit' }}
+                          onMouseEnter={e => (e.currentTarget.style.background = 'var(--press)')}
                           onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
                           <Avatar u={u} />
                           <div style={{ flex: 1, minWidth: 0 }}>
-                            {u.name && <p style={{ fontSize: 13.5, color: '#fff', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{u.name}</p>}
-                            <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{u.email}</p>
+                            {u.name && <p style={{ fontSize: 13.5, color: 'var(--text-1)', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{u.name}</p>}
+                            <p style={{ fontSize: 12, color: 'var(--text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{u.email}</p>
                           </div>
-                          {u.is_active === false && <span style={{ fontSize: 10, color: '#ff9f0a', flexShrink: 0 }}>nonaktif</span>}
+                          {u.is_active === false && <span style={{ fontSize: 10, color: 'var(--warn)', flexShrink: 0 }}>nonaktif</span>}
                         </button>
                       ))}
                       {!loadingUsers && typedEmailOk && (
-                        <button onClick={() => pickUser({ email: q })} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 10px', borderRadius: 10, background: 'rgba(76,175,80,0.08)', border: '1px dashed rgba(76,175,80,0.3)', cursor: 'pointer', color: '#5cc763', fontSize: 13, fontFamily: 'inherit', width: '100%' }}>
+                        <button onClick={() => pickUser({ email: q })} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 10px', borderRadius: 10, background: 'var(--accent-dim)', border: '1px dashed var(--accent-bdr)', cursor: 'pointer', color: 'var(--accent)', fontSize: 13, fontFamily: 'inherit', width: '100%' }}>
                           + Kirim ke “{q}”
                         </button>
                       )}
                       {!loadingUsers && filtered.length === 0 && !typedEmailOk && (
-                        <p style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.35)', padding: '8px 4px' }}>{q ? 'User tidak ditemukan.' : 'Belum ada user.'}</p>
+                        <p style={{ fontSize: 12.5, color: 'var(--text-3)', padding: '8px 4px' }}>{q ? 'User tidak ditemukan.' : 'Belum ada user.'}</p>
                       )}
                     </div>
                   </>
@@ -607,14 +584,14 @@ const EmailComposer: React.FC<{ open: boolean; onClose: () => void }> = ({ open,
               <div>
                 <span style={labelStyle}>Email tujuan (boleh lebih dari satu)</span>
                 <textarea value={customRaw} onChange={e => setCustomRaw(e.target.value)} placeholder="email1@contoh.com, email2@contoh.com" autoCapitalize="none" rows={3} style={{ ...inputStyle, resize: 'vertical', minHeight: 72, lineHeight: 1.5 }} />
-                <p style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.4)', marginTop: 6, lineHeight: 1.5 }}>
-                  Pisahkan dengan koma, spasi, atau baris baru.{customEmails.length > 0 && <> <span style={{ color: '#5cc763', fontWeight: 600 }}>{customEmails.length} email valid.</span></>}
+                <p style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 6, lineHeight: 1.5 }}>
+                  Pisahkan dengan koma, spasi, atau baris baru.{customEmails.length > 0 && <> <span style={{ color: 'var(--accent)', fontWeight: 600 }}>{customEmails.length} email valid.</span></>}
                 </p>
               </div>
             )}
 
             {target === 'all' && (
-              <p style={{ fontSize: 12.5, color: '#ff9f0a', background: 'rgba(255,159,10,0.10)', border: '1px solid rgba(255,159,10,0.20)', borderRadius: 10, padding: '10px 12px', lineHeight: 1.5 }}>
+              <p style={{ fontSize: 12.5, color: 'var(--warn)', background: 'var(--warn-dim)', border: '1px solid var(--warn-dim)', borderRadius: 10, padding: '10px 12px', lineHeight: 1.5 }}>
                 Email akan dikirim ke <strong>{users.length} user whitelist</strong>. Pastikan isinya sudah benar.
               </p>
             )}
@@ -626,9 +603,9 @@ const EmailComposer: React.FC<{ open: boolean; onClose: () => void }> = ({ open,
             <div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <span style={labelStyle}>Pesan</span>
-                <button onClick={() => setHtml(h => !h)} style={{ display: 'flex', alignItems: 'center', gap: 7, cursor: 'pointer', background: 'none', border: 'none', padding: 0, fontFamily: 'inherit', fontSize: 12, fontWeight: 600, color: html ? '#5cc763' : 'rgba(255,255,255,0.45)' }}>
+                <button onClick={() => setHtml(h => !h)} style={{ display: 'flex', alignItems: 'center', gap: 7, cursor: 'pointer', background: 'none', border: 'none', padding: 0, fontFamily: 'inherit', fontSize: 12, fontWeight: 600, color: html ? 'var(--accent)' : 'var(--text-3)' }}>
                   HTML
-                  <span style={{ width: 34, height: 20, borderRadius: 99, background: html ? 'rgba(76,175,80,0.55)' : 'rgba(255,255,255,0.15)', position: 'relative', transition: 'background 0.15s', flexShrink: 0 }}>
+                  <span style={{ width: 34, height: 20, borderRadius: 99, background: html ? 'var(--accent)' : 'var(--press)', position: 'relative', transition: 'background 0.15s', flexShrink: 0 }}>
                     <span style={{ position: 'absolute', top: 2, left: html ? 16 : 2, width: 16, height: 16, borderRadius: '50%', background: '#fff', transition: 'left 0.15s', boxShadow: '0 1px 3px rgba(0,0,0,0.3)' }} />
                   </span>
                 </button>
@@ -638,34 +615,34 @@ const EmailComposer: React.FC<{ open: boolean; onClose: () => void }> = ({ open,
                 rows={6} spellCheck={!html}
                 style={{ ...inputStyle, resize: 'vertical', minHeight: 110, lineHeight: 1.5, fontFamily: html ? 'ui-monospace, SFMono-Regular, Menlo, monospace' : 'inherit', fontSize: html ? 13 : 14 }} />
               {html && (
-                <p style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.4)', marginTop: 6, lineHeight: 1.5 }}>
-                  Mode HTML aktif — tulis tag HTML langsung (mis. <span style={{ fontFamily: 'monospace', color: 'rgba(255,255,255,0.6)' }}>&lt;b&gt;, &lt;a href&gt;, &lt;br&gt;</span>).
+                <p style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 6, lineHeight: 1.5 }}>
+                  Mode HTML aktif — tulis tag HTML langsung (mis. <span style={{ fontFamily: 'monospace', color: 'var(--text-2)' }}>&lt;b&gt;, &lt;a href&gt;, &lt;br&gt;</span>).
                 </p>
               )}
               {html && message.trim() && (
                 <div style={{ marginTop: 8 }}>
-                  <span style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.4)', fontWeight: 600 }}>Pratinjau</span>
-                  <div style={{ marginTop: 6, background: '#fff', color: '#1c1c1e', borderRadius: 10, padding: '12px 14px', fontSize: 13, lineHeight: 1.6, maxHeight: 180, overflowY: 'auto', wordBreak: 'break-word' }} dangerouslySetInnerHTML={{ __html: message }} />
+                  <span style={{ fontSize: 11.5, color: 'var(--text-3)', fontWeight: 600 }}>Pratinjau</span>
+                  <div style={{ marginTop: 6, background: '#fff', color: '#1c1c1e', borderRadius: 10, padding: '12px 14px', fontSize: 13, lineHeight: 1.6, maxHeight: 180, overflowY: 'auto', wordBreak: 'break-word', border: '1px solid var(--border)' }} dangerouslySetInnerHTML={{ __html: message }} />
                 </div>
               )}
             </div>
 
             {result && (
               <p style={{ fontSize: 13, fontWeight: 500, padding: '10px 12px', borderRadius: 10, lineHeight: 1.5,
-                color: result.ok ? '#30d158' : '#ff453a',
-                background: result.ok ? 'rgba(48,209,88,0.10)' : 'rgba(255,69,58,0.10)',
-                border: `1px solid ${result.ok ? 'rgba(48,209,88,0.22)' : 'rgba(255,69,58,0.22)'}` }}>
+                color: result.ok ? 'var(--success)' : 'var(--error)',
+                background: result.ok ? 'var(--success-dim)' : 'var(--error-dim)',
+                border: `1px solid ${result.ok ? 'var(--success-dim)' : 'var(--error-dim)'}` }}>
                 {result.text}
               </p>
             )}
           </div>
 
-          <div style={{ padding: '14px 22px 18px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+          <div style={{ padding: '14px 22px 18px', borderTop: '1px solid var(--hairline)' }}>
             <button onClick={handleSend} disabled={!canSend} style={{
               width: '100%', height: 48, borderRadius: 13, border: 'none', cursor: canSend ? 'pointer' : 'not-allowed',
-              fontSize: 15, fontWeight: 600, fontFamily: 'inherit', color: '#fff',
-              background: canSend ? 'linear-gradient(135deg,#34c759,#2faa4d)' : 'rgba(255,255,255,0.10)',
-              opacity: canSend ? 1 : 0.6, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              fontSize: 15, fontWeight: 600, fontFamily: 'inherit', color: canSend ? '#fff' : 'var(--text-3)',
+              background: canSend ? 'linear-gradient(135deg,#0E9F6E,#2DD4A7)' : 'var(--press)',
+              opacity: canSend ? 1 : 0.7, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             }}>
               {sending ? 'Mengirim…'
                 : target === 'all' ? `Kirim ke ${users.length} user`
@@ -847,16 +824,16 @@ function ProfilePageContent() {
   }) => (
     <div className={last ? '' : 'pf-info-row'} style={{ display: 'flex', alignItems: 'center', padding: '13px 16px', gap: 12 }}>
       {icon && (
-        <div style={{ width: 32, height: 32, borderRadius: 9, background: 'var(--chip-bg)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <div style={{ width: 32, height: 32, borderRadius: 9, background: 'var(--accent-dim)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
           {icon}
         </div>
       )}
       <div style={{ flex: 1, minWidth: 0 }}>
         <p style={{ fontSize: 12, color: 'var(--text-2)', marginBottom: 2 }}>{label}</p>
-        <p style={{ fontSize: 14, color: value ? 'var(--text-1)' : 'var(--text-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{value || '—'}</p>
+        <p style={{ fontSize: 14, fontWeight: 500, color: value ? 'var(--text-1)' : 'var(--text-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{value || '—'}</p>
       </div>
       {verified != null && (
-        <span style={{ fontSize: 11, fontWeight: 600, color: verified ? '#30d158' : '#ff9f0a', background: verified ? 'rgba(48,209,88,0.12)' : 'rgba(255,159,10,0.12)', padding: '3px 8px', borderRadius: 99, flexShrink: 0, border: `1px solid ${verified ? 'rgba(48,209,88,0.20)' : 'rgba(255,159,10,0.20)'}` }}>
+        <span style={{ fontSize: 11, fontWeight: 600, color: verified ? 'var(--success)' : 'var(--warn)', background: verified ? 'var(--success-dim)' : 'var(--warn-dim)', padding: '3px 8px', borderRadius: 99, flexShrink: 0 }}>
           {verified ? t('profile.verified') : t('profile.notVerified')}
         </span>
       )}
@@ -868,29 +845,26 @@ function ProfilePageContent() {
     danger?: boolean; onClick: () => void; last?: boolean; chevron?: boolean;
   }) => (
     <button onClick={onClick} className="pf-tap-row" style={{ borderBottom: last ? 'none' : undefined }}>
-      <div style={{ width: 34, height: 34, borderRadius: 9, background: iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: danger ? '0 2px 8px rgba(255,69,58,0.20)' : '0 2px 8px rgba(0,0,0,0.20)' }}>{icon}</div>
+      <div style={{ width: 34, height: 34, borderRadius: 10, background: iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>{icon}</div>
       <span style={{ flex: 1, fontSize: 15, color: danger ? 'var(--error)' : 'var(--text-1)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 500 }}>{label}</span>
       {value && <span style={{ fontSize: 13, color: 'var(--text-2)', marginRight: 6, flexShrink: 0, maxWidth: '40vw', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{value}</span>}
       {chevron && <svg width="6" height="11" viewBox="0 0 7 12" fill="none" style={{ flexShrink: 0, opacity: 0.6 }}><path d="M1 1l5 5-5 5" stroke={danger ? 'var(--error)' : 'var(--text-3)'} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>}
     </button>
   );
 
-  // Hero Avatar Card — redesigned
+  // Hero Card — banner gradient + avatar ring overlap
   const AvatarHero = () => (
-    <div className="pf-hero" style={{ padding: '24px 20px 22px' }}>
-      {/* Subtle green glow at top */}
-      <div style={{ position: 'absolute', top: -40, left: '50%', transform: 'translateX(-50%)', width: 200, height: 80, background: 'radial-gradient(ellipse, rgba(76,175,80,0.14) 0%, transparent 70%)', pointerEvents: 'none' }} />
-
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', position: 'relative' }}>
+    <div className="pf-hero">
+      <div className="pf-hero-banner" />
+      <div style={{ padding: '0 20px 22px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', marginTop: -46 }}>
         {/* Avatar */}
-        <div style={{ position: 'relative', marginBottom: 16, animation: 'pf-pop 0.5s cubic-bezier(0.34,1.56,0.64,1) 0.08s both' }}>
-          {/* Glow ring */}
-          <div style={{ position: 'absolute', inset: -4, borderRadius: '50%', background: 'conic-gradient(from 0deg, rgba(76,175,80,0.50), rgba(102,187,106,0.25), rgba(76,175,80,0.50))', animation: 'pf-spin 8s linear infinite', zIndex: 0 }} />
-          <div style={{ position: 'absolute', inset: -2, borderRadius: '50%', background: 'var(--bg)', zIndex: 1 }} />
-          <div style={{ width: 88, height: 88, borderRadius: '50%', background: 'linear-gradient(145deg, #2e7d32, #4caf50, #66bb6a)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 34, fontWeight: 800, color: '#fff', position: 'relative', zIndex: 2, overflow: 'hidden' }}>
+        <div className="pf-avatar-wrap" style={{ marginBottom: 14, animation: 'pf-pop 0.5s cubic-bezier(0.34,1.56,0.64,1) 0.08s both' }}>
+          <div className="pf-avatar-ring" />
+          <div className="pf-avatar-hole" />
+          <div className="pf-avatar">
             {isLoading ? '' : profile?.avatar ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={resolveAvatarUrl(profile.avatar) ?? profile.avatar} alt={getDisplayName()} width={88} height={88} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
+              <img src={resolveAvatarUrl(profile.avatar) ?? profile.avatar} alt={getDisplayName()} width={92} height={92} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
             ) : getInitials()}
           </div>
         </div>
@@ -908,16 +882,16 @@ function ProfilePageContent() {
             {/* Badges */}
             <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap', justifyContent: 'center', marginBottom: 4 }}>
               {profile?.docsVerified && (
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 700, color: '#30d158', background: 'rgba(48,209,88,0.12)', border: '1px solid rgba(48,209,88,0.25)', padding: '4px 10px', borderRadius: 99 }}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 700, color: 'var(--success)', background: 'var(--success-dim)', border: '1px solid var(--accent-bdr)', padding: '4px 10px', borderRadius: 99 }}>
                   <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
                   {t('profile.verified')}
                 </span>
               )}
               {profile?.id && (
-                <button className="pf-copy-btn" onClick={copyId} aria-label={copied ? t('profile.copiedId') : t('profile.copyId')} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, color: copied ? '#30d158' : 'var(--text-2)', background: copied ? 'rgba(48,209,88,0.10)' : 'var(--surface-2)', border: `1px solid ${copied ? 'rgba(48,209,88,0.25)' : 'var(--border)'}`, padding: '4px 10px', borderRadius: 99, cursor: 'pointer', transition: 'all 0.2s', WebkitTapHighlightColor: 'transparent' }}>
+                <button className="pf-copy-btn" onClick={copyId} aria-label={copied ? t('profile.copiedId') : t('profile.copyId')} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, color: copied ? 'var(--success)' : 'var(--text-2)', background: copied ? 'var(--success-dim)' : 'var(--press)', border: `1px solid ${copied ? 'var(--accent-bdr)' : 'var(--border)'}`, padding: '4px 10px', borderRadius: 99, cursor: 'pointer', transition: 'all 0.2s', fontFamily: 'inherit', WebkitTapHighlightColor: 'transparent' }}>
                   <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                   ID: {String(profile.id).slice(0, 8)}…
-                  {copied && <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#30d158" strokeWidth="2.5" strokeLinecap="round"><path d="M20 6L9 17l-5-5"/></svg>}
+                  {copied && <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="var(--success)" strokeWidth="2.5" strokeLinecap="round"><path d="M20 6L9 17l-5-5"/></svg>}
                 </button>
               )}
             </div>
@@ -927,34 +901,32 @@ function ProfilePageContent() {
     </div>
   );
 
-  // Balance Block — STC2 pattern (label top-left + icon top-right + big value)
+  // Balance Block — dua kartu (Real emerald / Demo amber), label + icon + big value
   const BalanceBlock = () => (
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
       {[
         {
           label: t('profile.balanceReal'),
-          color: '#30d158',
-          bgColor: 'rgba(48,209,88,0.12)',
-          borderColor: 'rgba(48,209,88,0.22)',
+          color: 'var(--success)',
+          bgColor: 'var(--success-dim)',
           val: balance?.real_balance,
           sub: currencyUnit,
           icon: (
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#30d158" strokeWidth="2" strokeLinecap="round"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--success)" strokeWidth="2" strokeLinecap="round"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg>
           ),
         },
         {
           label: t('profile.balanceDemo'),
-          color: '#ff9f0a',
-          bgColor: 'rgba(255,159,10,0.12)',
-          borderColor: 'rgba(255,159,10,0.22)',
+          color: 'var(--warn)',
+          bgColor: 'var(--warn-dim)',
           val: balance?.demo_balance,
           sub: t('common.virtual'),
           icon: (
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#ff9f0a" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--warn)" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
           ),
         },
-      ].map(({ label, color, bgColor, borderColor, val, sub, icon }) => (
-        <div key={label} style={{ background: 'var(--surface)', border: `1px solid ${borderColor}`, borderTop: `1px solid ${color}30`, borderRadius: 16, padding: '15px 14px', boxShadow: '0 1px 2px rgba(0,0,0,0.06)' }}>
+      ].map(({ label, color, bgColor, val, sub, icon }) => (
+        <div key={label} className="pf-card" style={{ borderRadius: 16, padding: '15px 14px' }}>
           {/* Header: label left, icon right */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
             <span style={{ fontSize: 10, fontWeight: 700, color, textTransform: 'uppercase' as const, letterSpacing: '0.07em' }}>{label}</span>
@@ -983,13 +955,10 @@ function ProfilePageContent() {
         flexDirection: 'column',
         overflow: 'hidden',
         position: 'relative',
+        transition: 'background 0.3s ease',
       }}
     >
       <style dangerouslySetInnerHTML={{ __html: PROFILE_STYLES }} />
-
-      {/* Ambient orbs */}
-      <div className="pf-orb pf-orb-1" />
-      <div className="pf-orb pf-orb-2" />
 
       {/* LOGOUT SPLASH */}
       {logoutSplash && (
@@ -1008,11 +977,11 @@ function ProfilePageContent() {
       )}
 
       {/* MOBILE HEADER */}
-      <div className="pf-mob-header" style={{ width: '100%', zIndex: 50, background: 'var(--surface)', borderBottom: '1px solid var(--border)' }}>
+      <div className="pf-mob-header" style={{ width: '100%', zIndex: 50, background: 'var(--surface)', borderBottom: '1px solid var(--hairline)', transition: 'background 0.3s ease' }}>
         <div style={{ width: '100%', padding: '11px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <button onClick={() => setLangSheetOpen(true)} title={t('language.title')} style={{ width: 36, height: 36, borderRadius: 10, background: 'var(--surface-2)', border: '1px solid var(--border)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0, WebkitTapHighlightColor: 'transparent' }}>🌐</button>
+          <button onClick={() => setLangSheetOpen(true)} title={t('language.title')} style={{ width: 36, height: 36, borderRadius: 10, background: 'var(--press)', border: '1px solid var(--hairline)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0, WebkitTapHighlightColor: 'transparent' }}>🌐</button>
           <h1 style={{ fontSize: 17, fontWeight: 700, color: 'var(--text-1)', letterSpacing: -0.4 }}>{t('profile.title')}</h1>
-          <button onClick={() => loadProfile(true)} disabled={refreshing || isLoading} title={t('profile.refreshProfile')} style={{ width: 36, height: 36, background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 10, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-dim)', opacity: (refreshing || isLoading) ? 0.4 : 1, transition: 'opacity 0.15s', flexShrink: 0, WebkitTapHighlightColor: 'transparent' }}>
+          <button onClick={() => loadProfile(true)} disabled={refreshing || isLoading} title={t('profile.refreshProfile')} style={{ width: 36, height: 36, background: 'var(--press)', border: '1px solid var(--hairline)', borderRadius: 10, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)', opacity: (refreshing || isLoading) ? 0.4 : 1, transition: 'opacity 0.15s', flexShrink: 0, WebkitTapHighlightColor: 'transparent' }}>
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" style={{ animation: (refreshing || isLoading) ? 'pf-spin 0.8s linear infinite' : 'none' }}>
               <path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
             </svg>
@@ -1026,8 +995,6 @@ function ProfilePageContent() {
         {/* LEFT SIDEBAR (desktop) */}
         <div className="pf-left">
           <AvatarHero />
-
-          <div style={{ height: '0.5px', background: 'rgba(76,175,80,0.12)', margin: '0 4px' }} />
 
           <div>
             <SectionLabel>{t('common.balance')}</SectionLabel>
@@ -1048,7 +1015,7 @@ function ProfilePageContent() {
                 {isSuperAdminUser && (
                   <TappableRow
                     icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 5L2 7"/></svg>}
-                    iconBg="linear-gradient(135deg,#34c759,#30d158)"
+                    iconBg="linear-gradient(135deg,#0E9F6E,#2DD4A7)"
                     label="Kirim Email"
                     onClick={() => setEmailOpen(true)}
                     last
@@ -1059,10 +1026,10 @@ function ProfilePageContent() {
             <Card>
               <TappableRow
                 icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>}
-                iconBg="rgba(255,69,58,0.85)" label={t('profile.logout')} danger onClick={() => setShowLogout(true)} last
+                iconBg="linear-gradient(135deg,#F87171,#E11D48)" label={t('profile.logout')} danger onClick={() => setShowLogout(true)} last
               />
             </Card>
-            <p style={{ textAlign: 'center', fontSize: 11, color: 'rgba(255,255,255,0.20)', marginTop: 6 }}>STC AutoTrade · v2.0.0</p>
+            <p style={{ textAlign: 'center', fontSize: 11, color: 'var(--text-3)', marginTop: 6 }}>STC AutoTrade · v2.0.0</p>
           </div>
         </div>
 
@@ -1072,12 +1039,12 @@ function ProfilePageContent() {
           {/* Desktop header */}
           <div className="pf-desk-header">
             <div>
-              <h1 style={{ fontSize: 24, fontWeight: 800, color: '#fff', letterSpacing: -0.6, marginBottom: 2 }}>{t('profile.title')}</h1>
-              <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.38)' }}>STC AutoTrade</p>
+              <h1 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text-1)', letterSpacing: -0.6, marginBottom: 2 }}>{t('profile.title')}</h1>
+              <p style={{ fontSize: 13, color: 'var(--text-3)' }}>STC AutoTrade</p>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <button onClick={() => setLangSheetOpen(true)} style={{ width: 38, height: 38, borderRadius: 10, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }} title={t('language.title')}>🌐</button>
-              <button onClick={() => loadProfile(true)} disabled={refreshing || isLoading} style={{ width: 38, height: 38, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 10, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#66bb6a', opacity: (refreshing || isLoading) ? 0.4 : 1, transition: 'opacity 0.15s' }}>
+              <button onClick={() => setLangSheetOpen(true)} style={{ width: 38, height: 38, borderRadius: 10, background: 'var(--press)', border: '1px solid var(--hairline)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }} title={t('language.title')}>🌐</button>
+              <button onClick={() => loadProfile(true)} disabled={refreshing || isLoading} style={{ width: 38, height: 38, background: 'var(--press)', border: '1px solid var(--hairline)', borderRadius: 10, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)', opacity: (refreshing || isLoading) ? 0.4 : 1, transition: 'opacity 0.15s' }}>
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" style={{ animation: (refreshing || isLoading) ? 'pf-spin 0.8s linear infinite' : 'none' }}>
                   <path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
                 </svg>
@@ -1087,20 +1054,20 @@ function ProfilePageContent() {
 
           {/* Refreshing indicator */}
           {refreshing && (
-            <div style={{ position: 'fixed', top: 56, right: 16, zIndex: 40, display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 20, background: 'rgba(10,10,22,0.92)', border: '1px solid rgba(76,175,80,0.28)', backdropFilter: 'blur(14px)', animation: 'pf-up 0.2s ease' }}>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#66bb6a" strokeWidth="2.2" strokeLinecap="round" style={{ animation: 'pf-spin 0.8s linear infinite' }}>
+            <div style={{ position: 'fixed', top: 56, right: 16, zIndex: 40, display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 20, background: 'var(--modal)', border: '1px solid var(--accent-bdr)', backdropFilter: 'blur(14px)', animation: 'pf-up 0.2s ease' }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2.2" strokeLinecap="round" style={{ animation: 'pf-spin 0.8s linear infinite' }}>
                 <path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
               </svg>
-              <span style={{ fontSize: 12, color: '#66bb6a', fontWeight: 500 }}>{t('common.refresh')}</span>
+              <span style={{ fontSize: 12, color: 'var(--accent)', fontWeight: 500 }}>{t('common.refresh')}</span>
             </div>
           )}
 
           {/* Error banner */}
           {error && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 15px', borderRadius: 12, background: 'rgba(255,69,58,0.10)', border: '1px solid rgba(255,69,58,0.24)' }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ff453a" strokeWidth="2" strokeLinecap="round" style={{ flexShrink: 0 }}><circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/></svg>
-              <span style={{ fontSize: 13, color: '#ff453a', flex: 1 }}>{error}</span>
-              <button onClick={() => setError(null)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#ff453a', opacity: 0.6, padding: 4, flexShrink: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 15px', borderRadius: 12, background: 'var(--error-dim)', border: '1px solid var(--error-dim)' }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--error)" strokeWidth="2" strokeLinecap="round" style={{ flexShrink: 0 }}><circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/></svg>
+              <span style={{ fontSize: 13, color: 'var(--error)', flex: 1 }}>{error}</span>
+              <button onClick={() => setError(null)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--error)', opacity: 0.6, padding: 4, flexShrink: 0 }}>
                 <svg width="11" height="11" viewBox="0 0 12 12"><path d="M1 1l10 10M11 1L1 11" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>
               </button>
             </div>
@@ -1133,27 +1100,27 @@ function ProfilePageContent() {
               ) : (
                 <>
                   <InfoRow
-                    icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#66bb6a" strokeWidth="2" strokeLinecap="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>}
+                    icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>}
                     label={t('profile.email')} value={profile?.email}
                     verified={profile?.emailVerified}
                   />
                   <InfoRow
-                    icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#66bb6a" strokeWidth="2" strokeLinecap="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.4 2 2 0 0 1 3.6 1.22h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.83a16 16 0 0 0 5.96 5.96l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>}
+                    icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.4 2 2 0 0 1 3.6 1.22h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.83a16 16 0 0 0 5.96 5.96l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>}
                     label={t('profile.phone')} value={profile?.phone || null}
                     verified={profile?.phoneVerified}
                   />
                   <InfoRow
-                    icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#66bb6a" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>}
+                    icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>}
                     label={t('profile.country')} value={profile?.country || profile?.registrationCountryIso || null}
                   />
                   {profile?.registeredAt && (
                     <InfoRow
-                      icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#66bb6a" strokeWidth="2" strokeLinecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>}
+                      icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>}
                       label={t('profile.joined')} value={formatDate(new Date(profile.registeredAt), language, { day: '2-digit', month: 'long', year: 'numeric' })}
                     />
                   )}
                   <InfoRow
-                    icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#66bb6a" strokeWidth="2" strokeLinecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}
+                    icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}
                     label={t('profile.birthday')} value={profile?.birthday ? formatDate(new Date(profile.birthday), language, { day: '2-digit', month: 'long', year: 'numeric' }) : null}
                     last
                   />
@@ -1175,7 +1142,7 @@ function ProfilePageContent() {
               />
               <TappableRow
                 icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>}
-                iconBg="linear-gradient(135deg,#4caf50,#66bb6a)"
+                iconBg="linear-gradient(135deg,#0E9F6E,#2DD4A7)"
                 label={t('common.currency')}
                 value={currencyLoading ? '…' : `${currency} (${currencyUnit})`}
                 onClick={() => currencies.length > 0 && setSheetOpen(true)}
@@ -1201,7 +1168,7 @@ function ProfilePageContent() {
                 {isSuperAdminUser && (
                   <TappableRow
                     icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 5L2 7"/></svg>}
-                    iconBg="linear-gradient(135deg,#34c759,#30d158)"
+                    iconBg="linear-gradient(135deg,#0E9F6E,#2DD4A7)"
                     label="Kirim Email"
                     onClick={() => setEmailOpen(true)}
                     last
@@ -1223,7 +1190,7 @@ function ProfilePageContent() {
               />
               <TappableRow
                 icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>}
-                iconBg="linear-gradient(135deg,#34c759,#30d158)"
+                iconBg="linear-gradient(135deg,#10B981,#34D399)"
                 label={t('profile.privacyPolicy')}
                 onClick={() => window.open('https://stockity.id/information/privacy', '_blank')}
                 last
@@ -1236,14 +1203,14 @@ function ProfilePageContent() {
             <Card>
               <TappableRow
                 icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>}
-                iconBg="rgba(255,69,58,0.85)"
+                iconBg="linear-gradient(135deg,#F87171,#E11D48)"
                 label={t('profile.logout')}
                 danger
                 onClick={() => setShowLogout(true)}
                 last
               />
             </Card>
-            <p style={{ textAlign: 'center', fontSize: 12, color: 'rgba(255,255,255,0.22)', paddingBottom: 4 }}>STC AutoTrade · v2.0.0</p>
+            <p style={{ textAlign: 'center', fontSize: 12, color: 'var(--text-3)', paddingBottom: 4 }}>STC AutoTrade · v2.0.0</p>
           </div>
 
         </div>

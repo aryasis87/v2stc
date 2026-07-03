@@ -16,30 +16,17 @@ export function BottomNav() {
   const pathname = usePathname();
   const { isDarkMode } = useDarkMode();
   const [mounted, setMounted] = useState(false);
-  const [isDesktop, setIsDesktop] = useState(false);
 
   useEffect(() => { setMounted(true); }, []);
-
-  // Deteksi lebar desktop — profile di desktop (≥768px) tetap bertema gelap
-  // (pf-root tidak punya override light di desktop), jadi nav ikut gelap di sana.
-  useEffect(() => {
-    const mq = window.matchMedia('(min-width: 768px)');
-    const sync = () => setIsDesktop(mq.matches);
-    sync();
-    mq.addEventListener('change', sync);
-    return () => mq.removeEventListener('change', sync);
-  }, []);
 
   if (!mounted) return null;
 
   // Sembunyikan nav di halaman webview agar konten full-screen
   if (pathname === '/webview') return null;
 
-  const isProfile = pathname === '/profile' || pathname.startsWith('/profile/');
-  // Nav mengikuti tema aplikasi di SEMUA halaman (dashboard, history, profile),
-  // sehingga tidak ada lagi nav terang di atas halaman gelap atau sebaliknya.
-  // Pengecualian: profile versi desktop selalu gelap → nav ikut gelap.
-  const useDarkNav = isDarkMode || (isProfile && isDesktop);
+  // Nav mengikuti tema aplikasi di SEMUA halaman (dashboard, history, profile).
+  // Profile kini theme-aware penuh di semua breakpoint, jadi tidak ada pengecualian.
+  const useDarkNav = isDarkMode;
 
   // Accent emerald + inactive grey, sinkron dgn palet dashboard (getColors).
   const theme = useDarkNav
