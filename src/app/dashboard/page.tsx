@@ -46,37 +46,40 @@ function getColors(isDark: boolean) {
   // textPrimary=#1F2937  textSecondary=#6B7280  textMuted=#9CA3AF
   // successColor=#059669  errorColor=#DC2626  warningColor=#D97706
   // borderColor=#D6DADF
+  // ── Redesign 2026: palet minimalis-modern (Linear/Vercel-style) ───────────
+  // Border hairline netral (bukan hijau tebal), surface berlapis halus,
+  // aksen emerald yang lebih kalem, hierarki teks lebih jelas.
   return {
-    // Surfaces
-    bg:    isDark ? '#111111' : '#EAECEF',
-    card:  isDark ? '#272727' : '#FFFFFF',
-    card2: isDark ? '#303030' : '#F0F2F5',
-    // Borders — green border yang kuat seperti semula
-    bdr:   isDark ? 'rgba(70, 184, 104, 0.65)' : '#9CA3AF',
-    bdrAct:'rgba(16,185,129,0.80)',
-    // Primary accent
-    cyan:  isDark ? '#22D3A0' : '#047857',
-    cyand: isDark ? 'rgba(34,211,160,0.20)' : 'rgba(4,120,87,0.10)',
+    // Surfaces — near-black berlapis (dark) / abu sangat terang (light)
+    bg:    isDark ? '#0B0C0E' : '#F6F7F9',
+    card:  isDark ? '#141518' : '#FFFFFF',
+    card2: isDark ? '#1B1D21' : '#F1F3F5',
+    // Borders — hairline netral tipis; aktif = emerald halus
+    bdr:   isDark ? 'rgba(255,255,255,0.08)' : '#E6E8EB',
+    bdrAct:isDark ? 'rgba(45,212,167,0.55)'  : 'rgba(5,150,105,0.45)',
+    // Primary accent — emerald bersih
+    cyan:  isDark ? '#2DD4A7' : '#059669',
+    cyand: isDark ? 'rgba(45,212,167,0.14)' : 'rgba(5,150,105,0.09)',
     // Error / loss
-    coral: isDark ? '#F87171' : '#B91C1C',
-    cord:  isDark ? 'rgba(248,113,113,0.18)' : 'rgba(185,28,28,0.10)',
+    coral: isDark ? '#FB7185' : '#E11D48',
+    cord:  isDark ? 'rgba(251,113,133,0.14)' : 'rgba(225,29,72,0.08)',
     // Warning / martingale
-    amber: isDark ? '#FCD34D' : '#B45309',
-    ambd:  isDark ? 'rgba(252,211,77,0.18)'  : 'rgba(180,83,9,0.10)',
+    amber: isDark ? '#FBBF24' : '#B45309',
+    ambd:  isDark ? 'rgba(251,191,36,0.14)'  : 'rgba(180,83,9,0.09)',
     // Misc accent colors
-    violet: isDark ? '#D37EFF' : '#7C3AED',
-    vltd:  isDark ? 'rgba(211,126,255,0.16)' : 'rgba(124,58,237,0.10)',
-    sky:   isDark ? '#4ADE80' : '#15803D',
-    skyd:  isDark ? 'rgba(74,222,128,0.16)'  : 'rgba(21,128,61,0.10)',
-    orange:'#FF6B35',
-    orgd:  isDark ? 'rgba(255,107,53,0.16)'  : 'rgba(255,107,53,0.10)',
-    pink:  isDark ? '#FF375F' : '#BE185D',
-    pinkd: isDark ? 'rgba(255,55,95,0.16)'   : 'rgba(190,24,93,0.10)',
-    // Text
-    text:  isDark ? '#F0F4FF' : '#0D1117',
-    sub:   isDark ? '#9BAAC4' : '#2D3748',
-    muted: isDark ? 'rgba(155,170,196,0.70)' : '#4A5568',
-    faint: isDark ? 'rgba(34,211,160,0.08)'  : 'rgba(4,120,87,0.06)',
+    violet: isDark ? '#C084FC' : '#7C3AED',
+    vltd:  isDark ? 'rgba(192,132,252,0.14)' : 'rgba(124,58,237,0.08)',
+    sky:   isDark ? '#4ADE80' : '#16A34A',
+    skyd:  isDark ? 'rgba(74,222,128,0.14)'  : 'rgba(22,163,74,0.09)',
+    orange: isDark ? '#FB923C' : '#EA580C',
+    orgd:  isDark ? 'rgba(251,146,60,0.14)'  : 'rgba(234,88,12,0.09)',
+    pink:  isDark ? '#F472B6' : '#BE185D',
+    pinkd: isDark ? 'rgba(244,114,182,0.14)' : 'rgba(190,24,93,0.08)',
+    // Text — hierarki lebih jelas, netral (bukan kebiruan)
+    text:  isDark ? '#F4F5F7' : '#0F172A',
+    sub:   isDark ? '#A1A8B3' : '#475569',
+    muted: isDark ? 'rgba(161,168,179,0.62)' : '#94A3B8',
+    faint: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(2,6,23,0.035)',
   };
 }
 
@@ -222,7 +225,7 @@ const RealtimeClock: React.FC<{t:(k:string)=>string;lang:string;isBotRunning?:bo
       borderRadius:16,overflow:'hidden',height:'100%',
       background:C.card,
       border:`1px solid ${C.bdr}`,
-      boxShadow:C.bg==='#161616'?`0 4px 18px rgba(0,0,0,0.28)`:`0 2px 8px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04)`,
+      boxShadow:C.bg==='#0B0C0E'?`0 4px 18px rgba(0,0,0,0.28)`:`0 2px 8px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04)`,
       padding:'14px 14px 10px',
       display:'flex',flexDirection:'column',gap:6,
     }}>
@@ -273,7 +276,7 @@ const RealtimeClockCompact: React.FC<{t:(k:string)=>string;lang:string;isBotRunn
       width:'100%',borderRadius:14,overflow:'hidden',
       background:C.bg,
       border:`1px solid ${C.bdr}`,
-      boxShadow:C.bg==='#161616'
+      boxShadow:C.bg==='#0B0C0E'
         ?`0 2px 0 ${C.cyan}08 inset, 0 8px 24px rgba(0,0,0,0.35), 0 2px 8px rgba(0,0,0,0.25)`
         :`0 2px 0 ${C.cyan}08 inset, 0 2px 8px rgba(0,0,0,0.07), 0 1px 3px rgba(0,0,0,0.04)`,
       padding:'10px 12px 8px',
@@ -1102,7 +1105,7 @@ const OrderInputModal: React.FC<{open:boolean;onClose:()=>void;orders:ScheduleOr
         background:C.bg,
         borderRadius:24,
         border:`1px solid rgba(52,211,153,0.25)`,
-        boxShadow:`0 32px 80px rgba(0,0,0,${C.bg==='#111111'?'0.70':'0.18'}), 0 8px 24px rgba(0,0,0,${C.bg==='#111111'?'0.50':'0.10'})`,
+        boxShadow:`0 32px 80px rgba(0,0,0,${C.bg==='#0B0C0E'?'0.70':'0.18'}), 0 8px 24px rgba(0,0,0,${C.bg==='#0B0C0E'?'0.50':'0.10'})`,
         overflow:'hidden',
         animation:'slide-up 0.28s cubic-bezier(0.32,0.72,0,1)',
       }}>
@@ -2355,7 +2358,7 @@ const MobileSessionSheet: React.FC<{
         background:C.bg,
         borderRadius:24,
         border:`0.4px solid ${ac}66`,
-        boxShadow:`0 32px 80px rgba(0,0,0,${C.bg==='#111111'?'0.70':'0.18'}), 0 8px 24px rgba(0,0,0,${C.bg==='#111111'?'0.50':'0.10'})`,
+        boxShadow:`0 32px 80px rgba(0,0,0,${C.bg==='#0B0C0E'?'0.70':'0.18'}), 0 8px 24px rgba(0,0,0,${C.bg==='#0B0C0E'?'0.50':'0.10'})`,
         overflow:'hidden',
         animation:'slide-up 0.28s cubic-bezier(0.32,0.72,0,1)',
       }}>
@@ -2434,7 +2437,7 @@ const ModePickerModal: React.FC<{
         borderRadius:20,
         border:`1px solid ${C.bdr}`,
         animation:'slide-up 0.28s cubic-bezier(0.32,0.72,0,1)',
-        boxShadow:`0 20px 60px rgba(0,0,0,${C.bg==='#111111'?'0.60':'0.14'})`,
+        boxShadow:`0 20px 60px rgba(0,0,0,${C.bg==='#0B0C0E'?'0.60':'0.14'})`,
         maxHeight:'85dvh',
         overflowY:'auto',
       }}>
@@ -2714,7 +2717,7 @@ const MartingaleDialog: React.FC<{
       <div style={{
         position:'relative',width:'100%',maxWidth:420,maxHeight:'88dvh',
         background:C.card, borderRadius:20,border:`1px solid ${C.bdr}`,
-        boxShadow:`0 20px 60px rgba(0,0,0,${C.bg==='#111111'?'0.55':'0.12'})`,
+        boxShadow:`0 20px 60px rgba(0,0,0,${C.bg==='#0B0C0E'?'0.55':'0.12'})`,
         overflow:'hidden',display:'flex',flexDirection:'column',
         animation:'slide-up 0.22s cubic-bezier(0.32,0.72,0,1)',
       }}>
@@ -5084,11 +5087,10 @@ export default function DashboardPage() {
               <div style={{display:'flex',flexDirection:'column',gap:12}}>
                 {/* Chart */}
                 <div style={{
-                  borderRadius:20,overflow:'hidden',
-                  background:isDarkMode?C.card2:C.card,
-                  border:`1.5px solid ${isDarkMode?'rgba(52,211,153,0.25)':'#9CA3AF'}`,
-                  boxShadow:isDarkMode?'0 4px 24px rgba(0,0,0,0.55), 0 1px 0 rgba(255,255,255,0.06) inset':'none',
-                  padding:4,
+                  borderRadius:16,overflow:'hidden',
+                  background:C.card,
+                  border:`1px solid ${C.bdr}`,
+                  boxShadow:isDarkMode?'0 4px 24px rgba(0,0,0,0.45)':'0 1px 3px rgba(0,0,0,0.05)',
                 }}>
                   {/* STC2-style card header */}
                   <div style={{
@@ -5341,7 +5343,7 @@ export default function DashboardPage() {
               <div style={{display:'flex',flexDirection:'column',gap:12}}>
 
                 {/* Chart card */}
-                <div style={{borderRadius:20,overflow:'hidden',background:isDarkMode?C.card2:C.card,border:`1.5px solid ${isDarkMode?'rgba(52,211,153,0.25)':'#9CA3AF'}`,boxShadow:isDarkMode?'0 4px 24px rgba(0,0,0,0.55), 0 1px 0 rgba(255,255,255,0.06) inset':'none',padding:4}}>
+                <div style={{borderRadius:16,overflow:'hidden',background:C.card,border:`1px solid ${C.bdr}`,boxShadow:isDarkMode?'0 4px 24px rgba(0,0,0,0.45)':'0 1px 3px rgba(0,0,0,0.05)'}}>
                   <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'12px 16px 10px',borderBottom:`1px solid ${isDarkMode?C.bdr:'rgba(0,0,0,0.06)'}`}}>
                     <div style={{display:'flex',alignItems:'center',gap:7}}>
                       <Activity style={{width:13,height:13,color:isActiveMode?modeAccent(tradingMode):C.cyan}}/>

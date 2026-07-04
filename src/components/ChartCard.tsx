@@ -147,7 +147,8 @@ export const ChartCard: React.FC<ChartCardProps> = ({ assetSymbol, height = 400 
 
     const accentRGB = isPos ? '16,185,129' : '239,68,68';
     const lineCol   = isPos ? '#10B981' : '#EF4444';
-    const bg        = dark ? '#161616' : '#F8F9FA';
+    // Sinkron dgn warna kartu dashboard (getColors: card #141518 / #FFFFFF)
+    const bg        = dark ? '#141518' : '#FFFFFF';
 
     // Padding layout
     // Mobile: r=48 for price badge, b=18 for time labels, t=20 for % pill
@@ -511,7 +512,9 @@ export const ChartCard: React.FC<ChartCardProps> = ({ assetSymbol, height = 400 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [height, deviceType]);
 
-  const bg = isDarkMode ? '#161616' : '#F8F9FA';
+  const bg = isDarkMode ? '#141518' : '#FFFFFF';
+  // ChartCard menyatu dgn kartu induk: tanpa border/radius sendiri (induk yang
+  // membingkai & membulatkan via overflow:hidden) → tidak ada kotak-dalam-kotak.
 
   // Mobile: absolute fill (parent must be position:relative) — reliable across all browsers.
   // Tablet/Desktop: keep width/height:100% with explicit minHeight fallback.
@@ -519,27 +522,19 @@ export const ChartCard: React.FC<ChartCardProps> = ({ assetSymbol, height = 400 
   const containerStyle: React.CSSProperties = isMob
     ? {
         background: bg,
-        borderRadius: 10,
         overflow: 'hidden',
         position: 'absolute',
         inset: 0,
         transition: 'background 0.3s',
-        border: isDarkMode
-          ? '1px solid rgba(125,211,252,0.40)'
-          : '1px solid #9CA3AF',
       }
     : {
         background: bg,
-        borderRadius: 10,
         overflow: 'hidden',
         width: '100%',
         height: '100%',
         minHeight: deviceType === 'tablet' ? 300 : height,
         position: 'relative',
         transition: 'background 0.3s',
-        border: isDarkMode
-          ? '1px solid rgba(125,211,252,0.40)'
-          : '1px solid #9CA3AF',
       };
 
   return (
