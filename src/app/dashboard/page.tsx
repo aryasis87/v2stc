@@ -216,30 +216,42 @@ const RealtimeClockCompact: React.FC<{t:(k:string)=>string;lang:string;isBotRunn
   const [time,setTime] = useState<Date|null>(null);
   useEffect(()=>{setTime(new Date());const id=setInterval(()=>setTime(new Date()),1000);return()=>clearInterval(id);},[]);
   const locale = langToIntlLocale(lang);
-  const fmt     = (d:Date) => {const h=String(d.getHours()).padStart(2,'0');const m=String(d.getMinutes()).padStart(2,'0');const s=String(d.getSeconds()).padStart(2,'0');return`${h}:${m}:${s}`;};
   const fmtDay  = (d:Date) => d.toLocaleDateString(locale,{weekday:'short'});
   const fmtDate = (d:Date) => d.toLocaleDateString(locale,{day:'2-digit',month:'short',year:'numeric'});
   const tz      = () => {if(!time)return'';const o=-time.getTimezoneOffset()/60;return`UTC${o>=0?'+':''}${o}`;};
-  const dotColor = isBotRunning ? C.cyan : C.coral;
+  const liveCol = isBotRunning ? C.cyan : C.muted;
+  const hhmm = time ? `${String(time.getHours()).padStart(2,'0')}:${String(time.getMinutes()).padStart(2,'0')}` : '--:--';
+  const ss   = time ? String(time.getSeconds()).padStart(2,'0') : '--';
   /*
-   * Redesign kompetisi v2: kolom chart mobile sangat sempit (~190px),
-   * jadi susunan DUA BARIS agar tidak pernah saling menimpa:
-   *   baris 1 — jam digital (kiri) + dot status (kanan)
-   *   baris 2 — hari, tanggal + zona waktu (muted, ellipsis)
+   * Redesign kompetisi v3 — look baru, bukan jam 7-segment retro lagi:
+   * strip lembut (bg faint, tanpa border) berisi
+   *   baris 1 — jam tabular besar dengan DETIK LEBIH KECIL (detail
+   *             tipografis khas trading terminal modern) + pill LIVE/OFF
+   *   baris 2 — hari, tanggal, zona waktu (muted, ellipsis)
    */
   return (
-    <div style={{display:'flex',flexDirection:'column',gap:3,minWidth:0}}>
+    <div style={{display:'flex',flexDirection:'column',gap:2,minWidth:0,background:C.faint,borderRadius:10,padding:'7px 10px'}}>
       <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:8,minWidth:0}}>
         <p suppressHydrationWarning className="dsh-num" style={{
-          fontSize:16,fontWeight:700,lineHeight:1,letterSpacing:'0.05em',
-          fontFamily:"'DSEG7 Classic','Share Tech Mono',ui-monospace,monospace",
-          color:C.text,margin:0,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',minWidth:0,
-        }}>{time?fmt(time):'--:--:--'}</p>
+          fontSize:17,fontWeight:700,lineHeight:1,
+          color:C.text,margin:0,whiteSpace:'nowrap',overflow:'hidden',minWidth:0,
+          display:'flex',alignItems:'baseline',gap:1,
+        }}>
+          {hhmm}
+          <span style={{fontSize:11,fontWeight:600,color:C.muted}}>:{ss}</span>
+        </p>
         <span style={{
-          width:6,height:6,borderRadius:'50%',flexShrink:0,
-          background:dotColor,
-          animation:isBotRunning?'ping 1.6s ease-in-out infinite':undefined,
-        }}/>
+          display:'inline-flex',alignItems:'center',gap:4,flexShrink:0,
+          fontSize:8.5,fontWeight:700,letterSpacing:'0.08em',
+          color:liveCol,background:`${liveCol}14`,
+          borderRadius:99,padding:'2px 7px',
+        }}>
+          <span style={{
+            width:5,height:5,borderRadius:'50%',background:isBotRunning?C.cyan:C.coral,
+            animation:isBotRunning?'ping 1.6s ease-in-out infinite':undefined,
+          }}/>
+          {isBotRunning?'LIVE':'OFF'}
+        </span>
       </div>
       <span suppressHydrationWarning style={{fontSize:9.5,color:C.muted,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',minWidth:0}}>
         {time?`${fmtDay(time)}, ${fmtDate(time)} · ${tz()}`:''}
@@ -252,22 +264,22 @@ const RealtimeClockCompact: React.FC<{t:(k:string)=>string;lang:string;isBotRunn
 const RealtimeClockDesktop: React.FC = () => {
   const [time, setTime] = useState<Date|null>(null);
   useEffect(()=>{setTime(new Date());const id=setInterval(()=>setTime(new Date()),1000);return()=>clearInterval(id);},[]);
-  const fmt  = (d:Date)=>{const h=String(d.getHours()).padStart(2,'0');const m=String(d.getMinutes()).padStart(2,'0');const s=String(d.getSeconds()).padStart(2,'0');return`${h}:${m}:${s}`;};
   const fmtD = (d:Date)=>d.toLocaleDateString('id-ID',{weekday:'short',day:'2-digit',month:'short'});
   const tz   = ()=>{if(!time)return'';const o=-time.getTimezoneOffset()/60;return`UTC${o>=0?'+':''}${o}`;};
+  const hhmm = time ? `${String(time.getHours()).padStart(2,'0')}:${String(time.getMinutes()).padStart(2,'0')}` : '--:--';
+  const ss   = time ? String(time.getSeconds()).padStart(2,'0') : '--';
   return (
-    <div>
-      <p suppressHydrationWarning style={{
-        fontSize:15,fontWeight:700,letterSpacing:'0.06em',lineHeight:1,
-        color:C.text,
-        fontFamily:"'DSEG7 Classic','Share Tech Mono',ui-monospace,monospace",
-        
+    <div style={{textAlign:'right'}}>
+      <p suppressHydrationWarning className="dsh-num" style={{
+        fontSize:15,fontWeight:700,lineHeight:1,color:C.text,
+        display:'flex',alignItems:'baseline',justifyContent:'flex-end',gap:1,
       }}>
-        {time?fmt(time):'--:--:--'}
+        {hhmm}
+        <span style={{fontSize:10.5,fontWeight:600,color:C.muted}}>:{ss}</span>
       </p>
-      <div suppressHydrationWarning style={{display:'flex',alignItems:'center',gap:5,marginTop:2}}>
+      <div suppressHydrationWarning style={{display:'flex',alignItems:'center',justifyContent:'flex-end',gap:5,marginTop:3}}>
         <span style={{fontSize:10,color:C.muted}}>{time?fmtD(time):''}</span>
-        <span style={{fontSize:9,fontWeight:700,color:C.cyan,background:'rgba(16,185,129,0.10)',border:'1px solid rgba(16,185,129,0.20)',borderRadius:4,padding:'0px 4px'}}>{tz()}</span>
+        <span style={{fontSize:9,fontWeight:600,color:C.cyan,background:`${C.cyan}12`,borderRadius:4,padding:'0px 4px'}}>{tz()}</span>
       </div>
     </div>
   );
@@ -5118,8 +5130,8 @@ export default function DashboardPage() {
             <div style={{display:'flex',flexDirection:'row',gap:g,alignItems:'stretch'}}>
               {/* LEFT: chart card — stretches to match right column height */}
               <Card style={{flex:3,padding:12,display:'flex',flexDirection:'column',minWidth:0}}>
-                {/* Header: jam realtime (flat, satu baris) */}
-                <div style={{marginBottom:8,paddingBottom:8,borderBottom:`1px solid ${C.bdr}`,flexShrink:0}}>
+                {/* Header: strip jam realtime (look baru — bg faint, tanpa border) */}
+                <div style={{marginBottom:8,flexShrink:0}}>
                   <RealtimeClockCompact t={t} lang={language} isBotRunning={isActiveMode}/>
                 </div>
                 {/* Sub-header: asset + status */}
