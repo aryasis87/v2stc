@@ -9,6 +9,7 @@ import { checkIsAdmin, checkIsSuperAdmin } from '@/lib/supabaseRepository';
 import { LanguageProvider, useLanguage, formatCurrency, formatDate, Language } from '@/lib';
 import { applyLanguageFromCountry } from '@/lib/LanguageContext';
 import { SESSION_KEYS } from '@/lib/storage';
+import { APP_VERSION_NAME } from '@/lib/appVersion';
 import { LanguageSheet } from '@/components/LanguageSelector';
 
 // ─────────────────────────────────────────────
@@ -1029,7 +1030,7 @@ function ProfilePageContent() {
                 iconBg="linear-gradient(135deg,#F87171,#E11D48)" label={t('profile.logout')} danger onClick={() => setShowLogout(true)} last
               />
             </Card>
-            <p style={{ textAlign: 'center', fontSize: 11, color: 'var(--text-3)', marginTop: 6 }}>STC AutoTrade · v2.0.0</p>
+            <p style={{ textAlign: 'center', fontSize: 11, color: 'var(--text-3)', marginTop: 6 }}>STC AutoTrade · v{APP_VERSION_NAME}</p>
           </div>
         </div>
 
@@ -1210,7 +1211,7 @@ function ProfilePageContent() {
                 last
               />
             </Card>
-            <p style={{ textAlign: 'center', fontSize: 12, color: 'var(--text-3)', paddingBottom: 4 }}>STC AutoTrade · v2.0.0</p>
+            <p style={{ textAlign: 'center', fontSize: 12, color: 'var(--text-3)', paddingBottom: 4 }}>STC AutoTrade · v{APP_VERSION_NAME}</p>
           </div>
 
         </div>
