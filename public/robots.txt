@@ -1,0 +1,10 @@
+# stcautotradepro.id = aplikasi trading (login-gated), BUKAN situs konten.
+# Domain ini sengaja di-noindex via meta robots di layout.tsx.
+#
+# JANGAN tambahkan "Disallow" di sini: halaman yang diblokir crawl tidak
+# pernah terlihat noindex-nya oleh Googlebot, sehingga URL-nya justru bisa
+# nyangkut di indeks sebagai "Indexed, though blocked by robots.txt".
+# Crawl diizinkan penuh -> Googlebot membaca meta noindex -> URL keluar
+# dari indeks secara permanen. Situs SEO satu-satunya: https://stcautotrade.id
+User-Agent: *
+Allow: /

@@ -13,15 +13,9 @@ export const metadata: Metadata = {
     'STC AutoTrade Pro: bot auto trading & sinyal otomatis untuk Stockity. Atur jadwal trading, eksekusi order otomatis, dan pantau saldo serta profit real-time dari satu dashboard.',
   applicationName: 'STC AutoTrade Pro',
   generator: 'Next.js',
-  keywords: [
-    'STC AutoTrade', 'STC AutoTrade Pro', 'auto trade stockity', 'bot trading stockity',
-    'robot stockity', 'sinyal trading stockity', 'auto trading otomatis',
-    'bot binary option', 'robot trading stockity', 'stockity indonesia',
-  ],
   authors: [{ name: 'STC AutoTrade' }],
   creator: 'STC AutoTrade',
   publisher: 'STC AutoTrade',
-  alternates: { canonical: '/' },
   openGraph: {
     type: 'website',
     locale: 'id_ID',
@@ -39,7 +33,21 @@ export const metadata: Metadata = {
       'Bot auto trading & sinyal otomatis untuk Stockity. Pantau saldo & profit real-time dari satu dashboard.',
     images: ['/headerdark.png'],
   },
-  robots: { index: true, follow: true },
+  /*
+   * SEO: domain ini adalah APLIKASI (login-gated), bukan situs konten.
+   * Satu-satunya wajah di Google adalah stcautotrade.id (webstc).
+   * noindex di sini mencegah: (1) kanibalisasi keyword dengan webstc,
+   * (2) halaman login/dashboard masuk indeks sebagai thin content,
+   * (3) error "Duplicate canonical" di Search Console.
+   * OG/twitter card tetap dipertahankan untuk preview share WA/Telegram.
+   * PENTING: robots.txt TIDAK boleh Disallow halaman ini — Googlebot harus
+   * bisa crawl untuk MELIHAT noindex (lihat public/robots.txt).
+   */
+  robots: {
+    index: false,
+    follow: false,
+    googleBot: { index: false, follow: false },
+  },
   icons: {
     icon: [
       { url: '/logo.png', media: '(prefers-color-scheme: light)' },
