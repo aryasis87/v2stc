@@ -2317,11 +2317,9 @@ const ModeSessionPanel: React.FC<{
           <span style={{ color: C.muted, opacity: 0.6, flexShrink: 0, display: 'flex', alignItems: 'center' }}>
             {active.icon}
           </span>
-          <div style={{ textAlign: 'left', minWidth: 0 }}>
-            <p style={{ fontSize: 11, color: C.muted, margin: 0, lineHeight: 1 }}>Trading Mode</p>
-            <p style={{ fontSize: 14, fontWeight: 700, color: C.text, margin: '3px 0 0', lineHeight: 1.2,
-              whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{active.label}</p>
-          </div>
+          {/* Label "Trading Mode" dihapus — mode sudah terpilih, nama mode saja cukup */}
+          <p style={{ fontSize: 14, fontWeight: 650, color: C.text, margin: 0, lineHeight: 1.2, minWidth: 0,
+            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'left' }}>{active.label}</p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
           {locked && (
