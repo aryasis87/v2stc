@@ -565,48 +565,42 @@ const PickerModal: React.FC<{open:boolean;onClose:()=>void;title:string;options:
   if(!open) return null;
   const filtered = q.trim() ? options.filter(o=>o.label.toLowerCase().includes(q.toLowerCase())||o.value.toLowerCase().includes(q.toLowerCase())) : options;
   
-  // Theme-aware colors
-  const modalBg = isDark 
-    ? '#1B1D21'
-    : '#ffffff';
-  const headerBorder = isDark ? 'rgba(255,255,255,0.10)' : '#E6E8EB';
-  const closeBtnBg = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)';
-  const closeBtnBorder = isDark ? 'rgba(255,255,255,0.14)' : '#E6E8EB';
-  const closeBtnColor = isDark ? 'rgba(255,255,255,0.65)' : 'rgba(0,0,0,0.55)';
-  const itemBorder = isDark ? 'rgba(255,255,255,0.08)' : '#E6E8EB';
-  const iconBg = isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.05)';
-  const iconBorder = isDark ? 'rgba(255,255,255,0.16)' : '#E6E8EB';
+  /*
+   * Look baru popup picker: kartu radius 20 tanpa border-header,
+   * baris opsi bersih dengan inset padding (tanpa garis kiri/kotak radio) —
+   * terpilih = bg tint + ikon Check accent; hover = faint (kelas dsh-row).
+   */
+  const modalBg = isDark ? '#1B1D21' : '#ffffff';
+  const iconBg  = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(2,6,23,0.045)';
   const iconColor = isDark ? 'rgba(255,255,255,0.65)' : 'rgba(0,0,0,0.55)';
-  const radioBg = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
-  
+
   return (
     <div style={{position:'fixed',inset:0,zIndex:80,display:'flex',flexDirection:'column',justifyContent:'center',alignItems:'center',padding:'16px 16px calc(env(safe-area-inset-bottom, 0px) + 16px) 16px',animation:'fade-in 0.15s ease'}}>
-      <div onClick={onClose} style={{position:'absolute',inset:0,background:isDark?'rgba(0,0,0,0.8)':'rgba(0,0,0,0.5)',backdropFilter:'blur(12px)'}}/>
-      <div style={{position:'relative',width:'100%',maxWidth:480,maxHeight:'80%',display:'flex',flexDirection:'column',background:modalBg,borderRadius:16,border:`1px solid ${C.bdr}`,boxShadow:isDark?'0 24px 80px rgba(0,0,0,0.7)':'0 24px 80px rgba(0,0,0,0.3)',overflow:'hidden',animation:'slide-up 0.25s cubic-bezier(0.32,0.72,0,1)'}}>
-        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'11px 16px 12px',borderBottom:`1px solid ${headerBorder}`,flexShrink:0}}>
-          <span style={{fontSize:14,fontWeight:600,color:C.text}}>{title}</span>
-          <button onClick={onClose} style={{width:28,height:28,display:'flex',alignItems:'center',justifyContent:'center',borderRadius:8,border:`1px solid ${closeBtnBorder}`,background:closeBtnBg,color:closeBtnColor,cursor:'pointer'}}>
-            <X style={{width:13,height:13}}/>
+      <div onClick={onClose} style={{position:'absolute',inset:0,background:'rgba(0,0,0,0.55)',backdropFilter:'blur(10px)',WebkitBackdropFilter:'blur(10px)'}}/>
+      <div style={{position:'relative',width:'100%',maxWidth:480,maxHeight:'80%',display:'flex',flexDirection:'column',background:modalBg,borderRadius:20,border:`1px solid ${C.bdr}`,boxShadow:isDark?'0 24px 80px rgba(0,0,0,0.6)':'0 24px 80px rgba(15,23,42,0.25)',overflow:'hidden',animation:'slide-up 0.25s cubic-bezier(0.32,0.72,0,1)'}}>
+        {/* Header tanpa garis — title mengambang, tombol tutup polos */}
+        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'16px 18px 8px',flexShrink:0}}>
+          <span style={{fontSize:15,fontWeight:650,letterSpacing:'-0.01em',color:C.text}}>{title}</span>
+          <button onClick={onClose} style={{width:28,height:28,display:'flex',alignItems:'center',justifyContent:'center',borderRadius:99,border:'none',background:C.faint,color:C.muted,cursor:'pointer'}}>
+            <X style={{width:14,height:14}}/>
           </button>
         </div>
         {searchable&&(
-          <div style={{padding:'10px 14px',borderBottom:`1px solid ${headerBorder}`,flexShrink:0}}>
-            <input className="ds-input" style={{fontSize:13,borderRadius:8}} placeholder={T('dashboard.searchAsset')} value={q} onChange={e=>setQ(e.target.value)}/>
+          <div style={{padding:'6px 14px 10px',flexShrink:0}}>
+            <input className="ds-input" style={{fontSize:13,borderRadius:10}} placeholder={T('dashboard.searchAsset')} value={q} onChange={e=>setQ(e.target.value)}/>
           </div>
         )}
-        <div style={{overflowY:'auto',flex:1}}>
-          {filtered.map((opt,i)=>{
+        <div style={{overflowY:'auto',flex:1,padding:'4px 8px 10px'}}>
+          {filtered.map(opt=>{
             const isSel = opt.value===value;
             return (
-              <button key={opt.value} onClick={()=>{onSelect(opt.value);onClose();}} style={{
-                width:'100%',textAlign:'left',display:'flex',alignItems:'center',gap:12,padding:'11px 16px',
-                background:isSel?`${C.cyan}15`:'transparent',
-                borderBottom:i<filtered.length-1?`1px solid ${itemBorder}`:'none',
-                borderLeft:isSel?`2px solid ${C.cyan}`:'2px solid transparent',
-                borderTop:'none',borderRight:'none',cursor:'pointer',
+              <button key={opt.value} className={isSel?undefined:'dsh-row'} onClick={()=>{onSelect(opt.value);onClose();}} style={{
+                width:'100%',textAlign:'left',display:'flex',alignItems:'center',gap:12,padding:'10px 10px',
+                background:isSel?`${C.cyan}12`:'transparent',
+                border:'none',borderRadius:12,cursor:'pointer',marginBottom:2,
               }}>
                 {opt.icon!==undefined&&(
-                  <div style={{width:32,height:32,borderRadius:8,flexShrink:0,overflow:'hidden',display:'flex',alignItems:'center',justifyContent:'center',background:isSel?`${C.cyan}15`:iconBg,border:`1px solid ${isSel?`${C.cyan}40`:iconBorder}`}}>
+                  <div style={{width:32,height:32,borderRadius:9,flexShrink:0,overflow:'hidden',display:'flex',alignItems:'center',justifyContent:'center',background:iconBg}}>
                     {opt.icon?(
                       <img src={opt.icon} alt="" style={{width:'100%',height:'100%',objectFit:'contain',padding:4}} onError={e=>{(e.currentTarget as HTMLImageElement).style.display='none'}}/>
                     ):(
@@ -615,12 +609,10 @@ const PickerModal: React.FC<{open:boolean;onClose:()=>void;title:string;options:
                   </div>
                 )}
                 <div style={{flex:1,minWidth:0}}>
-                  <span style={{display:'block',fontSize:13,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',color:isSel?C.cyan:C.text,fontWeight:isSel?600:400}}>{opt.label}</span>
+                  <span style={{display:'block',fontSize:13,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',color:C.text,fontWeight:isSel?600:500}}>{opt.label}</span>
                   {opt.sub&&<span style={{display:'block',fontSize:11,marginTop:2,color:C.muted,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{opt.sub}</span>}
                 </div>
-                <div style={{flexShrink:0,width:20,height:20,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',background:isSel?`${C.cyan}15`:radioBg,border:`1px solid ${isSel?C.cyan:iconBorder}`}}>
-                  {isSel&&<span style={{fontSize:10,color:C.cyan}}>✓</span>}
-                </div>
+                {isSel&&<Check style={{width:16,height:16,color:C.cyan,flexShrink:0}}/>}
               </button>
             );
           })}
@@ -2200,7 +2192,7 @@ const ModePickerModal: React.FC<{
                   <span style={{display:'block',fontSize:11,color:C.muted,marginTop:1}}>{desc}</span>
                 </div>
                 {isAct && (
-                  <span style={{width:20,height:20,borderRadius:'50%',background:`${accent}18`,border:`1px solid ${accent}40`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,color:accent,flexShrink:0}}>✓</span>
+                  <Check style={{width:16,height:16,color:accent,flexShrink:0}}/>
                 )}
               </button>
             );
@@ -2727,13 +2719,14 @@ const SettingsCard: React.FC<{
                     {amtDrop&&!disabled&&(
                       <>
                         <div style={{ position:'fixed',inset:0,zIndex:55 }} onClick={()=>setAmtDrop(false)}/>
-                        <div style={{ position:'absolute',right:0,marginTop:4,zIndex:60,minWidth:170,borderRadius:12,overflow:'hidden',background:isDarkMode?C.card:'#fff',border:`1px solid ${isDarkMode?C.bdr:'#D1D5DB'}`,boxShadow:'0 8px 32px rgba(0,0,0,0.25)',animation:'slide-up 0.15s ease' }}>
-                          {QUICK_AMOUNTS_DYN.map((a,idx)=>{
+                        {/* Dropdown look baru: kartu melayang berpadding, baris rounded, check icon */}
+                        <div style={{ position:'absolute',right:0,marginTop:6,zIndex:60,minWidth:176,borderRadius:14,overflow:'hidden',padding:5,background:isDarkMode?'#1B1D21':'#fff',border:`1px solid ${C.bdr}`,boxShadow:isDarkMode?'0 16px 48px -12px rgba(0,0,0,0.65)':'0 16px 48px -16px rgba(15,23,42,0.30)',animation:'slide-up 0.15s ease' }}>
+                          {QUICK_AMOUNTS_DYN.map(a=>{
                             const isAct=amount===a;
                             return (
-                              <button key={a} type="button" onClick={()=>{onAmountChange(a);setAmtDrop(false);}} style={{ width:'100%',display:'flex',alignItems:'center',justifyContent:'space-between',padding:'10px 14px',fontSize:13,background:isAct?`${C.cyan}12`:'transparent',borderBottom:idx<QUICK_AMOUNTS_DYN.length-1?`1px solid ${isDarkMode?C.bdr:'rgba(60,60,67,0.1)'}`:'none',borderLeft:isAct?`2px solid ${C.cyan}`:'2px solid transparent',borderTop:'none',borderRight:'none',color:isAct?C.cyan:C.sub,fontWeight:isAct?700:400,cursor:'pointer' }}>
-                                <span>{a>=1000000?`${CURR_UNIT} ${a/1000000}M`:`${CURR_UNIT} ${(a/1000).toFixed(a%1000===0?0:1)}K`}</span>
-                                {isAct&&<span style={{ color:C.cyan }}>✓</span>}
+                              <button key={a} type="button" className={isAct?undefined:'dsh-row'} onClick={()=>{onAmountChange(a);setAmtDrop(false);}} style={{ width:'100%',display:'flex',alignItems:'center',justifyContent:'space-between',gap:8,padding:'9px 11px',fontSize:12.5,background:isAct?`${C.cyan}12`:'transparent',border:'none',borderRadius:9,color:isAct?C.cyan:C.sub,fontWeight:isAct?650:450,cursor:'pointer' }}>
+                                <span className="dsh-num">{a>=1000000?`${CURR_UNIT} ${a/1000000}M`:`${CURR_UNIT} ${(a/1000).toFixed(a%1000===0?0:1)}K`}</span>
+                                {isAct&&<Check style={{ width:14,height:14,color:C.cyan,flexShrink:0 }}/>}
                               </button>
                             );
                           })}
@@ -2946,203 +2939,127 @@ const SettingsCard: React.FC<{
               )}
             </div>
 
-            {/* Risk Management — Kotlin StopLossProfitCard style */}
+            {/* Risk Management — redesign: settings-group (selaras strip jam) */}
             {(mode!=='aisignal')&&(
               <div>
                 <div style={{ height:1,background:C.bdr,marginBottom:16 }}/>
-                <SL accent="rgba(255,69,58,0.55)">Risk Management</SL>
+                <p style={{ fontSize:12,fontWeight:600,color:C.text,marginBottom:10 }}>Risk Management</p>
 
-                {/* Toggle Buttons Row */}
-                <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:(slEnabled&&showSlInput)||(spEnabled&&showSpInput)?12:0 }}>
-                  {/* Stop Loss Button */}
-                  <button
-                    onClick={()=>{
-                      if(disabled) return;
-                      const next = !slEnabled;
-                      setSlEnabled(next);
-                      if(next){ setShowSlInput(true); }
-                      else{ onSlChange(0); setShowSlInput(false); setSlInputValue(''); }
-                    }}
-                    disabled={disabled}
-                    style={{
-                      height:42,borderRadius:12,display:'flex',alignItems:'center',justifyContent:'center',gap:5,
-                      background: slEnabled ? `${C.coral}14` : C.card2,
-                      border: `1px solid ${slEnabled ? `${C.coral}50` : C.bdr}`,
-                      color: slEnabled ? C.coral : C.sub,
-                      fontSize:12,fontWeight:600,
-                      cursor:disabled?'not-allowed':'pointer',
-                      transition:'all 0.15s',
-                    }}
-                  >
-                    <TrendingDown style={{ width:13,height:13,flexShrink:0 }}/>
-                    Stop Loss
-                  </button>
+                {/* Group container — bg faint, baris ber-divider, toggle switch */}
+                <div style={{ background:C.faint,borderRadius:12,overflow:'hidden' }}>
 
-                  {/* Target Profit Button */}
-                  <button
-                    onClick={()=>{
-                      if(disabled) return;
-                      const next = !spEnabled;
-                      setSpEnabled(next);
-                      if(next){ setShowSpInput(true); }
-                      else{ onSpChange(0); setShowSpInput(false); setSpInputValue(''); }
-                    }}
-                    disabled={disabled}
-                    style={{
-                      height:42,borderRadius:12,display:'flex',alignItems:'center',justifyContent:'center',gap:5,
-                      background: spEnabled ? `${C.cyan}14` : C.card2,
-                      border: `1px solid ${spEnabled ? `${C.cyan}50` : C.bdr}`,
-                      color: spEnabled ? C.cyan : C.sub,
-                      fontSize:12,fontWeight:600,
-                      cursor:disabled?'not-allowed':'pointer',
-                      transition:'all 0.15s',
-                    }}
-                  >
-                    <TrendingUp style={{ width:13,height:13,flexShrink:0 }}/>
-                    Target Profit
-                  </button>
-                </div>
-
-                {/* Summary info — tampil di bawah tombol saat panel tertutup, grid 2 kolom sejajar tombol */}
-                {((slEnabled&&stopLoss>0&&!showSlInput)||(spEnabled&&stopProfit>0&&!showSpInput))&&(
-                  <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:10 }}>
-                    {/* Kolom kiri: Stop Loss info atau placeholder kosong */}
-                    {slEnabled&&stopLoss>0&&!showSlInput ? (
-                      <button
-                        onClick={()=>!disabled&&setShowSlInput(true)}
-                        disabled={disabled}
-                        style={{
-                          display:'flex',flexDirection:'column',alignItems:'flex-start',
-                          gap:3,padding:'9px 12px',borderRadius:12,textAlign:'left',
-                          background:`${C.coral}10`,
-                          border:`1px solid ${C.coral}45`,
-                          borderLeft:`3px solid ${C.coral}`,
-                          cursor:disabled?'not-allowed':'pointer',
-                        }}
-                      >
-                        <div style={{ display:'flex',alignItems:'center',gap:5 }}>
-                          <TrendingDown style={{ width:11,height:11,color:C.coral,flexShrink:0 }}/>
-                          <span style={{ fontSize:9,fontWeight:600,color:C.muted,letterSpacing:'0.06em',textTransform:'uppercase' }}>Stop Loss</span>
-                        </div>
-                        <span style={{ fontSize:13,fontWeight:700,color:C.coral,fontFamily:'inherit',fontVariantNumeric:'tabular-nums',lineHeight:1 }}>
-                          {CURR_UNIT} {FMT(stopLoss)}
-                        </span>
-                      </button>
-                    ) : <div/>}
-
-                    {/* Kolom kanan: Target Profit info atau placeholder kosong */}
-                    {spEnabled&&stopProfit>0&&!showSpInput ? (
-                      <button
-                        onClick={()=>!disabled&&setShowSpInput(true)}
-                        disabled={disabled}
-                        style={{
-                          display:'flex',flexDirection:'column',alignItems:'flex-start',
-                          gap:3,padding:'9px 12px',borderRadius:12,textAlign:'left',
-                          background:`${C.cyan}10`,
-                          border:`1px solid ${C.cyan}45`,
-                          borderLeft:`3px solid ${C.cyan}`,
-                          cursor:disabled?'not-allowed':'pointer',
-                        }}
-                      >
-                        <div style={{ display:'flex',alignItems:'center',gap:5 }}>
-                          <TrendingUp style={{ width:11,height:11,color:C.cyan,flexShrink:0 }}/>
-                          <span style={{ fontSize:9,fontWeight:600,color:C.muted,letterSpacing:'0.06em',textTransform:'uppercase' }}>Target Profit</span>
-                        </div>
-                        <span style={{ fontSize:13,fontWeight:700,color:C.cyan,fontFamily:'inherit',fontVariantNumeric:'tabular-nums',lineHeight:1 }}>
-                          {CURR_UNIT} {FMT(stopProfit)}
-                        </span>
-                      </button>
-                    ) : <div/>}
-                  </div>
-                )}
-
-                {/* Stop Loss Input Panel — Kotlin: AnimatedVisibility */}
-                {slEnabled&&showSlInput&&(
-                  <div style={{
-                    background:C.card2,borderRadius:16,
-                    border:`1px solid ${C.coral}80`,
-                    padding:16,marginBottom:10,
-                    display:'flex',flexDirection:'column',gap:12,
-                  }}>
-                    <div style={{ display:'flex',alignItems:'center',justifyContent:'space-between' }}>
-                      <span style={{ color:C.coral,fontSize:14,fontWeight:700 }}>Stop Loss Settings</span>
-                      <button onClick={()=>setShowSlInput(false)} style={{ background:'none',border:'none',cursor:'pointer',padding:4,display:'flex',alignItems:'center',justifyContent:'center' }}>
-                        <X style={{ width:18,height:18,color:C.coral }}/>
-                      </button>
+                  {/* ── Baris Stop Loss ── */}
+                  <div style={{ display:'flex',alignItems:'center',gap:10,padding:'11px 12px',borderBottom:`1px solid ${C.bdr}` }}>
+                    <div style={{ width:28,height:28,borderRadius:8,flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center',background:`${C.coral}14` }}>
+                      <TrendingDown style={{ width:14,height:14,color:C.coral }}/>
                     </div>
-                    <div style={{ position:'relative' }}>
-                      <span style={{ position:'absolute',left:10,top:'50%',transform:'translateY(-50%)',fontSize:11,color:C.muted,zIndex:1,pointerEvents:'none' }}>{CURR_UNIT}</span>
-                      <input
-                        className="ds-input"
-                        value={slInputValue}
-                        onChange={e=>setSlInputValue(e.target.value)}
-                        onKeyDown={e=>{
-                          if(e.key==='Enter'){
+                    <button
+                      onClick={()=>{ if(!disabled&&slEnabled) setShowSlInput(v=>!v); }}
+                      disabled={disabled||!slEnabled}
+                      style={{ flex:1,minWidth:0,display:'flex',flexDirection:'column',alignItems:'flex-start',gap:2,background:'transparent',border:'none',padding:0,textAlign:'left',cursor:slEnabled&&!disabled?'pointer':'default' }}
+                    >
+                      <span style={{ fontSize:12.5,fontWeight:600,color:C.text,lineHeight:1 }}>Stop Loss</span>
+                      {slEnabled&&stopLoss>0
+                        ? <span className="dsh-num" style={{ fontSize:11,fontWeight:600,color:C.coral }}>{CURR_UNIT} {FMT(stopLoss)}</span>
+                        : <span style={{ fontSize:10.5,color:C.muted }}>Batas kerugian harian</span>
+                      }
+                    </button>
+                    <Toggle
+                      checked={slEnabled}
+                      disabled={disabled}
+                      accent={C.coral}
+                      onChange={next=>{
+                        setSlEnabled(next);
+                        if(next){ setShowSlInput(true); }
+                        else{ onSlChange(0); setShowSlInput(false); setSlInputValue(''); }
+                      }}
+                    />
+                  </div>
+
+                  {/* Input inline Stop Loss */}
+                  {slEnabled&&showSlInput&&(
+                    <div style={{ padding:'10px 12px',borderBottom:`1px solid ${C.bdr}`,display:'flex',flexDirection:'column',gap:6 }}>
+                      <div style={{ position:'relative' }}>
+                        <span style={{ position:'absolute',left:10,top:'50%',transform:'translateY(-50%)',fontSize:11,color:C.muted,zIndex:1,pointerEvents:'none' }}>{CURR_UNIT}</span>
+                        <input
+                          className="ds-input"
+                          value={slInputValue}
+                          autoFocus
+                          onChange={e=>setSlInputValue(e.target.value)}
+                          onKeyDown={e=>{
+                            if(e.key==='Enter'){
+                              const v=parseFlexibleInput(slInputValue);
+                              if(v&&v>0){ onSlChange(v); setShowSlInput(false); }
+                            }
+                          }}
+                          onBlur={()=>{
                             const v=parseFlexibleInput(slInputValue);
-                            if(v&&v>0){ onSlChange(v); setShowSlInput(false); }
-                          }
-                        }}
-                        onBlur={()=>{
-                          const v=parseFlexibleInput(slInputValue);
-                          if(v&&v>0){ onSlChange(v); }
-                        }}
-                        placeholder="100K, 1M, 500000"
-                        style={{ paddingLeft:30,borderColor:`${C.coral}aa` }}
-                      />
-                    </div>
-                    {stopLoss>0&&(
-                      <div style={{ background:C.card,borderRadius:10,padding:'10px 12px',display:'flex',justifyContent:'space-between',alignItems:'center' }}>
-                        <span style={{ color:C.sub,fontSize:11,fontWeight:500 }}>Maks. Loss Saat Ini</span>
-                        <span style={{ color:C.coral,fontSize:13,fontWeight:700 }}>{CURR_UNIT} {FMT(stopLoss)}</span>
+                            if(v&&v>0){ onSlChange(v); }
+                          }}
+                          placeholder="100K, 1M, 500000"
+                          style={{ paddingLeft:30,background:C.card }}
+                        />
                       </div>
-                    )}
-                    <span style={{ color:C.muted,fontSize:10,lineHeight:'1.4' }}>Format: angka biasa, K (ribu), M (juta), B (miliar)</span>
-                  </div>
-                )}
+                      <span style={{ color:C.muted,fontSize:10,lineHeight:1.4 }}>Format: angka biasa, K (ribu), M (juta), B (miliar) · Enter untuk simpan</span>
+                    </div>
+                  )}
 
-                {/* Target Profit Input Panel */}
-                {spEnabled&&showSpInput&&(
-                  <div style={{
-                    background:C.card2,borderRadius:16,
-                    border:`1px solid ${C.cyan}80`,
-                    padding:16,
-                    display:'flex',flexDirection:'column',gap:12,
-                  }}>
-                    <div style={{ display:'flex',alignItems:'center',justifyContent:'space-between' }}>
-                      <span style={{ color:C.cyan,fontSize:14,fontWeight:700 }}>Target Profit Settings</span>
-                      <button onClick={()=>setShowSpInput(false)} style={{ background:'none',border:'none',cursor:'pointer',padding:4,display:'flex',alignItems:'center',justifyContent:'center' }}>
-                        <X style={{ width:18,height:18,color:C.cyan }}/>
-                      </button>
+                  {/* ── Baris Target Profit ── */}
+                  <div style={{ display:'flex',alignItems:'center',gap:10,padding:'11px 12px',borderBottom:spEnabled&&showSpInput?`1px solid ${C.bdr}`:'none' }}>
+                    <div style={{ width:28,height:28,borderRadius:8,flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center',background:`${C.cyan}14` }}>
+                      <TrendingUp style={{ width:14,height:14,color:C.cyan }}/>
                     </div>
-                    <div style={{ position:'relative' }}>
-                      <span style={{ position:'absolute',left:10,top:'50%',transform:'translateY(-50%)',fontSize:11,color:C.muted,zIndex:1,pointerEvents:'none' }}>{CURR_UNIT}</span>
-                      <input
-                        className="ds-input"
-                        value={spInputValue}
-                        onChange={e=>setSpInputValue(e.target.value)}
-                        onKeyDown={e=>{
-                          if(e.key==='Enter'){
-                            const v=parseFlexibleInput(spInputValue);
-                            if(v&&v>0){ onSpChange(v); setShowSpInput(false); }
-                          }
-                        }}
-                        onBlur={()=>{
-                          const v=parseFlexibleInput(spInputValue);
-                          if(v&&v>0){ onSpChange(v); }
-                        }}
-                        placeholder="100K, 1M, 500000"
-                        style={{ paddingLeft:30,borderColor:`${C.cyan}aa` }}
-                      />
-                    </div>
-                    {stopProfit>0&&(
-                      <div style={{ background:C.card,borderRadius:10,padding:'10px 12px',display:'flex',justifyContent:'space-between',alignItems:'center' }}>
-                        <span style={{ color:C.sub,fontSize:11,fontWeight:500 }}>Target Profit Saat Ini</span>
-                        <span style={{ color:C.cyan,fontSize:13,fontWeight:700 }}>{CURR_UNIT} {FMT(stopProfit)}</span>
-                      </div>
-                    )}
-                    <span style={{ color:C.muted,fontSize:10,lineHeight:'1.4' }}>Format: angka biasa, K (ribu), M (juta), B (miliar)</span>
+                    <button
+                      onClick={()=>{ if(!disabled&&spEnabled) setShowSpInput(v=>!v); }}
+                      disabled={disabled||!spEnabled}
+                      style={{ flex:1,minWidth:0,display:'flex',flexDirection:'column',alignItems:'flex-start',gap:2,background:'transparent',border:'none',padding:0,textAlign:'left',cursor:spEnabled&&!disabled?'pointer':'default' }}
+                    >
+                      <span style={{ fontSize:12.5,fontWeight:600,color:C.text,lineHeight:1 }}>Target Profit</span>
+                      {spEnabled&&stopProfit>0
+                        ? <span className="dsh-num" style={{ fontSize:11,fontWeight:600,color:C.cyan }}>{CURR_UNIT} {FMT(stopProfit)}</span>
+                        : <span style={{ fontSize:10.5,color:C.muted }}>Amankan target keuntungan</span>
+                      }
+                    </button>
+                    <Toggle
+                      checked={spEnabled}
+                      disabled={disabled}
+                      accent={C.cyan}
+                      onChange={next=>{
+                        setSpEnabled(next);
+                        if(next){ setShowSpInput(true); }
+                        else{ onSpChange(0); setShowSpInput(false); setSpInputValue(''); }
+                      }}
+                    />
                   </div>
-                )}
+
+                  {/* Input inline Target Profit */}
+                  {spEnabled&&showSpInput&&(
+                    <div style={{ padding:'10px 12px',display:'flex',flexDirection:'column',gap:6 }}>
+                      <div style={{ position:'relative' }}>
+                        <span style={{ position:'absolute',left:10,top:'50%',transform:'translateY(-50%)',fontSize:11,color:C.muted,zIndex:1,pointerEvents:'none' }}>{CURR_UNIT}</span>
+                        <input
+                          className="ds-input"
+                          value={spInputValue}
+                          autoFocus
+                          onChange={e=>setSpInputValue(e.target.value)}
+                          onKeyDown={e=>{
+                            if(e.key==='Enter'){
+                              const v=parseFlexibleInput(spInputValue);
+                              if(v&&v>0){ onSpChange(v); setShowSpInput(false); }
+                            }
+                          }}
+                          onBlur={()=>{
+                            const v=parseFlexibleInput(spInputValue);
+                            if(v&&v>0){ onSpChange(v); }
+                          }}
+                          placeholder="100K, 1M, 500000"
+                          style={{ paddingLeft:30,background:C.card }}
+                        />
+                      </div>
+                      <span style={{ color:C.muted,fontSize:10,lineHeight:1.4 }}>Format: angka biasa, K (ribu), M (juta), B (miliar) · Enter untuk simpan</span>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>
@@ -3236,50 +3153,48 @@ const ControlCard: React.FC<{
   // Dynamic colors: green=running, amber=paused, red=stopped
   const stateCol = canResumeBot ? C.amber : canStopBot ? C.cyan : C.coral;
   const stateLabel = canResumeBot ? T('dashboard.botStatus.paused') : canStopBot ? T('dashboard.botStatus.running') : T('dashboard.botStatus.stopped');
-  const stateBg: Record<string,string> = {
-    [T('dashboard.botStatus.running')]: 'rgba(16,185,129,0.12)',
-    [T('dashboard.botStatus.paused')]:  'rgba(255,170,0,0.12)',
-    [T('dashboard.botStatus.stopped')]: 'rgba(255,77,77,0.10)',
-  };
 
   return (
     <Card>
-      {/* ── Header: LEFT-aligned title + state pill + chevron ── */}
+      {/* ── Header look baru: tanpa kotak ikon & kotak chevron — bersih,
+             status = dot + teks polos, chevron tunggal berputar ── */}
       <button onClick={()=>setOpen(!open)} style={{
         width:'100%',display:'flex',alignItems:'center',gap:10,
-        padding:'16px 18px',background:'transparent',border:'none',
+        padding:'15px 18px',background:'transparent',border:'none',
         borderBottom:open?`1px solid ${C.bdr}`:'none',cursor:'pointer',
         textAlign:'left',
       }}>
-        {/* icon badge */}
-        <div style={{width:34,height:34,borderRadius:10,flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center',background:`${ac}14`,border:`1px solid ${ac}30`}}>
-          <span style={{color:ac}}>{modeIcon}</span>
-        </div>
-        {/* title — left-aligned */}
         <div style={{flex:1,minWidth:0,textAlign:'left',overflow:'hidden'}}>
-          <span style={{fontSize:'clamp(11px,3.8vw,16px)',fontWeight:700,color:C.text,display:'block',lineHeight:1.2,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>Bot Control</span>
-          <span style={{fontSize:10.5,color:C.muted,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',display:'block'}}>{modeLabel} · {modeSub}</span>
+          <span style={{fontSize:14,fontWeight:600,color:C.text,display:'block',lineHeight:1.2,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>Bot Control</span>
+          <span style={{fontSize:10.5,color:C.muted,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',display:'block',marginTop:2}}>{modeLabel} · {modeSub}</span>
         </div>
-        {/* state pill */}
-        <div style={{
-          display:'flex',alignItems:'center',gap:5,
-          padding:'4px 10px',borderRadius:99,flexShrink:0,
-          background:stateBg[stateLabel]??`${C.muted}10`,
-        }}>
+        {/* status: dot + teks polos */}
+        <div style={{display:'flex',alignItems:'center',gap:6,flexShrink:0}}>
           <span style={{
             width:7,height:7,borderRadius:'50%',flexShrink:0,
             background:stateCol,
             animation:canStopBot&&!canResumeBot?'ping 1.6s ease-in-out infinite':undefined,
           }}/>
-          <span style={{fontSize:11,fontWeight:600,color:stateCol}}>{stateLabel}</span>
+          <span style={{fontSize:11.5,fontWeight:600,color:stateCol}}>{stateLabel}</span>
         </div>
-        <div style={{width:28,height:28,borderRadius:8,display:'flex',alignItems:'center',justifyContent:'center',background:open?`${ac}18`:C.card2,border:`1px solid ${open?`${ac}45`:C.bdr}`,transition:'all 0.2s',flexShrink:0}}>
-          {open?<ChevronUp style={{width:15,height:15,color:ac}}/>:<ChevronDown style={{width:15,height:15,color:ac}}/>}
-        </div>
+        <ChevronDown style={{
+          width:16,height:16,color:C.muted,flexShrink:0,
+          transform:open?'rotate(180deg)':'rotate(0deg)',
+          transition:'transform 0.22s ease',
+        }}/>
       </button>
 
       {open&&(
-        <div style={{padding:'16px 18px 18px',display:'flex',flexDirection:'column',gap:12}}>
+        <div style={{padding:'14px 18px 18px',display:'flex',flexDirection:'column',gap:12}}>
+
+          {/* ── Ringkasan mode — strip faint (selaras strip jam & risk group) ── */}
+          <div style={{display:'flex',alignItems:'center',gap:10,padding:'9px 12px',borderRadius:12,background:C.faint}}>
+            <span style={{color:ac,display:'flex',alignItems:'center',flexShrink:0}}>{modeIcon}</span>
+            <div style={{flex:1,minWidth:0}}>
+              <span style={{fontSize:12,fontWeight:600,color:C.text,display:'block',lineHeight:1.2,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{modeLabel}</span>
+              <span style={{fontSize:10,color:C.muted,display:'block',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{modeSub}</span>
+            </div>
+          </div>
 
           {/* ── Always Signal badge ── */}
           {(()=>{
@@ -4520,46 +4435,47 @@ export default function DashboardPage() {
       {stopConfirmOpen && (
         <div style={{position:'fixed',inset:0,zIndex:90,display:'flex',alignItems:'center',justifyContent:'center',padding:20,animation:'fade-in 0.18s ease'}}>
           <div onClick={()=>setStopConfirmOpen(false)} style={{position:'absolute',inset:0,background:'rgba(0,0,0,0.6)',backdropFilter:'blur(14px)',WebkitBackdropFilter:'blur(14px)'}}/>
+          {/* Look baru: dialog radius 20, ikon lingkaran lembut, tombol
+              berdampingan — Batal (ghost) + Stop (solid coral) */}
           <div style={{
             position:'relative',width:'100%',maxWidth:320,
             background: isDarkMode ? '#17181C' : '#ffffff',
-            borderRadius:18,border: isDarkMode ? '1px solid rgba(255,255,255,0.10)' : `1px solid rgba(0,0,0,0.08)`,
+            borderRadius:20,border:`1px solid ${C.bdr}`,
             overflow:'hidden',
             animation:'slide-up 0.24s cubic-bezier(0.32,0.72,0,1)',
-            boxShadow:`0 20px 60px rgba(0,0,0,${isDarkMode?'0.60':'0.14'})`,
+            boxShadow:isDarkMode?'0 24px 64px -12px rgba(0,0,0,0.65)':'0 24px 64px -20px rgba(15,23,42,0.30)',
+            padding:'26px 20px 20px',
           }}>
-            {/* Icon + Title + Desc */}
-            <div style={{padding:'28px 24px 20px',textAlign:'center',borderBottom: isDarkMode ? '1px solid rgba(255,255,255,0.07)' : '1px solid rgba(0,0,0,0.07)'}}>
-              <div style={{width:52,height:52,borderRadius:16,background:'rgba(255,69,58,0.12)',border:'1px solid rgba(255,69,58,0.25)',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 14px'}}>
-                <StopCircle style={{width:24,height:24,color:C.coral}}/>
+            <div style={{textAlign:'center',marginBottom:18}}>
+              <div style={{width:48,height:48,borderRadius:'50%',background:`${C.coral}14`,display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 14px'}}>
+                <StopCircle style={{width:22,height:22,color:C.coral}}/>
               </div>
-              <p style={{fontSize:17,fontWeight:700,color:C.text,marginBottom:6}}>{T('dashboard.stopConfirm.title')}</p>
-              <p style={{fontSize:13,color:C.sub,lineHeight:1.5}}>
+              <p style={{fontSize:16,fontWeight:650,letterSpacing:'-0.01em',color:C.text,marginBottom:6}}>{T('dashboard.stopConfirm.title')}</p>
+              <p style={{fontSize:12.5,color:C.sub,lineHeight:1.55}}>
                 {T('dashboard.stopConfirm.message')}
               </p>
             </div>
-            {/* Action buttons — Apple-style */}
-            <div style={{display:'flex',flexDirection:'column'}}>
-              <button
-                onClick={handleStopConfirmed}
-                style={{
-                  padding:'15px 20px',fontSize:16,fontWeight:600,
-                  color:C.coral,background:'transparent',border:'none',
-                  borderBottom: isDarkMode ? '1px solid rgba(255,255,255,0.07)' : '1px solid rgba(0,0,0,0.07)',
-                  cursor:'pointer',letterSpacing:'-0.01em',
-                }}
-              >
-                {T('dashboard.stopConfirm.confirm')}
-              </button>
+            <div style={{display:'flex',gap:8}}>
               <button
                 onClick={()=>setStopConfirmOpen(false)}
                 style={{
-                  padding:'15px 20px',fontSize:16,fontWeight:400,
-                  color:C.text,background:'transparent',border:'none',
-                  cursor:'pointer',letterSpacing:'-0.01em',
+                  flex:1,height:42,borderRadius:11,fontSize:13,fontWeight:600,
+                  color:C.text,background:C.faint,border:'none',
+                  cursor:'pointer',
                 }}
               >
                 {T('common.cancel')}
+              </button>
+              <button
+                onClick={handleStopConfirmed}
+                style={{
+                  flex:1,height:42,borderRadius:11,fontSize:13,fontWeight:600,
+                  color:'#fff',background:C.coral,border:'none',
+                  boxShadow:`0 2px 10px ${C.coral}35`,
+                  cursor:'pointer',
+                }}
+              >
+                {T('dashboard.stopConfirm.confirm')}
               </button>
             </div>
           </div>

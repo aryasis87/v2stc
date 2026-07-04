@@ -85,14 +85,6 @@ export function BottomNav() {
           white-space: nowrap;
           transition: color 0.2s ease;
         }
-        .bnav-ind {
-          position: absolute;
-          top: 3px;
-          width: 4px;
-          height: 4px;
-          border-radius: 50%;
-          transition: opacity 0.2s ease, transform 0.2s ease;
-        }
       `}</style>
 
       <div
@@ -142,14 +134,6 @@ export function BottomNav() {
                 }}
                 onClick={() => handleNavClick(href)}
               >
-                <span
-                  className="bnav-ind"
-                  style={{
-                    background: theme.activeColor,
-                    opacity: isActive ? 1 : 0,
-                    transform: isActive ? 'scale(1)' : 'scale(0)',
-                  }}
-                />
                 <Icon size={20} strokeWidth={isActive ? 2.2 : 1.8} />
                 <span className="bnav-label" style={{ color: col }}>
                   {label}
