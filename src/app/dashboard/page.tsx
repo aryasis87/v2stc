@@ -159,7 +159,7 @@ const Toggle: React.FC<{checked:boolean;onChange:(v:boolean)=>void;disabled?:boo
 
 const StatusChip: React.FC<{col:string;label:string;pulse?:boolean}> = ({col,label,pulse}) => (
   <span style={{display:'inline-flex',alignItems:'center',gap:5,fontSize:10,fontWeight:700,letterSpacing:'0.08em',textTransform:'uppercase',padding:'4px 10px',borderRadius:99,color:col,background:`${col}10`,border:`1px solid ${col}28`}}>
-    <span style={{width:5,height:5,borderRadius:'50%',background:col,animation:pulse?'ping 1.6s ease-in-out infinite':undefined,boxShadow:`0 0 4px ${col}`}}/>
+    <span style={{width:5,height:5,borderRadius:'50%',background:col,animation:pulse?'ping 1.6s ease-in-out infinite':undefined}}/>
     {label}
   </span>
 );
@@ -180,7 +180,7 @@ const AlwaysSignalBadge: React.FC<{
       padding: '5px 10px', borderRadius: 99,
       background: `${accent}12`, border: `1px solid ${accent}35`,
     }}>
-      <span style={{ width: 5, height: 5, borderRadius: '50%', background: accent, animation: 'ping 1.4s ease-in-out infinite', boxShadow: `0 0 5px ${accent}` }} />
+      <span style={{ width: 5, height: 5, borderRadius: '50%', background: accent, animation: 'ping 1.4s ease-in-out infinite' }} />
       <span style={{ fontSize: 10, fontWeight: 700, color: accent, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
         Always Signal
       </span>
@@ -202,7 +202,7 @@ const CtrlBtn: React.FC<{onClick:()=>void;disabled?:boolean;loading?:boolean;acc
     letterSpacing:'0.06em',textTransform:'uppercase',cursor:(disabled||loading)?'not-allowed':'pointer',
     background:solid?accent:`${accent}14`,border:`1px solid ${accent}${solid?'':'35'}`,
     color:solid?'#000':accent,opacity:disabled?0.3:1,
-    boxShadow:(!disabled&&!loading)?`0 0 14px ${accent}20`:'none',transition:'all 0.15s',
+    transition:'all 0.15s',
   }}>
     {loading?<RefreshCw style={{width:14,height:14,animation:'spin 0.7s linear infinite'}}/>:icon}
     {loading?T('common.processing'):label}
@@ -212,55 +212,6 @@ const CtrlBtn: React.FC<{onClick:()=>void;disabled?:boolean;loading?:boolean;acc
 // ═══════════════════════════════════════════
 // CLOCK
 // ═══════════════════════════════════════════
-const RealtimeClock: React.FC<{t:(k:string)=>string;lang:string;isBotRunning?:boolean}> = ({t:tr,lang,isBotRunning=false}) => {
-  const [time,setTime] = useState<Date|null>(null);
-  useEffect(()=>{setTime(new Date());const id=setInterval(()=>setTime(new Date()),1000);return()=>clearInterval(id);},[]);
-  const locale = langToIntlLocale(lang);
-  const fmt  = (d:Date) => {const h=String(d.getHours()).padStart(2,'0');const m=String(d.getMinutes()).padStart(2,'0');const s=String(d.getSeconds()).padStart(2,'0');return`${h}:${m}:${s}`;};
-  const fmtD = (d:Date) => d.toLocaleDateString(locale,{weekday:'short',day:'2-digit',month:'short',year:'numeric'});
-  const tz   = () => {if(!time)return'';const o=-time.getTimezoneOffset()/60;return`UTC${o>=0?'+':''}${o}`;};
-  const dotColor = isBotRunning ? C.cyan : C.coral;
-  return (
-    <div style={{
-      borderRadius:16,overflow:'hidden',height:'100%',
-      background:C.card,
-      border:`1px solid ${C.bdr}`,
-      boxShadow:C.bg==='#0B0C0E'?`0 4px 18px rgba(0,0,0,0.28)`:`0 2px 8px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04)`,
-      padding:'14px 14px 10px',
-      display:'flex',flexDirection:'column',gap:6,
-    }}>
-      {/* Digital time box */}
-      <div style={{
-        height:46,borderRadius:12,
-        background:C.card2,
-        border:`1px solid ${C.bdr}`,
-        display:'flex',alignItems:'center',justifyContent:'center',
-      }}>
-        <p suppressHydrationWarning style={{
-          fontSize:28,fontWeight:700,lineHeight:1,letterSpacing:'0.08em',
-          fontFamily:"'DSEG7 Classic','Share Tech Mono',ui-monospace,monospace",
-          color:C.text,
-          textShadow:`0 0 20px rgba(16,185,129,0.40),0 0 6px rgba(16,185,129,0.18)`,
-          margin:0,
-        }}>{time?fmt(time):'--:--:--'}</p>
-      </div>
-      {/* Date row */}
-      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-        <span suppressHydrationWarning style={{fontSize:8,color:C.sub}}>{time?fmtD(time):''}</span>
-        <div style={{display:'flex',alignItems:'center',gap:5}}>
-          <span style={{fontSize:8,fontWeight:600,color:C.text}}>{tz()}</span>
-          <span style={{
-            width:8,height:8,borderRadius:'50%',flexShrink:0,
-            background:dotColor,
-            boxShadow:`0 0 ${isBotRunning?6:3}px ${dotColor}`,
-            animation:isBotRunning?'ping 1.6s ease-in-out infinite':undefined,
-          }}/>
-        </div>
-      </div>
-    </div>
-  );
-};
-
 const RealtimeClockCompact: React.FC<{t:(k:string)=>string;lang:string;isBotRunning?:boolean}> = ({t:tr,lang,isBotRunning=false}) => {
   const [time,setTime] = useState<Date|null>(null);
   useEffect(()=>{setTime(new Date());const id=setInterval(()=>setTime(new Date()),1000);return()=>clearInterval(id);},[]);
@@ -310,7 +261,7 @@ const RealtimeClockDesktop: React.FC = () => {
         fontSize:15,fontWeight:700,letterSpacing:'0.06em',lineHeight:1,
         color:C.text,
         fontFamily:"'DSEG7 Classic','Share Tech Mono',ui-monospace,monospace",
-        textShadow:`0 0 14px rgba(16,185,129,0.45),0 0 4px rgba(16,185,129,0.18)`,
+        
       }}>
         {time?fmt(time):'--:--:--'}
       </p>
@@ -321,191 +272,6 @@ const RealtimeClockDesktop: React.FC = () => {
     </div>
   );
 };
-
-// ═══════════════════════════════════════════
-// ═══════════════════════════════════════════
-const BalanceCard: React.FC<{balance:ProfileBalance|null;accountType:'demo'|'real';isLoading?:boolean;t:(k:string)=>string}> = ({balance,accountType,isLoading,t}) => {
-  const [hidden,setHidden] = useState(false);
-  const isDemo = accountType==='demo';
-  const rawAmount = isDemo
-    ? (balance?.demo_balance ?? balance?.balance ?? 0)
-    : (balance?.real_balance ?? balance?.balance ?? 0);
-  const amount = rawAmount / 100;
-  const col  = isDemo?C.amber:C.cyan;
-  const colBg = isDemo?'rgba(255,159,10,0.08)':'rgba(41,151,255,0.08)';
-  return (
-    <Card style={{padding:'11px 14px'}}>
-      <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:5}}>
-        <span style={{fontSize:10,fontWeight:500,textTransform:'uppercase',letterSpacing:'0.08em',color:C.muted}}>{t('dashboard.balance')}</span>
-        <span style={{fontSize:9,fontWeight:700,padding:'1px 6px',borderRadius:99,color:col,background:colBg,border:`1px solid ${col}30`}}>{isDemo?t('common.demo'):t('common.real')}</span>
-      </div>
-      {isLoading?<Sk h={26} w={110}/>:
-        hidden?(
-          <div style={{display:'flex',alignItems:'center',gap:3,marginTop:4}}>
-            {[...Array(6)].map((_,i)=><span key={i} style={{width:5,height:5,borderRadius:'50%',background:col,opacity:0.4+(i%2)*0.2}}/>)}
-          </div>
-        ):(
-          <p style={{fontSize:'clamp(16px,4vw,24px)',fontWeight:700,letterSpacing:'-0.02em',lineHeight:1,color:col}}>
-            {FMT(amount)}
-          </p>
-        )
-      }
-      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:4}}>
-        <span style={{fontSize:9,color:C.muted}}>{balance?.currency??'IDR'}</span>
-        <button onClick={()=>setHidden(h=>!h)} style={{background:'transparent',border:'none',cursor:'pointer',color:C.muted,padding:0,fontSize:11}}>
-          {hidden?'👁':'👁‍🗨'}
-        </button>
-      </div>
-    </Card>
-  );
-};
-
-// ═══════════════════════════════════════════
-// COMPACT ASSET CARD (Mobile 2-row layout)
-// ═══════════════════════════════════════════
-const AssetCardCompact: React.FC<{asset?:StockityAsset|null;mode:TradingMode;isLoading?:boolean;t:(k:string)=>string;onOpenPicker?:()=>void;disabled?:boolean}> = ({asset,mode,isLoading,t,onOpenPicker,disabled}) => {
-  const modeCol = modeAccent(mode);
-  const abbr = asset?.ric ? asset.ric.slice(0,3).toUpperCase() : '+';
-  const [imgErr,setImgErr] = useState(false);
-  if(isLoading) return <Card style={{padding:'10px 12px'}}><Sk w={80} h={18}/></Card>;
-  return (
-    <Card style={{padding:'10px 12px',cursor:onOpenPicker&&!disabled?'pointer':'default',position:'relative'}} onClick={onOpenPicker&&!disabled?onOpenPicker:undefined}>
-      <div style={{display:'flex',alignItems:'center',gap:8}}>
-        <div style={{width:32,height:32,borderRadius:9,overflow:'hidden',flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center',background:`${modeCol}12`,border:`1px solid ${modeCol}28`}}>
-          {asset?.iconUrl&&!imgErr?(
-            <img src={asset.iconUrl} alt={asset.ric} crossOrigin="anonymous"
-              onError={()=>setImgErr(true)}
-              style={{width:'100%',height:'100%',objectFit:'contain',padding:3}}
-            />
-          ):(
-            <span style={{fontWeight:700,fontSize:18,color:modeCol,letterSpacing:'-0.02em'}}>{abbr}</span>
-          )}
-        </div>
-        <div style={{flex:1,minWidth:0}}>
-          <p style={{fontSize:9,fontWeight:500,textTransform:'uppercase',letterSpacing:'0.06em',color:C.muted,lineHeight:1,marginBottom:3}}>{t('dashboard.asset')}</p>
-          {asset?(
-            <p style={{fontSize:13,fontWeight:700,lineHeight:1,color:C.text,letterSpacing:'-0.02em',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{asset.name}</p>
-          ):(
-            <p style={{fontSize:11,color:modeCol,fontWeight:600}}>{t('dashboard.notSelected')}</p>
-          )}
-        </div>
-        {asset
-          ? <span style={{fontSize:10,fontWeight:700,color:modeCol,flexShrink:0}}>{asset.profitRate}%</span>
-          : onOpenPicker&&!disabled&&<ChevronDown style={{width:12,height:12,color:modeCol,flexShrink:0}}/>
-        }
-      </div>
-    </Card>
-  );
-};
-
-// ═══════════════════════════════════════════
-// COMPACT BALANCE CARD (Mobile 2-row layout)
-// ════════════════════��══════════════════════
-const BalanceCardCompact: React.FC<{balance:ProfileBalance|null;accountType:'demo'|'real';isLoading?:boolean;t:(k:string)=>string}> = ({balance,accountType,isLoading,t}) => {
-  const [hidden,setHidden] = useState(false);
-  const isDemo = accountType==='demo';
-  const rawAmount = isDemo
-    ? (balance?.demo_balance ?? balance?.balance ?? 0)
-    : (balance?.real_balance ?? balance?.balance ?? 0);
-  const amount = rawAmount / 100;
-  const col = isDemo?C.amber:C.cyan;
-  const colBg = isDemo?'rgba(255,159,10,0.08)':'rgba(16,185,129,0.08)';
-  return (
-    <Card style={{padding:'10px 12px'}}>
-      {/* Baris 1: label + badge + eye */}
-      <div style={{display:'flex',alignItems:'center',gap:5,marginBottom:5}}>
-        <span style={{fontSize:9,fontWeight:500,textTransform:'uppercase',letterSpacing:'0.06em',color:C.muted,flex:1}}>{t('dashboard.balance')}</span>
-        <span style={{fontSize:8,fontWeight:700,padding:'1px 5px',borderRadius:99,color:col,background:colBg,border:`1px solid ${col}30`}}>{isDemo?t('common.demo'):t('common.real')}</span>
-        <button onClick={()=>setHidden(h=>!h)} style={{background:'transparent',border:'none',cursor:'pointer',color:C.muted,padding:0,fontSize:10,lineHeight:1}}>
-          {hidden?'👁':'👁‍🗨'}
-        </button>
-      </div>
-      {/* Baris 2: angka + currency pojok kanan */}
-      <div style={{display:'flex',alignItems:'flex-end',justifyContent:'space-between',gap:4}}>
-        {isLoading?<Sk h={18} w={80}/>:
-          hidden?(
-            <div style={{display:'flex',alignItems:'center',gap:2}}>
-              {[...Array(5)].map((_,i)=><span key={i} style={{width:4,height:4,borderRadius:'50%',background:col,opacity:0.4+(i%2)*0.2}}/>)}
-            </div>
-          ):(
-            <p style={{fontSize:'clamp(14px,3.5vw,18px)',fontWeight:700,letterSpacing:'-0.02em',lineHeight:1,color:col}}>
-              {FMT(amount)}
-            </p>
-          )
-        }
-        <span style={{fontSize:11,fontWeight:700,color:C.muted,letterSpacing:'0.04em'}}>{balance?.currency??'IDR'}</span>
-      </div>
-    </Card>
-  );
-};
-
-// ═══════════════════════════════════════════
-// PROFIT CARD - with auto-scaling font and 00 trimmed for mobile
-// ═══════════════════════════════════════════
-const formatProfitDisplay = (profit: number): string => {
-  const absVal = Math.abs(profit / 100);
-  // Remove trailing 00 for cleaner display (like trading settings)
-  const formatted = FMT(absVal);
-  // Remove trailing 00 patterns (e.g., 14000 -> 14k, 100000 -> 100k)
-  return formatted;
-};
-
-const getAutoScaleFontSize = (valueLength: number): string => {
-  // Auto scale font based on digit count - larger font for smaller numbers
-  if (valueLength <= 4) return 'clamp(18px, 5vw, 24px)';
-  if (valueLength <= 6) return 'clamp(16px, 4vw, 20px)';
-  if (valueLength <= 8) return 'clamp(14px, 3.5vw, 18px)';
-  return 'clamp(12px, 3vw, 16px)';
-};
-
-const ProfitCard: React.FC<{profit:number;currencyUnit:string;isLoading?:boolean;flash?:'win'|'lose'|null;t:(k:string)=>string}> = ({profit,currencyUnit,isLoading,flash,t}) => {
-  const isPos = profit>=0;
-  const col   = isPos?C.cyan:C.coral;
-  const prevR = useRef(profit);
-  // ✅ FIX flicker: ganti key={animKey} dengan ref + class toggle
-  const numRef2 = useRef<HTMLParagraphElement>(null);
-  useEffect(()=>{
-    if(profit===prevR.current) return;
-    const dir = profit>prevR.current?'up':'down';
-    prevR.current=profit;
-    const el = numRef2.current;
-    if(!el) return;
-    el.classList.remove('profit-slide-up','profit-slide-down');
-    void el.offsetWidth;
-    el.classList.add(`profit-slide-${dir}`);
-    const t = setTimeout(()=>el.classList.remove(`profit-slide-${dir}`),450);
-    return ()=>clearTimeout(t);
-  },[profit]);
-  
-  const displayValue = formatProfitDisplay(profit);
-  const fontSize = getAutoScaleFontSize(displayValue.length);
-  
-  return (
-    <Card style={{padding:'11px 16px'}} flash={flash}>
-      <div style={{display:'flex',alignItems:'center',gap:12}}>
-        <div style={{display:'flex',flexDirection:'column',gap:4,flexShrink:0}}>
-          <span style={{fontSize:10,fontWeight:500,textTransform:'uppercase',letterSpacing:'0.1em',color:C.muted}}>{t('dashboard.profitToday')}</span>
-          <span style={{display:'flex',alignItems:'center',gap:5,padding:'2px 7px',borderRadius:99,background:`${col}10`,border:`1px solid ${col}22`,width:'fit-content'}}>
-            <span style={{width:5,height:5,borderRadius:'50%',background:col,boxShadow:`0 0 5px ${col}`,animation:'pulse 1.8s ease-in-out infinite'}}/>
-            <span style={{fontSize:9,fontWeight:700,letterSpacing:'0.1em',textTransform:'uppercase',color:col}}>{T('dashboard.live')}</span>
-          </span>
-        </div>
-        <div style={{width:1,alignSelf:'stretch',background:C.bdr}}/>
-        <div style={{flex:1,minWidth:0}}>
-          {isLoading?<Sk h={24} w="85%"/>:(
-            <p ref={numRef2} style={{
-              fontWeight:700,letterSpacing:'-0.02em',lineHeight:1,color:col,
-              fontSize:fontSize,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',
-            }}>
-              {isPos?'+':'-'}{currencyUnit} {displayValue}
-            </p>
-          )}
-        </div>
-      </div>
-    </Card>
-  );
-};
-
 // ═══════════════════════════════════════════
 // TODAY PROFIT CARD — uses /today-profit API
 // ═══════════════════════════════════════════
@@ -584,12 +350,12 @@ const TodayProfitCard: React.FC<{
     <Card style={{ padding: isMobile ? '10px 14px' : '12px 16px', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, minHeight: isMobile ? 62 : 68 }} flash={flash}>
       {/* Baris 1: Label + age + eye toggle + refresh */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-        <span style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.12em', color: C.muted, whiteSpace: 'nowrap' }}>
+        <span style={{ fontSize: 10.5, fontWeight: 500, color: C.muted, whiteSpace: 'nowrap' }}>
           {t('dashboard.profitToday')}
         </span>
         {/* Age badge */}
         {ageLabel && !isRefreshing && (
-          <span style={{ fontSize: 8, color: C.muted, opacity: 0.6, fontFamily: 'monospace' }}>{ageLabel}</span>
+          <span style={{ fontSize: 9, color: C.muted, opacity: 0.7, fontVariantNumeric: 'tabular-nums' }}>{ageLabel}</span>
         )}
         {/* Refresh spinner / button */}
         {onRefresh && (
@@ -622,12 +388,11 @@ const TodayProfitCard: React.FC<{
           ))}
         </div>
       ) : (
-        <p ref={numRef} style={{
+        <p ref={numRef} className="dsh-num" style={{
           fontWeight: 700,
-          letterSpacing: '-0.03em',
           lineHeight: 1,
           color: col,
-          fontSize: isMobile ? 'clamp(16px,5vw,24px)' : 'clamp(20px, 6.5vw, 36px)',
+          fontSize: isMobile ? 'clamp(16px,5vw,24px)' : 'clamp(20px, 6.5vw, 34px)',
           whiteSpace: 'nowrap',
           overflow: 'hidden',
           textOverflow: 'ellipsis',
@@ -635,7 +400,6 @@ const TodayProfitCard: React.FC<{
           maxWidth: '100%',
           // ✅ FIX flicker: animasi via CSS class toggle, bukan key prop (yg unmount/remount)
           // opacity TIDAK diturunkan saat isRefreshing — itu yg bikin fade-flicker tiap poll
-          textShadow: isMobile ? 'none' : `0 0 18px ${col}90, 0 0 6px ${col}55`,
         }}>
           {isPos ? '+' : '−'}{currencyUnit} {displayValue}
         </p>
@@ -643,45 +407,6 @@ const TodayProfitCard: React.FC<{
     </Card>
   );
 };
-
-// ═══════════════════════════════════════════
-// ASSET CARD
-// ═══════════════════════════════════════════
-const AssetCard: React.FC<{asset?:StockityAsset|null;mode:TradingMode;isLoading?:boolean;t:(k:string)=>string;onOpenPicker?:()=>void;disabled?:boolean}> = ({asset,mode,isLoading,t,onOpenPicker,disabled}) => {
-  const modeCol = modeAccent(mode);
-  const abbr    = asset?.ric ? asset.ric.slice(0,3).toUpperCase() : '+';
-  const [imgErr,setImgErr] = useState(false);
-  if(isLoading) return <Card style={{padding:'11px 14px',height:'100%'}}><Sk w={100} h={22}/></Card>;
-  return (
-    <Card style={{padding:0,height:'100%',cursor:onOpenPicker&&!disabled?'pointer':'default'}} onClick={onOpenPicker&&!disabled?onOpenPicker:undefined}>
-      <div style={{display:'flex',alignItems:'center',gap:10,padding:'11px 14px',height:68}}>
-        <div style={{width:40,height:40,borderRadius:11,overflow:'hidden',flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center',background:`${modeCol}12`,border:`1.5px solid ${modeCol}28`}}>
-          {asset?.iconUrl&&!imgErr?(
-            <img src={asset.iconUrl} alt={asset.ric} crossOrigin="anonymous"
-              onError={()=>setImgErr(true)}
-              style={{width:'100%',height:'100%',objectFit:'contain',padding:4}}
-            />
-          ):(
-            <span style={{fontWeight:700,fontSize:20,color:modeCol,letterSpacing:'-0.02em'}}>{abbr}</span>
-          )}
-        </div>
-        <div style={{flex:1,minWidth:0}}>
-          <p style={{fontSize:10,fontWeight:500,textTransform:'uppercase',letterSpacing:'0.08em',color:C.muted,lineHeight:1,marginBottom:5}}>{t('dashboard.asset')}</p>
-          {asset?(
-            <>
-              <p style={{fontSize:15,fontWeight:700,lineHeight:1,color:C.text,letterSpacing:'-0.02em',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{asset.name}</p>
-              <p style={{fontSize:10,marginTop:3,color:C.sub,lineHeight:1.2,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{asset.ric}</p>
-            </>
-          ):(
-            <p style={{fontSize:12,color:C.muted}}>{t('dashboard.notSelected')}</p>
-          )}
-        </div>
-        {asset && <span style={{fontSize:11,fontWeight:700,color:modeCol,flexShrink:0}}>{asset.profitRate}%</span>}
-      </div>
-    </Card>
-  );
-};
-
 // ═══════════════════════════════════════════
 // COMBINED ASSET + BALANCE CARD (Mobile — 1 card full width)
 // ═══════════════════════════════════════════
@@ -744,15 +469,15 @@ const AssetBalanceCombinedCard: React.FC<{
           <div style={{ flex: 1, minWidth: 0 }}>
             {/* Label "ASET" + persentasi di sebelah kanannya */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 3 }}>
-              <p style={{ fontSize: 9, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.06em', color: C.muted, lineHeight: 1, margin: 0 }}>
+              <p style={{ fontSize: 10, fontWeight: 500, color: C.muted, lineHeight: 1, margin: 0 }}>
                 {t('dashboard.asset')}
               </p>
               {asset && (
-                <span style={{ fontSize: 9, fontWeight: 700, color: modeCol, lineHeight: 1, flexShrink: 0 }}>{asset.profitRate}%</span>
+                <span className="dsh-num" style={{ fontSize: 9.5, fontWeight: 600, color: modeCol, lineHeight: 1, flexShrink: 0 }}>{asset.profitRate}%</span>
               )}
             </div>
             {isLoading ? <div style={{ height: 14, width: 60, borderRadius: 4, background: C.faint }} /> : asset ? (
-              <p style={{ fontSize: 'clamp(10px,3.2vw,14px)', fontWeight: 700, lineHeight: 1, color: C.text, letterSpacing: '-0.02em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0, margin: 0 }}>
+              <p style={{ fontSize: 'clamp(11px,3.2vw,14px)', fontWeight: 650, lineHeight: 1.1, color: C.text, letterSpacing: '-0.01em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0, margin: 0 }}>
                 {asset.name}
               </p>
             ) : (
@@ -778,7 +503,7 @@ const AssetBalanceCombinedCard: React.FC<{
         <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3 }}>
           {/* Baris 1: label + eye + badge sejajar */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <p style={{ fontSize: 9, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.06em', color: C.muted, lineHeight: 1, margin: 0 }}>
+            <p style={{ fontSize: 10, fontWeight: 500, color: C.muted, lineHeight: 1, margin: 0 }}>
               {t('dashboard.balance')}
             </p>
             <button
@@ -790,7 +515,7 @@ const AssetBalanceCombinedCard: React.FC<{
                 : <EyeOff style={{ width: 10, height: 10 }} />
               }
             </button>
-            <span style={{ fontSize: 8, fontWeight: 700, padding: '1px 5px', borderRadius: 99, color: balCol, background: balBg, border: `1px solid ${balCol}30`, lineHeight: '13px', display: 'inline-block' }}>
+            <span style={{ fontSize: 9, fontWeight: 600, padding: '1px 6px', borderRadius: 99, color: balCol, background: balBg, lineHeight: '13px', display: 'inline-block' }}>
               {isDemo ? t('common.demo') : t('common.real')}
             </span>
           </div>
@@ -805,7 +530,7 @@ const AssetBalanceCombinedCard: React.FC<{
               ))}
             </div>
           ) : (
-            <p style={{ fontSize: 'clamp(11px,3.5vw,16px)', fontWeight: 700, letterSpacing: '-0.02em', lineHeight: 1, color: balCol, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', margin: 0, textAlign: 'center' }}>
+            <p className="dsh-num" style={{ fontSize: 'clamp(12px,3.5vw,16px)', fontWeight: 700, lineHeight: 1, color: C.text, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', margin: 0, textAlign: 'center' }}>
               {FMT(amount)}
             </p>
           )}
@@ -830,8 +555,8 @@ const PickerModal: React.FC<{open:boolean;onClose:()=>void;title:string;options:
   
   // Theme-aware colors
   const modalBg = isDark 
-    ? 'linear-gradient(160deg,#242424 0%,#1C1C1C 100%)'
-    : 'linear-gradient(160deg,#ffffff 0%,#F2F4F8 100%)';
+    ? '#1B1D21'
+    : '#ffffff';
   const headerBorder = isDark ? 'rgba(255,255,255,0.10)' : '#E6E8EB';
   const closeBtnBg = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)';
   const closeBtnBorder = isDark ? 'rgba(255,255,255,0.14)' : '#E6E8EB';
@@ -1088,7 +813,7 @@ const OrderInputModal: React.FC<{open:boolean;onClose:()=>void;orders:ScheduleOr
         {/* ── Header — vertical gradient surface→cardBackground ── */}
         <div style={{
           flexShrink:0,
-          background:`linear-gradient(180deg,${C.card2} 0%,${C.card} 100%)`,
+          background:C.card,
           padding:'16px 24px',
           display:'flex',flexDirection:'column',gap:8,
         }}>
@@ -1146,7 +871,7 @@ const OrderInputModal: React.FC<{open:boolean;onClose:()=>void;orders:ScheduleOr
                 <div style={{display:'flex',alignItems:'center',gap:4,flex:1,minWidth:0,overflow:'hidden'}}>
                   <span style={{
                     width:6,height:6,borderRadius:'50%',flexShrink:0,
-                    background:C.cyan,boxShadow:`0 0 5px ${C.cyan}`,
+                    background:C.cyan,
                   }}/>
                   <span style={{fontSize:9,fontWeight:600,color:C.muted,letterSpacing:'0.05em',textTransform:'uppercase',flexShrink:0}}>Win</span>
                   <span style={{fontSize:'clamp(13px,3.5vw,16px)',fontWeight:700,color:C.cyan,fontFamily:'inherit',fontVariantNumeric:'tabular-nums',lineHeight:1,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{winCount}</span>
@@ -1169,7 +894,7 @@ const OrderInputModal: React.FC<{open:boolean;onClose:()=>void;orders:ScheduleOr
                   <span style={{fontSize:9,fontWeight:600,color:C.muted,letterSpacing:'0.05em',textTransform:'uppercase',flexShrink:0}}>Loss</span>
                   <span style={{
                     width:6,height:6,borderRadius:'50%',flexShrink:0,
-                    background:C.coral,boxShadow:`0 0 5px ${C.coral}`,
+                    background:C.coral,
                   }}/>
                 </div>
               </div>
@@ -1408,9 +1133,9 @@ const OrderInputModal: React.FC<{open:boolean;onClose:()=>void;orders:ScheduleOr
                                     <span style={{fontSize:9,fontWeight:700,color:phaseColor}}>{globalIdx}</span>
                                   </div>
                                   <span style={{fontSize:13,fontWeight:600,color:C.sub,fontFamily:'inherit',fontVariantNumeric:'tabular-nums'}}>{o.time}</span>
-                                  <span style={{fontSize:8,fontWeight:700,padding:'1px 5px',borderRadius:4,background:isBuy?`${C.cyan}15`:`${C.coral}15`,color:isBuy?C.cyan:C.coral,border:`1px solid ${isBuy?C.cyan:C.coral}25`,flexShrink:0}}>{isBuy?'BUY':'SELL'}</span>
+                                  <span style={{fontSize:9.5,fontWeight:700,padding:'1px 5px',borderRadius:4,background:isBuy?`${C.cyan}15`:`${C.coral}15`,color:isBuy?C.cyan:C.coral,border:`1px solid ${isBuy?C.cyan:C.coral}25`,flexShrink:0}}>{isBuy?'BUY':'SELL'}</span>
                                   {ms && (ms.currentStep??0) > 0 && (
-                                    <span style={{fontSize:8,color:C.amber,fontFamily:'inherit',fontVariantNumeric:'tabular-nums',flexShrink:0}}>K{ms.currentStep}</span>
+                                    <span style={{fontSize:9.5,color:C.amber,fontFamily:'inherit',fontVariantNumeric:'tabular-nums',flexShrink:0}}>K{ms.currentStep}</span>
                                   )}
                                   <div style={{marginLeft:'auto',display:'flex',alignItems:'center',gap:6,flexShrink:0}}>
                                     {profit != null && (
@@ -1418,7 +1143,7 @@ const OrderInputModal: React.FC<{open:boolean;onClose:()=>void;orders:ScheduleOr
                                         {profit>=0?'+':''}{FMT(profit/100)}
                                       </span>
                                     )}
-                                    <span style={{fontSize:8,fontWeight:700,padding:'1px 6px',borderRadius:99,background:`${phaseColor}15`,border:`1px solid ${phaseColor}28`,color:phaseColor}}>{phaseLabel}</span>
+                                    <span style={{fontSize:9.5,fontWeight:700,padding:'1px 6px',borderRadius:99,background:`${phaseColor}15`,border:`1px solid ${phaseColor}28`,color:phaseColor}}>{phaseLabel}</span>
                                   </div>
                                 </div>
                               );
@@ -1461,7 +1186,7 @@ const OrderInputModal: React.FC<{open:boolean;onClose:()=>void;orders:ScheduleOr
                             marginBottom:4,
                           }}>
                             <span style={{
-                              fontSize:phase==='martingale'?9:14,fontWeight:800,color:phaseColor,
+                              fontSize:phase==='martingale'?9:14,fontWeight:700,color:phaseColor,
                               width:22,textAlign:'center',lineHeight:1,flexShrink:0,
                               animation:'pulse 1.2s ease-in-out infinite',
                             }}>{phaseIcon}</span>
@@ -1557,22 +1282,6 @@ const OrderInputModal: React.FC<{open:boolean;onClose:()=>void;orders:ScheduleOr
 };
 
 
-
-// ═══════════════════════════════════════════
-// GENERIC STAT GRID
-// ═══════════════════════════════════════════
-const StatGrid: React.FC<{stats:{l:string;v:string|number;c:string}[]}> = ({stats}) => (
-  <div style={{display:'grid',gridTemplateColumns:`repeat(${stats.length},1fr)`,gap:8}}>
-    {stats.map(s=>(
-      <div key={s.l} style={{background:`${s.c}08`,border:`1px solid ${s.c}18`,borderRadius:10,padding:'8px 10px'}}>
-        <p style={{fontSize:9,color:C.muted,textTransform:'uppercase',letterSpacing:'0.1em',marginBottom:4}}>{s.l}</p>
-        <p style={{fontSize:15,fontWeight:800,color:s.c,fontFamily:'inherit',fontVariantNumeric:'tabular-nums'}}>{s.v}</p>
-      </div>
-    ))}
-  </div>
-);
-
-// ═══════════════════════════════════════════
 // SCHEDULE PANEL
 // ═══════════════════════════════════════════
 const SchedulePanel: React.FC<{orders:ScheduleOrder[];logs:ExecutionLog[];onOpenModal:()=>void;isRunning:boolean;isLoading:boolean;fillHeight?:boolean;compact?:boolean;onViewSession?:()=>void;historyIdsRef?:React.MutableRefObject<Set<string>>;inModal?:boolean}> =
@@ -1647,7 +1356,7 @@ const SchedulePanel: React.FC<{orders:ScheduleOrder[];logs:ExecutionLog[];onOpen
             const isMartingale = ms?.isActive && (ms.currentStep ?? 0) > 0;
             const col = isMartingale ? C.amber : C.sky;
             const label = isMartingale ? `K${ms!.currentStep}` : '●';
-            const timeFz = compact ? 'clamp(9px,2.8vw,11px)' : '12px';
+            const timeFz = compact ? '10.5px' : '12px';
             const itemPad = compact ? '5px 10px' : '8px 12px';
             const itemGap = compact ? 5 : 8;
             return (
@@ -1657,7 +1366,7 @@ const SchedulePanel: React.FC<{orders:ScheduleOrder[];logs:ExecutionLog[];onOpen
                 background: isMartingale ? `${C.amber}08` : `${C.sky}08`,
                 minWidth:0,overflow:'hidden',
               }}>
-                <span style={{fontSize:compact?9:10,fontWeight:800,color:col,width:18,textAlign:'center',flexShrink:0,animation:'pulse 1.2s ease-in-out infinite'}}>{label}</span>
+                <span style={{fontSize:compact?9:10,fontWeight:700,color:col,width:18,textAlign:'center',flexShrink:0,animation:'pulse 1.2s ease-in-out infinite'}}>{label}</span>
                 <span style={{fontSize:timeFz,fontFamily:'inherit',fontVariantNumeric:'tabular-nums',color:C.text,fontWeight:600,flexShrink:0}}>{o.time}</span>
                 <span style={{fontSize:compact?8:9,fontWeight:700,padding:'1px 5px',borderRadius:4,color:isCall?C.cyan:C.coral,background:isCall?`${C.cyan}12`:`${C.coral}12`,flexShrink:0}}>{isCall?'B':'S'}</span>
                 <span style={{fontSize:compact?8:9,fontWeight:700,padding:'1px 6px',borderRadius:99,color:col,background:`${col}12`,border:`1px solid ${col}28`,flexShrink:0,marginLeft:'auto'}}>
@@ -1670,8 +1379,8 @@ const SchedulePanel: React.FC<{orders:ScheduleOrder[];logs:ExecutionLog[];onOpen
           {(compact?pendingOrders.slice(0,2):pendingOrders).map((order,i,arr)=>{
             const isA=i===activeIdx, isCall=order.trend==='call', col=isCall?C.cyan:C.coral;
             const iconSz = compact?11:13;
-            const timeFz = compact?'clamp(9px,2.8vw,11px)':'12px';
-            const badgeFz = compact?'clamp(8px,2.4vw,10px)':'10px';
+            const timeFz = compact?'10.5px':'12px';
+            const badgeFz = compact?'9.5px':'10px';
             const badgePad = compact?'2px 5px':'2px 7px';
             const itemPad = compact?'5px 10px':'8px 12px';
             const itemGap = compact?5:8;
@@ -1679,7 +1388,7 @@ const SchedulePanel: React.FC<{orders:ScheduleOrder[];logs:ExecutionLog[];onOpen
               <div key={order.id} ref={el=>{itemRefs.current[i]=el;}} className="schedule-item" style={{
                 display:'flex',alignItems:'center',gap:itemGap,padding:itemPad,
                 borderBottom:i<arr.length-1?`1px solid ${C.bdr}`:'none',
-                background:isA?(isCall?'rgba(41,151,255,0.04)':'rgba(255,69,58,0.04)'):'transparent',
+                background:isA?(isCall?`${C.cyan}08`:`${C.coral}08`):'transparent',
                 minWidth:0,overflow:'hidden',
               }}>
                 {isA
@@ -1699,7 +1408,7 @@ const SchedulePanel: React.FC<{orders:ScheduleOrder[];logs:ExecutionLog[];onOpen
           onClick={onOpenModal}
           style={{
             width:'100%',display:'flex',alignItems:'center',justifyContent:'center',gap:6,
-            padding:'8px 0',borderRadius:8,fontSize:'clamp(9px,3vw,12px)',fontWeight:500,
+            padding:'8px 0',borderRadius:8,fontSize:11.5,fontWeight:500,
             background:`${C.cyan}10`,border:`1px solid ${C.cyan}28`,color:C.cyan,
             cursor:'pointer',whiteSpace:'nowrap',overflow:'hidden',
           }}
@@ -1872,7 +1581,7 @@ const AISignalPanel: React.FC<{
     <span style={{
       width: 6, height: 6, borderRadius: '50%', flexShrink: 0,
       background: on ? col : C.muted,
-      boxShadow: on ? `0 0 5px ${col}` : 'none',
+      
       animation: on && pulse ? 'pulse 1.6s ease-in-out infinite' : 'none',
     }} />
   );
@@ -2010,7 +1719,7 @@ const AISignalPanel: React.FC<{
                     <span key={i} style={{
                       width: 6, height: 6, borderRadius: '50%',
                       background: i < (alwaysSignal.currentStep ?? 0) ? C.amber : `${C.amber}28`,
-                      boxShadow: i < (alwaysSignal.currentStep ?? 0) ? `0 0 4px ${C.amber}` : 'none',
+                      
                     }} />
                   ))}
                 </div>
@@ -2092,7 +1801,7 @@ const AISignalPanel: React.FC<{
                           {formatExecTime(o.executionTime)}
                         </span>
                         {isMart && (
-                          <span style={{ fontSize: 8, fontWeight: 700, padding: '1px 4px', borderRadius: 4, color: C.amber, background: `${C.amber}12`, border: `1px solid ${C.amber}25` }}>
+                          <span style={{ fontSize: 9.5, fontWeight: 700, padding: '1px 4px', borderRadius: 4, color: C.amber, background: `${C.amber}12`, border: `1px solid ${C.amber}25` }}>
                             M{o.martingaleStep}
                           </span>
                         )}
@@ -2332,7 +2041,7 @@ const MobileSessionSheet: React.FC<{
         display:'flex',flexDirection:'column',
         background:C.bg,
         borderRadius:24,
-        border:`0.4px solid ${ac}66`,
+        border:`1px solid ${C.bdr}`,
         boxShadow:`0 32px 80px rgba(0,0,0,${C.bg==='#0B0C0E'?'0.70':'0.18'}), 0 8px 24px rgba(0,0,0,${C.bg==='#0B0C0E'?'0.50':'0.10'})`,
         overflow:'hidden',
         animation:'slide-up 0.28s cubic-bezier(0.32,0.72,0,1)',
@@ -2340,12 +2049,12 @@ const MobileSessionSheet: React.FC<{
         {/* header — gradient seperti OrderInputModal */}
         <div style={{
           flexShrink:0,
-          background:`linear-gradient(180deg,${C.card2} 0%,${C.card} 100%)`,
+          background:C.card,
           padding:'16px 24px',
           display:'flex',alignItems:'center',justifyContent:'space-between',
         }}>
           <div style={{display:'flex',alignItems:'center',gap:10}}>
-            <span style={{width:8,height:8,borderRadius:'50%',background:ac,boxShadow:`0 0 6px ${ac}`,animation:'pulse 1.6s ease-in-out infinite',flexShrink:0}}/>
+            <span style={{width:8,height:8,borderRadius:'50%',background:ac,animation:'pulse 1.6s ease-in-out infinite',flexShrink:0}}/>
             <p style={{fontSize:20,fontWeight:600,color:C.text,letterSpacing:'-0.02em',margin:0}}>{modeLabel[mode]}</p>
           </div>
           <button
@@ -2943,9 +2652,9 @@ const SettingsCard: React.FC<{
                   {isNewMode&&<div style={{ height:44,borderRadius:12,display:'flex',alignItems:'center',padding:'0 10px',background:C.card2,border:`1px solid ${C.bdr}` }}><span style={{ fontSize:11,color:C.muted }}>{T('dashboard.settings.automatic')}</span></div>}
                 </div>
                 {/* Mata Uang */}
-                <div style={{ flex:1,height:44,borderRadius:12,display:'flex',alignItems:'center',justifyContent:'space-between',gap:6,padding:'0 10px',background:C.card2,border:`0.8px solid ${C.bdr}`,minWidth:0 }}>
+                <div style={{ flex:1,height:44,borderRadius:12,display:'flex',alignItems:'center',justifyContent:'space-between',gap:6,padding:'0 10px',background:C.card2,border:`1px solid ${C.bdr}`,minWidth:0 }}>
                   <span style={{ fontSize:11,fontWeight:600,color:C.sub,flexShrink:0 }}>{CURR_UNIT}</span>
-                  <span style={{ fontSize:8,fontWeight:700,color:C.sub,background:`${C.cyan}10`,borderRadius:4,padding:'1px 5px',border:`1px solid ${C.cyan}25`,flexShrink:0,whiteSpace:'nowrap' }}>AUTO</span>
+                  <span style={{ fontSize:9,fontWeight:600,color:C.cyan,background:`${C.cyan}12`,borderRadius:4,padding:'1px 5px',flexShrink:0,whiteSpace:'nowrap' }}>AUTO</span>
                 </div>
               </div>
               {mode==='ctc'&&<div style={{ marginTop:8,padding:'9px 12px',borderRadius:10,background:'rgba(191,90,242,0.07)',border:'1px solid rgba(191,90,242,0.2)',display:'flex',gap:8 }}><Copy style={{ width:13,height:13,color:C.violet,flexShrink:0,marginTop:1 }}/><p style={{ fontSize:10,color:C.muted,lineHeight:1.5 }}>{T('dashboard.settings.ctcInfo')}</p></div>}
@@ -3021,7 +2730,7 @@ const SettingsCard: React.FC<{
                     )}
                   </div>
                 </div>
-                {isBelowMin&&<p style={{ fontSize:10,color:C.coral,marginTop:4 }}>⚠ {T('dashboard.settings.amountBelowMin')}</p>}
+                {isBelowMin&&<p style={{ fontSize:10.5,color:C.coral,marginTop:4,display:'flex',alignItems:'center',gap:4 }}><AlertCircle style={{width:11,height:11,flexShrink:0}}/>{T('dashboard.settings.amountBelowMin')}</p>}
               </div>
             )}
 
@@ -3191,7 +2900,7 @@ const SettingsCard: React.FC<{
                 {/* Toggle card */}
                 <button disabled={disabled} onClick={()=>set('enabled',!martingale.enabled)} style={{
                   flex:1,height:44,borderRadius:12,cursor:'pointer',display:'flex',alignItems:'center',gap:8,padding:'0 12px',
-                  background:martingale.enabled?`${C.cyan}18`:C.card2,border:`0.8px solid ${martingale.enabled?`${C.cyan}60`:C.bdr}`,transition:'all 0.15s',
+                  background:martingale.enabled?`${C.cyan}18`:C.card2,border:`1px solid ${martingale.enabled?`${C.cyan}60`:C.bdr}`,transition:'all 0.15s',
                 }}>
                   <div style={{ width:16,height:16,borderRadius:'50%',flexShrink:0,background:martingale.enabled?C.cyan:'transparent',border:`1.5px solid ${martingale.enabled?C.cyan:C.muted}`,display:'flex',alignItems:'center',justifyContent:'center' }}>
                     {martingale.enabled&&<span style={{ width:6,height:6,borderRadius:'50%',background:'#fff' }}/>}
@@ -3202,7 +2911,7 @@ const SettingsCard: React.FC<{
                 <button disabled={disabled||!martingale.enabled} onClick={()=>{ if(martingale.enabled) setShowMartingaleDialog(true); }} style={{
                   flex:1,height:44,borderRadius:12,cursor:martingale.enabled?'pointer':'not-allowed',
                   display:'flex',alignItems:'center',justifyContent:'space-between',padding:'0 12px',
-                  background:C.card2,border:`0.8px solid ${martingale.enabled&&!martingale.alwaysSignal?`${C.amber}45`:C.bdr}`,
+                  background:C.card2,border:`1px solid ${martingale.enabled&&!martingale.alwaysSignal?`${C.amber}45`:C.bdr}`,
                   opacity:martingale.enabled?1:0.45,transition:'all 0.15s',
                 }}>
                   <span style={{ fontSize:11,fontWeight:500,color:C.text }}>{T('dashboard.martingale.maxStepLabel')}</span>
@@ -3522,10 +3231,7 @@ const ControlCard: React.FC<{
   };
 
   return (
-    <Card style={{
-      border:`1px solid ${C.bdr}`,
-      boxShadow: isDarkMode ? `0 2px 0 ${C.cyan}08 inset, 0 10px 32px rgba(0,0,0,0.35), 0 3px 10px rgba(0,0,0,0.25)` : 'none',
-    }}>
+    <Card>
       {/* ── Header: LEFT-aligned title + state pill + chevron ── */}
       <button onClick={()=>setOpen(!open)} style={{
         width:'100%',display:'flex',alignItems:'center',gap:10,
@@ -3545,16 +3251,15 @@ const ControlCard: React.FC<{
         {/* state pill */}
         <div style={{
           display:'flex',alignItems:'center',gap:5,
-          padding:'4px 10px',borderRadius:20,flexShrink:0,
+          padding:'4px 10px',borderRadius:99,flexShrink:0,
           background:stateBg[stateLabel]??`${C.muted}10`,
-          border:`0.5px solid ${stateCol}40`,
         }}>
           <span style={{
-            width:8,height:8,borderRadius:'50%',flexShrink:0,
-            background:stateCol,boxShadow:`0 0 5px ${stateCol}`,
+            width:7,height:7,borderRadius:'50%',flexShrink:0,
+            background:stateCol,
             animation:canStopBot&&!canResumeBot?'ping 1.6s ease-in-out infinite':undefined,
           }}/>
-          <span style={{fontSize:11,fontWeight:700,color:stateCol}}>{stateLabel}</span>
+          <span style={{fontSize:11,fontWeight:600,color:stateCol}}>{stateLabel}</span>
         </div>
         <div style={{width:28,height:28,borderRadius:8,display:'flex',alignItems:'center',justifyContent:'center',background:open?`${ac}18`:C.card2,border:`1px solid ${open?`${ac}45`:C.bdr}`,transition:'all 0.2s',flexShrink:0}}>
           {open?<ChevronUp style={{width:15,height:15,color:ac}}/>:<ChevronDown style={{width:15,height:15,color:ac}}/>}
@@ -3596,12 +3301,12 @@ const ControlCard: React.FC<{
             <div style={{display:'flex',gap:10}}>
               {/* Stop — full width, no Pause */}
               <button onClick={onStop} disabled={!canStopBot||isLoading} style={{
-                flex:1,height:48,borderRadius:14,cursor:'pointer',
-                border:`0.5px solid ${C.coral}`,
-                background:`rgba(239,68,68,0.60)`,
-                color:'#fff',fontSize:13,fontWeight:700,letterSpacing:'0.02em',
+                flex:1,height:48,borderRadius:12,cursor:'pointer',
+                border:'none',
+                background:C.coral,
+                color:'#fff',fontSize:13,fontWeight:600,letterSpacing:'0.01em',
                 display:'flex',alignItems:'center',justifyContent:'center',gap:7,
-                boxShadow: isDarkMode ? `0 1px 0 ${C.coral}15 inset, 0 8px 24px ${C.coral}50, 0 3px 8px rgba(0,0,0,0.25)` : `0 2px 8px ${C.coral}30`,
+                boxShadow:`0 2px 10px ${C.coral}35`,
                 opacity:(!canStopBot||isLoading)?0.45:1,transition:'opacity 0.2s',
               }}>
                 <StopCircle style={{width:16,height:16}}/> Stop
@@ -3611,12 +3316,12 @@ const ControlCard: React.FC<{
             /* Idle — simple start button */
             <>
               <button onClick={onStart} disabled={isLoading||!canStart||isBelowMin||isAnyOtherRunning} style={{
-                width:'100%',height:50,borderRadius:14,cursor:'pointer',
-                border:`1px solid ${ac}55`,
-                background:`linear-gradient(180deg,${ac}CC,${ac}AA)`,
-                color:'#fff',fontSize:14,fontWeight:700,letterSpacing:'0.02em',
+                width:'100%',height:50,borderRadius:12,cursor:'pointer',
+                border:'none',
+                background:ac,
+                color:'#fff',fontSize:14,fontWeight:600,letterSpacing:'0.01em',
                 display:'flex',alignItems:'center',justifyContent:'center',gap:8,
-                boxShadow: isDarkMode ? `0 1px 0 rgba(255,255,255,0.18) inset, 0 10px 28px ${ac}55, 0 3px 10px rgba(0,0,0,0.45)` : `0 2px 10px ${ac}40`,
+                boxShadow:`0 2px 12px ${ac}40`,
                 opacity:(isLoading||!canStart||isBelowMin||isAnyOtherRunning)?0.45:1,transition:'opacity 0.2s',
               }}>
                 <PlayCircle style={{width:18,height:18}}/> Start
@@ -3668,18 +3373,17 @@ const DarkModeToggleStrip: React.FC<{
       border: `1px solid ${C.bdr}`,
       cursor: 'pointer',
       WebkitTapHighlightColor: 'transparent',
-      boxShadow: isDarkMode ? '0 2px 10px rgba(0,0,0,0.25)' : '0 1px 4px rgba(0,0,0,0.06)',
     }}
   >
     {/* Icon */}
     <div style={{
       width: 30, height: 30, borderRadius: 8, flexShrink: 0,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      background: isDarkMode ? 'linear-gradient(135deg,#1a1a2e,#16213e)' : 'linear-gradient(135deg,#fff9c4,#ffe082)',
+      background: C.faint, border: `1px solid ${C.bdr}`,
     }}>
       {isDarkMode
-        ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="2" strokeLinecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-        : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.sub} strokeWidth="2" strokeLinecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.amber} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
       }
     </div>
 
@@ -3692,7 +3396,7 @@ const DarkModeToggleStrip: React.FC<{
     <div style={{
       width: 44, height: 26, borderRadius: 26, flexShrink: 0,
       position: 'relative', transition: 'background 0.3s',
-      background: isDarkMode ? '#a78bfa' : 'rgba(120,120,128,0.18)',
+      background: isDarkMode ? C.cyan : 'rgba(120,120,128,0.18)',
     }}>
       <div style={{
         position: 'absolute', top: 3,
@@ -4704,24 +4408,6 @@ export default function DashboardPage() {
 
   const TopCards = <TodayProfitCard data={todayProfitData} localProfit={profitToday} currencyUnit={currencyConfig.currencyUnit} isLoading={isLoading} isRefreshing={profitRefreshing} lastUpdatedAt={profitLastUpdated} flash={flash} onRefresh={refreshProfit} t={t} isMobile={deviceType==='mobile'}/>;
 
-  const InfoRow = (
-    <div style={{display:'grid',gridTemplateColumns:deviceType==='desktop'?'repeat(3,1fr)':deviceType==='tablet'?'repeat(2,1fr)':'1fr 1fr',gap:g}}>
-      <AssetCard asset={selectedAsset} mode={tradingMode} isLoading={isLoading} t={t} onOpenPicker={()=>setAssetPickerOpen(true)} disabled={isActiveMode}/>
-      <BalanceCard balance={balance} accountType={isDemo?'demo':'real'} isLoading={isLoading} t={t}/>
-      {deviceType==='desktop'&&(
-        <Card style={{padding:'11px 14px'}}>
-          <p style={{fontSize:10,fontWeight:500,textTransform:'uppercase',letterSpacing:'0.08em',color:C.muted,marginBottom:5}}>{t('dashboard.tradingMode')}</p>
-          <p style={{fontSize:16,fontWeight:700,color:isActiveMode?modeAccent(tradingMode):C.muted}}>
-            {{schedule:'Signal Mode',fastrade:'Fastrade FTT Mode',ctc:'Fastrade CTC',aisignal:'AI Signal Mode',indicator:'Analysis Strategy Mode',momentum:'Momentum Mode'}[tradingMode]}
-          </p>
-          <div style={{marginTop:6}}>
-            <StatusChip col={isActiveMode?modeAccent(tradingMode):C.muted} label={isActiveMode?t('dashboard.running'):t('common.standby')}/>
-          </div>
-        </Card>
-      )}
-    </div>
-  );
-
   const ModeSession = (fillH:boolean, compact?:boolean, onViewSession?:()=>void, startStopButton?:React.ReactNode) => (
     <ModeSessionPanel
       mode={tradingMode} onModeChange={handleModeChange} locked={isAnyModeRunning} blockedModes={blockedModes}
@@ -4785,7 +4471,7 @@ export default function DashboardPage() {
             : `linear-gradient(135deg,${ac}d0,${ac}90)`,
         border:`1px solid ${isActiveMode ? C.coral : ac}55`,
         color:'#fff',
-        fontSize:12,fontWeight:800,letterSpacing:'0.05em',
+        fontSize:12,fontWeight:700,letterSpacing:'0.05em',
         cursor: actionLoading || (!isActiveMode && (!canStart || isAnyModeRunning)) ? 'not-allowed' : 'pointer',
         opacity: !isActiveMode && (!canStart || isAnyModeRunning) ? 0.45 : 1,
         boxShadow: actionLoading ? 'none' : isActiveMode
@@ -4824,7 +4510,7 @@ export default function DashboardPage() {
           <div onClick={()=>setStopConfirmOpen(false)} style={{position:'absolute',inset:0,background:'rgba(0,0,0,0.6)',backdropFilter:'blur(14px)',WebkitBackdropFilter:'blur(14px)'}}/>
           <div style={{
             position:'relative',width:'100%',maxWidth:320,
-            background: isDarkMode ? 'linear-gradient(160deg,#1c1c1e 0%,#141416 100%)' : '#ffffff',
+            background: isDarkMode ? '#17181C' : '#ffffff',
             borderRadius:18,border: isDarkMode ? '1px solid rgba(255,255,255,0.10)' : `1px solid rgba(0,0,0,0.08)`,
             overflow:'hidden',
             animation:'slide-up 0.24s cubic-bezier(0.32,0.72,0,1)',
