@@ -3,31 +3,31 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
 /**
- * TabLoadingBar — v2
+ * TabLoadingBar — v3 (redesign kompetisi)
  *
- * Problem v1: navigasi App Router bisa selesai < 100ms sehingga bar
- * langsung hilang sebelum terlihat. Halaman baru juga punya stacking
- * context sendiri yang bisa menimpa z-index.
+ * v2 memakai overlay gelap full-screen + spinner dengan durasi minimum
+ * 500ms — setiap pindah tab terasa "berat" walau halamannya instan.
  *
- * Solusi:
- *  - Overlay full-viewport → tidak bisa ketutup halaman manapun
- *  - Durasi minimum MIN_VISIBLE_MS (500ms) terjamin
- *  - Z-index 2147483647 (INT_MAX) — selalu di atas segalanya
- *  - State machine: idle → entering → visible → leaving → idle
+ * v3 = progress bar tipis di tepi atas (pola nprogress/YouTube):
+ *  - Tidak memblokir/menggelapkan apa pun — navigasi terasa instan
+ *  - Bar merayap ke ~80% selama menunggu (ease-out), lalu melesat ke
+ *    100% dan fade saat halaman tiba
+ *  - GPU-friendly: hanya transform scaleX + opacity
+ *  - State machine tetap: idle → entering/visible → leaving → idle,
+ *    dipicu event 'stc:navstart' dari BottomNav & selesai via pathname
  */
 
-const MIN_VISIBLE_MS = 500; // ms overlay pasti terlihat
-const FADE_MS        = 250; // durasi fade in/out
+const MIN_VISIBLE_MS = 200; // supaya bar sempat terlihat pada navigasi instan
+const DONE_MS        = 260; // durasi lari ke 100% + fade
 
-type Phase = 'idle' | 'entering' | 'visible' | 'leaving';
+type Phase = 'idle' | 'loading' | 'done';
 
 export function TabLoadingBar() {
   const pathname     = usePathname();
   const prevPathRef  = useRef(pathname);
-  const [phase, setPhase]  = useState<Phase>('idle');
+  const [phase, setPhase] = useState<Phase>('idle');
   const phaseRef     = useRef<Phase>('idle');
-  const navDoneRef   = useRef(false);
-  const showStartRef = useRef(0);
+  const startRef     = useRef(0);
 
   const setPhaseSync = (p: Phase) => {
     phaseRef.current = p;
@@ -37,107 +37,68 @@ export function TabLoadingBar() {
   // ── Mulai saat user klik tab ──────────────────────────────────────────────
   useEffect(() => {
     const handleNavStart = () => {
-      if (phaseRef.current !== 'idle') return;
-      navDoneRef.current   = false;
-      showStartRef.current = Date.now();
-      setPhaseSync('entering');
-
-      // Setelah fade-in → pindah ke 'visible'
-      setTimeout(() => {
-        setPhaseSync('visible');
-        // Jika halaman sudah selesai selagi fade-in berlangsung
-        if (navDoneRef.current) scheduleLeave();
-      }, FADE_MS);
+      if (phaseRef.current === 'loading') return;
+      startRef.current = Date.now();
+      setPhaseSync('loading');
     };
-
     window.addEventListener('stc:navstart', handleNavStart);
     return () => window.removeEventListener('stc:navstart', handleNavStart);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ── Deteksi navigasi selesai via perubahan pathname ───────────────────────
+  // ── Navigasi selesai via perubahan pathname ───────────────────────────────
   useEffect(() => {
     if (pathname === prevPathRef.current) return;
     prevPathRef.current = pathname;
-    if (phaseRef.current === 'idle') return;
+    if (phaseRef.current !== 'loading') return;
 
-    navDoneRef.current = true;
-    if (phaseRef.current === 'visible') scheduleLeave();
-    // Jika masih 'entering', scheduleLeave dipanggil dari setTimeout di atas
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pathname]);
-
-  // ── Tunggu minimum duration lalu fade-out ─────────────────────────────────
-  const scheduleLeave = () => {
-    const elapsed   = Date.now() - showStartRef.current;
+    const elapsed   = Date.now() - startRef.current;
     const remaining = Math.max(0, MIN_VISIBLE_MS - elapsed);
-    setTimeout(() => {
-      setPhaseSync('leaving');
-      setTimeout(() => setPhaseSync('idle'), FADE_MS);
+    const t1 = setTimeout(() => {
+      setPhaseSync('done');
+      setTimeout(() => setPhaseSync('idle'), DONE_MS + 60);
     }, remaining);
-  };
+    return () => clearTimeout(t1);
+  }, [pathname]);
 
   if (phase === 'idle') return null;
 
-  const opacity = phase === 'leaving' ? 0 : 1;
+  const loading = phase === 'loading';
 
   return (
     <div
       aria-hidden
       style={{
-        position:            'fixed',
-        inset:               0,
-        zIndex:              2147483647,
-        pointerEvents:       'none',
-        display:             'flex',
-        flexDirection:       'column',
-        alignItems:          'center',
-        justifyContent:      'center',
-        background:          'rgba(0,0,0,0.50)',
-        backdropFilter:      'blur(3px)',
-        WebkitBackdropFilter:'blur(3px)',
-        opacity,
-        transition:          `opacity ${FADE_MS}ms ease`,
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        height: 3,
+        zIndex: 2147483647,
+        pointerEvents: 'none',
+        // hormati notch/status bar Android WebView
+        paddingTop: 'env(safe-area-inset-top, 0px)',
+        opacity: loading ? 1 : 0,
+        transition: loading ? 'none' : `opacity ${DONE_MS}ms ease ${DONE_MS * 0.4}ms`,
       }}
     >
       <style>{`
-        @keyframes __tab_spin {
-          to { transform: rotate(360deg); }
-        }
-        @keyframes __tab_pulse {
-          0%, 100% { opacity: 0.25; transform: scale(0.7); }
-          50%       { opacity: 1;   transform: scale(1);   }
-        }
-        .__tab_ring {
-          width: 40px;
-          height: 40px;
-          border-radius: 50%;
-          border: 3px solid rgba(255,255,255,0.12);
-          border-top-color: #00d4aa;
-          animation: __tab_spin 0.7s linear infinite;
-        }
-        .__tab_dots {
-          display: flex;
-          gap: 8px;
-          margin-top: 18px;
-        }
-        .__tab_dot {
-          width: 5px;
-          height: 5px;
-          border-radius: 50%;
-          background: rgba(255,255,255,0.6);
-          animation: __tab_pulse 1.2s ease-in-out infinite;
-        }
-        .__tab_dot:nth-child(2) { animation-delay: 0.18s; }
-        .__tab_dot:nth-child(3) { animation-delay: 0.36s; }
+        /* mulai dari 0 → merayap ke ~80% dan melambat (pola nprogress) */
+        @keyframes __bar_creep  { from { transform: scaleX(0.03); } to { transform: scaleX(0.82); } }
+        /* halaman tiba → lari dari 80% ke penuh */
+        @keyframes __bar_finish { from { transform: scaleX(0.82); } to { transform: scaleX(1); } }
       `}</style>
-
-      <div className="__tab_ring" />
-      <div className="__tab_dots">
-        <span className="__tab_dot" />
-        <span className="__tab_dot" />
-        <span className="__tab_dot" />
-      </div>
+      <div
+        style={{
+          height: 3,
+          borderRadius: '0 2px 2px 0',
+          background: 'linear-gradient(90deg, #059669, #2DD4A7)',
+          transformOrigin: 'left center',
+          animation: loading
+            ? '__bar_creep 6s cubic-bezier(0.08, 0.6, 0.16, 1) forwards'
+            : `__bar_finish ${DONE_MS}ms ease-out forwards`,
+          willChange: 'transform',
+        }}
+      />
     </div>
   );
 }

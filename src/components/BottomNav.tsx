@@ -12,6 +12,14 @@ const NAV_ITEMS = [
   { href: '/profile',   label: 'Profil',    icon: User },
 ];
 
+/**
+ * BottomNav — redesign kompetisi: floating dock.
+ * Bukan bar full-width menempel di tepi, melainkan "dock" mengambang
+ * dengan rounded penuh, blur, hairline border, dan shadow lembut —
+ * konsisten dengan design system dashboard (hairline + emerald accent).
+ * Halaman sudah memberi padding-bottom 88px+safe-area, jadi dock
+ * (tinggi ~56 + offset 10) tidak pernah menutupi konten.
+ */
 export function BottomNav() {
   const pathname = usePathname();
   const { isDarkMode } = useDarkMode();
@@ -24,33 +32,27 @@ export function BottomNav() {
   // Sembunyikan nav di halaman webview agar konten full-screen
   if (pathname === '/webview') return null;
 
-  // Nav mengikuti tema aplikasi di SEMUA halaman (dashboard, history, profile).
-  // Profile kini theme-aware penuh di semua breakpoint, jadi tidak ada pengecualian.
-  const useDarkNav = isDarkMode;
-
-  // Accent emerald + inactive grey, sinkron dgn palet dashboard (getColors).
-  const theme = useDarkNav
+  const theme = isDarkMode
     ? {
-        navBg:      'rgba(15,16,18,0.92)',
-        navBorder:  '0.5px solid rgba(255,255,255,0.08)',
-        itemColor:  'rgba(161,168,179,0.55)',
+        dockBg:     'rgba(19,20,24,0.88)',
+        dockBorder: '1px solid rgba(255,255,255,0.09)',
+        dockShadow: '0 12px 32px -8px rgba(0,0,0,0.65), 0 2px 8px rgba(0,0,0,0.35)',
+        itemColor:  'rgba(161,168,179,0.60)',
         activeColor:'#2DD4A7',
-        activePill: 'rgba(45,212,167,0.14)',
-        labelColor: (active: boolean) => active ? '#2DD4A7' : 'rgba(161,168,179,0.55)',
+        activePill: 'rgba(45,212,167,0.13)',
       }
     : {
-        navBg:      'rgba(255,255,255,0.92)',
-        navBorder:  '0.5px solid #E6E8EB',
+        dockBg:     'rgba(255,255,255,0.90)',
+        dockBorder: '1px solid rgba(2,6,23,0.08)',
+        dockShadow: '0 12px 32px -12px rgba(15,23,42,0.22), 0 2px 8px rgba(15,23,42,0.06)',
         itemColor:  '#94A3B8',
         activeColor:'#059669',
-        activePill: 'rgba(5,150,105,0.10)',
-        labelColor: (active: boolean) => active ? '#059669' : '#94A3B8',
+        activePill: 'rgba(5,150,105,0.09)',
       };
 
-  // ── Dispatch loading event — hanya jika berpindah ke halaman berbeda ──────
+  // Dispatch loading event — hanya jika berpindah ke halaman berbeda
   const handleNavClick = (href: string) => {
-    const isActive =
-      pathname === href || pathname.startsWith(href + '/');
+    const isActive = pathname === href || pathname.startsWith(href + '/');
     if (!isActive) {
       window.dispatchEvent(new CustomEvent('stc:navstart'));
     }
@@ -64,30 +66,32 @@ export function BottomNav() {
           flex-direction: column;
           align-items: center;
           justify-content: center;
-          gap: 5px;
+          gap: 3px;
           flex: 1;
-          padding: 8px 4px 6px;
+          min-width: 0;
+          padding: 7px 2px 6px;
+          border-radius: 18px;
           text-decoration: none;
           -webkit-tap-highlight-color: transparent;
-          transition: opacity 0.15s ease;
+          transition: background 0.22s ease, transform 0.18s ease;
           position: relative;
         }
-        .bnav-item:active { opacity: 0.6; }
-        .bnav-icon-wrap {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          height: 30px;
-          padding: 0 18px;
-          border-radius: 999px;
-          transition: background 0.22s ease, transform 0.22s ease;
-        }
+        .bnav-item:active { transform: scale(0.94); }
         .bnav-label {
           font-size: 10px;
           font-weight: 600;
-          letter-spacing: 0.02em;
+          letter-spacing: 0.01em;
           line-height: 1;
+          white-space: nowrap;
           transition: color 0.2s ease;
+        }
+        .bnav-ind {
+          position: absolute;
+          top: 3px;
+          width: 4px;
+          height: 4px;
+          border-radius: 50%;
+          transition: opacity 0.2s ease, transform 0.2s ease;
         }
       `}</style>
 
@@ -95,22 +99,34 @@ export function BottomNav() {
         suppressHydrationWarning
         style={{
           position: 'fixed',
-          bottom: 0,
-          left: 0,
-          right: 0,
+          bottom: 'calc(10px + env(safe-area-inset-bottom, 0px))',
+          left: 12,
+          right: 12,
           zIndex: 50,
-          background: theme.navBg,
-          backdropFilter: 'blur(18px) saturate(180%)',
-          WebkitBackdropFilter: 'blur(18px) saturate(180%)',
-          borderTop: theme.navBorder,
-          paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-          boxShadow: useDarkNav
-            ? '0 -0.5px 0 rgba(255,255,255,0.06)'
-            : '0 -0.5px 0 rgba(2,6,23,0.06)',
-          transition: 'background 0.3s ease',
+          display: 'flex',
+          justifyContent: 'center',
+          pointerEvents: 'none',
         }}
       >
-        <nav style={{ display: 'flex', alignItems: 'stretch', height: 56 }}>
+        <nav
+          style={{
+            pointerEvents: 'auto',
+            display: 'flex',
+            alignItems: 'stretch',
+            width: '100%',
+            maxWidth: 430,
+            height: 56,
+            padding: 5,
+            gap: 2,
+            borderRadius: 999,
+            background: theme.dockBg,
+            backdropFilter: 'blur(20px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+            border: theme.dockBorder,
+            boxShadow: theme.dockShadow,
+            transition: 'background 0.3s ease',
+          }}
+        >
           {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
             const isActive = pathname === href || pathname.startsWith(href + '/');
             const col = isActive ? theme.activeColor : theme.itemColor;
@@ -120,19 +136,22 @@ export function BottomNav() {
                 key={href}
                 href={href}
                 className="bnav-item"
-                style={{ color: col }}
+                style={{
+                  color: col,
+                  background: isActive ? theme.activePill : 'transparent',
+                }}
                 onClick={() => handleNavClick(href)}
               >
                 <span
-                  className="bnav-icon-wrap"
+                  className="bnav-ind"
                   style={{
-                    background: isActive ? theme.activePill : 'transparent',
-                    transform: isActive ? 'translateY(-1px)' : 'none',
+                    background: theme.activeColor,
+                    opacity: isActive ? 1 : 0,
+                    transform: isActive ? 'scale(1)' : 'scale(0)',
                   }}
-                >
-                  <Icon size={21} strokeWidth={isActive ? 2.2 : 1.8} />
-                </span>
-                <span className="bnav-label" style={{ color: theme.labelColor(isActive) }}>
+                />
+                <Icon size={20} strokeWidth={isActive ? 2.2 : 1.8} />
+                <span className="bnav-label" style={{ color: col }}>
                   {label}
                 </span>
               </Link>

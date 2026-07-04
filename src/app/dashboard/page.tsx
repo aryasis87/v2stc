@@ -222,28 +222,28 @@ const RealtimeClockCompact: React.FC<{t:(k:string)=>string;lang:string;isBotRunn
   const tz      = () => {if(!time)return'';const o=-time.getTimezoneOffset()/60;return`UTC${o>=0?'+':''}${o}`;};
   const dotColor = isBotRunning ? C.cyan : C.coral;
   /*
-   * Redesign kompetisi: satu baris flat (bukan kartu-dalam-kartu).
-   * Jam digital kiri, tanggal + zona waktu + status kanan — hemat ruang
-   * vertikal di mobile dan menghilangkan border/shadow ganda.
+   * Redesign kompetisi v2: kolom chart mobile sangat sempit (~190px),
+   * jadi susunan DUA BARIS agar tidak pernah saling menimpa:
+   *   baris 1 — jam digital (kiri) + dot status (kanan)
+   *   baris 2 — hari, tanggal + zona waktu (muted, ellipsis)
    */
   return (
-    <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:8,minWidth:0}}>
-      <div style={{display:'flex',alignItems:'baseline',gap:6,minWidth:0}}>
-        <p suppressHydrationWarning style={{
-          fontSize:16,fontWeight:700,lineHeight:1,letterSpacing:'0.06em',
+    <div style={{display:'flex',flexDirection:'column',gap:3,minWidth:0}}>
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:8,minWidth:0}}>
+        <p suppressHydrationWarning className="dsh-num" style={{
+          fontSize:16,fontWeight:700,lineHeight:1,letterSpacing:'0.05em',
           fontFamily:"'DSEG7 Classic','Share Tech Mono',ui-monospace,monospace",
-          color:C.text,margin:0,
+          color:C.text,margin:0,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',minWidth:0,
         }}>{time?fmt(time):'--:--:--'}</p>
-        <span style={{fontSize:9,fontWeight:600,color:C.cyan,letterSpacing:'0.04em'}}>{tz()}</span>
-      </div>
-      <div style={{display:'flex',alignItems:'center',gap:6,flexShrink:0}}>
-        <span suppressHydrationWarning style={{fontSize:10,color:C.sub}}>{time?`${fmtDay(time)} · ${fmtDate(time)}`:''}</span>
         <span style={{
-          width:6,height:6,borderRadius:'50%',
+          width:6,height:6,borderRadius:'50%',flexShrink:0,
           background:dotColor,
           animation:isBotRunning?'ping 1.6s ease-in-out infinite':undefined,
         }}/>
       </div>
+      <span suppressHydrationWarning style={{fontSize:9.5,color:C.muted,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',minWidth:0}}>
+        {time?`${fmtDay(time)}, ${fmtDate(time)} · ${tz()}`:''}
+      </span>
     </div>
   );
 };
@@ -5136,7 +5136,8 @@ export default function DashboardPage() {
                     {isActiveMode?t('common.active'):T('dashboard.offStatus')}
                   </span>
                 </div>
-                <div style={{flex:1,minHeight:0,position:'relative'}}>
+                {/* Chart bleed sampai tepi kartu — tanpa gutter padding kiri/kanan/bawah */}
+                <div style={{flex:1,minHeight:0,position:'relative',margin:'0 -12px -12px'}}>
                   <ChartCard assetSymbol={selectedRic} height={110}/>
                 </div>
               </Card>
