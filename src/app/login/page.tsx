@@ -6,7 +6,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { api } from '@/lib/api';
 import { storage, isSessionValid, SESSION_KEYS } from '@/lib/storage';
-import { isWhitelistedByUserId, isWhitelisted, updateLastLogin, getRegistrationConfig } from '@/lib/supabaseRepository';
+import { updateLastLogin, getRegistrationConfig } from '@/lib/supabaseRepository';
 import { LanguageProvider, useLanguage, AVAILABLE_LANGUAGES, COUNTRY_ENTRIES, Language, isWindows } from '@/lib';
 
 type SplashPhase = 'hidden' | 'welcome' | 'verified' | 'out';
@@ -699,23 +699,12 @@ function LoginPageContent() {
     try {
       const res = await api.login(emailVal, passVal);
 
-      setLoginStep('whitelist');
-      // Admin & super-admin bypass cek whitelist (status dari backend, pakai token baru).
+      // Gate whitelist DIHAPUS (2026-07): semua pengguna dengan akun Stockity
+      // yang valid boleh masuk TANPA harus terdaftar lebih dulu. Backend tetap
+      // auto-register ke whitelist saat login. Status admin tetap diambil (untuk
+      // fitur admin), tapi TIDAK lagi memblokir akses.
       const role = await api.admin.me(res.accessToken).catch(() => ({ isAdmin: false, isSuperAdmin: false }));
-      const privileged = role.isAdmin || role.isSuperAdmin;
-      // Lolos jika admin/super-admin, ATAU cocok by user_id, ATAU by email
-      // (self-register: whitelist.user_id pakai profile.id yang bisa beda dari
-      //  session.user_id, jadi email jadi fallback).
-      const allowed =
-        privileged ||
-        await isWhitelistedByUserId(res.userId) ||
-        await isWhitelisted(res.email || emailVal);
-      if (!allowed) {
-        setIsWhitelistError(true);
-        throw new Error(t('login.notWhitelisted'));
-      }
-      // Simpan flag agar guard berkala juga melewati admin/super-admin.
-      await storage.set(SESSION_KEYS.IS_PRIVILEGED, privileged ? 'true' : 'false');
+      await storage.set(SESSION_KEYS.IS_PRIVILEGED, (role.isAdmin || role.isSuperAdmin) ? 'true' : 'false');
 
       setLoginStep('saving');
       if (remember) {
