@@ -5,8 +5,8 @@ import { storage, isSessionValid } from '@/lib/storage';
 import { api, type ChatMessage, type ChatContact, type AdminStanding, type ReactivationRequest } from '@/lib/api';
 import {
   checkIsAdmin, checkIsSuperAdmin, getUserStatistics, getAllWhitelistUsers,
-  addWhitelistUser, updateWhitelistUser, deleteWhitelistUser,
-  toggleWhitelistUserStatus, importWhitelistUsers, getAdminUsers, addAdminUser,
+  addWhitelistUser, updateWhitelistUser,
+  importWhitelistUsers, getAdminUsers, addAdminUser,
   removeAdminUser, updateAdminUser, updateRegistrationConfig, getRegistrationConfig,
   exportWhitelistAsJson, exportWhitelistAsCsv,
   type WhitelistUser, type AdminUser, type RegistrationConfig,
@@ -210,9 +210,7 @@ const UserCard: React.FC<{
   user: WhitelistUser;
   showOwner?: boolean;
   onEdit: () => void;
-  onDelete: () => void;
-  onToggle: () => void;
-}> = ({ user, showOwner, onEdit, onDelete, onToggle }) => {
+}> = ({ user, showOwner, onEdit }) => {
   const active = isUserActive(user);
   const initials = (user.name ?? user.email).slice(0, 2).toUpperCase();
 
@@ -230,7 +228,6 @@ const UserCard: React.FC<{
           <span className={`text-[9px] font-black px-2 py-0.5 rounded-full tracking-wider ${active ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-600'}`}>
             {active ? 'AKTIF' : 'BLOKIR'}
           </span>
-          <Toggle checked={active} onChange={onToggle} />
         </div>
       </div>
 
@@ -290,12 +287,6 @@ const UserCard: React.FC<{
           >
             <span className="text-blue-500">{Icon.edit('w-3.5 h-3.5')}</span>
           </button>
-          <button
-            onClick={onDelete}
-            className="w-8 h-8 rounded-xl bg-red-50 hover:bg-red-100 flex items-center justify-center transition-colors"
-          >
-            <span className="text-red-500">{Icon.trash('w-3.5 h-3.5')}</span>
-          </button>
         </div>
       </div>
     </div>
@@ -313,7 +304,6 @@ const UserDialog: React.FC<{
   const [deviceId,   setDeviceId]   = useState(user?.deviceId ?? '');
   const [addedBy,    setAddedBy]    = useState(user?.addedBy  ?? '');
   const [resetLogin, setResetLogin] = useState(false);
-  const [deactivate, setDeactivate] = useState(false);
 
   // Whitelist berbasis User ID (Stockity) — email tidak ditampilkan/diperlukan admin.
   const valid = name.trim() && userId.trim() && deviceId.trim();
@@ -328,7 +318,7 @@ const UserDialog: React.FC<{
       onSave({ name: name.trim(), email: resolvedEmail, userId: userId.trim(), deviceId: deviceId.trim(), addedBy: addedBy.trim() });
     } else {
       const base = { name: name.trim(), email: email.trim().toLowerCase(), userId: userId.trim(), deviceId: deviceId.trim(), addedBy: addedBy.trim() };
-      onSave({ ...user, ...base, lastLogin: resetLogin ? 0 : user!.lastLogin, isActive: deactivate ? false : isUserActive(user!) });
+      onSave({ ...user, ...base, lastLogin: resetLogin ? 0 : user!.lastLogin, isActive: isUserActive(user!) });
     }
   };
 
@@ -364,16 +354,6 @@ const UserDialog: React.FC<{
           </label>
         )}
 
-        {mode === 'edit' && isUserActive(user!) && (
-          <label className="flex items-start gap-3 bg-amber-50 border border-amber-100 rounded-xl p-3 cursor-pointer">
-            <input type="checkbox" checked={deactivate} onChange={e => setDeactivate(e.target.checked)} className="mt-0.5 accent-amber-500" />
-            <div>
-              <p className="text-sm font-semibold text-amber-700">Blokir / Nonaktifkan User</p>
-              <p className="text-xs text-slate-500">User tidak bisa login setelah diblokir</p>
-            </div>
-          </label>
-        )}
-
         <div className="flex gap-2.5 pt-1">
           <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-500 hover:bg-slate-50 transition-colors">
             Batal
@@ -391,34 +371,6 @@ const UserDialog: React.FC<{
     </Modal>
   );
 };
-
-// ─── Delete Dialog ────────────────────────────────────────────────────────────
-const DeleteDialog: React.FC<{ user: WhitelistUser; onClose: () => void; onConfirm: () => void; loading: boolean }> =
-({ user, onClose, onConfirm, loading }) => (
-  <Modal onClose={onClose}>
-    <div className="text-center py-2 mb-4">
-      <div className="w-14 h-14 rounded-2xl bg-red-100 flex items-center justify-center mx-auto mb-3">
-        <span className="text-red-500">{Icon.warn('w-7 h-7')}</span>
-      </div>
-      <h3 className="text-lg font-bold text-slate-800 mb-1">Hapus User?</h3>
-      <p className="text-sm font-medium text-slate-600">{user.name}</p>
-      <p className="text-xs text-slate-400 mt-0.5">{user.userId ? `ID: ${user.userId}` : '(tanpa ID)'}</p>
-      <p className="text-xs text-red-500 mt-2">Tindakan ini tidak dapat dibatalkan.</p>
-    </div>
-    <div className="flex gap-2.5">
-      <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-500 hover:bg-slate-50 transition-colors">
-        Batal
-      </button>
-      <button
-        onClick={onConfirm} disabled={loading}
-        className="flex-1 py-2.5 rounded-xl bg-red-500 text-white text-sm font-semibold disabled:opacity-50 hover:bg-red-600 transition-colors flex items-center justify-center gap-2"
-      >
-        {loading && <Spinner cls="w-4 h-4 border-2 text-white" />}
-        Hapus
-      </button>
-    </div>
-  </Modal>
-);
 
 // ─── Import Dialog ────────────────────────────────────────────────────────────
 const ImportDialog: React.FC<{ onClose: () => void; onImport: (json: string) => void; loading: boolean }> =
@@ -796,8 +748,8 @@ const CopyBtn: React.FC<{ value: string; label?: string }> = ({ value, label }) 
 // ─── Stats Detail Dialog ──────────────────────────────────────────────────────
 const StatsDetailDialog: React.FC<{
   filter: StatsFilter; allUsers: WhitelistUser[]; onClose: () => void;
-  onEdit: (u: WhitelistUser) => void; onDelete: (u: WhitelistUser) => void; onToggle: (u: WhitelistUser) => void;
-}> = ({ filter, allUsers, onClose, onEdit, onDelete, onToggle }) => {
+  onEdit: (u: WhitelistUser) => void;
+}> = ({ filter, allUsers, onClose, onEdit }) => {
   const threshold24h = Date.now() - 24 * 60 * 60 * 1000;
   const filtered = useMemo(() => {
     switch (filter) {
@@ -871,7 +823,6 @@ const StatsDetailDialog: React.FC<{
                   <span className={`text-[9px] font-black px-2 py-0.5 rounded-full tracking-wider ${active ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-600'}`}>
                     {active ? 'AKTIF' : 'BLOKIR'}
                   </span>
-                  <Toggle checked={active} onChange={() => onToggle(u)} />
                 </div>
               </div>
 
@@ -913,12 +864,6 @@ const StatsDetailDialog: React.FC<{
                     className="w-8 h-8 rounded-xl bg-blue-50 hover:bg-blue-100 flex items-center justify-center transition-colors"
                   >
                     <span className="text-blue-500">{Icon.edit('w-3.5 h-3.5')}</span>
-                  </button>
-                  <button
-                    onClick={() => onDelete(u)}
-                    className="w-8 h-8 rounded-xl bg-red-50 hover:bg-red-100 flex items-center justify-center transition-colors"
-                  >
-                    <span className="text-red-500">{Icon.trash('w-3.5 h-3.5')}</span>
                   </button>
                 </div>
               </div>
@@ -1335,7 +1280,6 @@ export default function AdminPage() {
   // Dialogs
   const [addOpen,       setAddOpen]       = useState(false);
   const [editUser,      setEditUser]      = useState<WhitelistUser | null>(null);
-  const [deleteUser,    setDeleteUser]    = useState<WhitelistUser | null>(null);
   const [importOpen,    setImportOpen]    = useState(false);
   const [adminMgmt,     setAdminMgmt]     = useState(false);
   const [chatOpen,      setChatOpen]      = useState(false);
@@ -1421,8 +1365,6 @@ export default function AdminPage() {
 
   const handleAdd    = (data: any)          => act(async () => { await addWhitelistUser({ ...data, isActive: true, createdAt: Date.now(), lastLogin: 0, addedBy: currentEmail, addedAt: Date.now(), fcmToken: '', fcmTokenUpdatedAt: 0 }, currentEmail); setAddOpen(false); }, 'User berhasil ditambahkan ✓');
   const handleEdit   = (data: WhitelistUser)=> act(async () => { await updateWhitelistUser(data); setEditUser(null); }, 'User berhasil diupdate ✓');
-  const handleDelete = ()                   => act(async () => { if (!deleteUser) return; await deleteWhitelistUser(deleteUser.email); setDeleteUser(null); }, 'User berhasil dihapus ✓');
-  const handleToggle = (u: WhitelistUser) => act(async () => { await toggleWhitelistUserStatus(u); }, isUserActive(u) ? 'User diblokir ✓' : 'User diaktifkan ✓');
   const handleImport = (json: string)       => act(async () => { const parsed = JSON.parse(json); const r = await importWhitelistUsers(parsed, currentEmail); setImportOpen(false); setSuccess(`Import: ${r.success} berhasil, ${r.skipped} dilewati`); }, '');
 
   const handleAddAdmin    = (email: string, name: string, role: string) => act(async () => { await addAdminUser(email, name, role, currentEmail); }, 'Admin ditambahkan ✓');
@@ -1693,8 +1635,6 @@ export default function AdminPage() {
                     user={u}
                     showOwner={isSuperAdmin}
                     onEdit={() => setEditUser(u)}
-                    onDelete={() => setDeleteUser(u)}
-                    onToggle={() => handleToggle(u)}
                   />
                 ))}
                 <p className="text-center text-xs text-slate-400 pt-1 pb-2">
@@ -1746,7 +1686,6 @@ export default function AdminPage() {
       {/* ── DIALOGS ──────────────────────────────────────────────────────── */}
       {addOpen    && <UserDialog mode="add" isSuperAdmin={isSuperAdmin} onClose={() => setAddOpen(false)} onSave={handleAdd} loading={isActing} />}
       {editUser   && <UserDialog mode="edit" user={editUser} isSuperAdmin={isSuperAdmin} onClose={() => setEditUser(null)} onSave={handleEdit} loading={isActing} />}
-      {deleteUser && <DeleteDialog user={deleteUser} onClose={() => setDeleteUser(null)} onConfirm={handleDelete} loading={isActing} />}
       {importOpen && <ImportDialog onClose={() => setImportOpen(false)} onImport={handleImport} loading={isActing} />}
       {adminMgmt  && <AdminMgmtDialog admins={admins} isSuperAdmin={isSuperAdmin} currentEmail={currentEmail} onClose={() => setAdminMgmt(false)} onAdd={handleAddAdmin} onUpdate={handleUpdateAdmin} onRemove={handleRemoveAdmin} onSetPeriod={handleSetPeriod} loadingId={adminLoadId} />}
       {reactReqOpen && <ReactivationRequestsDialog onClose={() => setReactReqOpen(false)} onChanged={() => loadData(currentEmail, isSuperAdmin)} />}
@@ -1754,8 +1693,6 @@ export default function AdminPage() {
         <StatsDetailDialog
           filter={statsFilter} allUsers={allUsers} onClose={() => setStatsFilter(null)}
           onEdit={u => { setStatsFilter(null); setEditUser(u); }}
-          onDelete={u => { setStatsFilter(null); setDeleteUser(u); }}
-          onToggle={handleToggle}
         />
       )}
       {waUrlOpen  && <UrlDialog field="whatsappHelpUrl" currentValue={regConfig.whatsappHelpUrl ?? ''} onClose={() => setWaUrlOpen(false)} onSave={v => handleUpdateUrl('whatsappHelpUrl', v)} loading={isActing} />}
