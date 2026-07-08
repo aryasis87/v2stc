@@ -736,7 +736,7 @@ function LoginPageContent() {
     setIsWhitelistError(false);
 
     if (!isNativeApp()) {
-      setError('Login Google hanya tersedia di aplikasi STC AutoTrade.');
+      setError('Login Google hanya tersedia di aplikasi Stockity AutoTrade.');
       setErrorKey(k => k + 1);
       return;
     }
