@@ -38,26 +38,45 @@ const CORS = {
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...CORS, 'Content-Type': 'application/json' } });
 
-/** Validasi token ke Stockity → profil otoritatif */
-async function stockityProfile(authToken: string, deviceId: string) {
-  const res = await fetch(`${STOCKITY_BASE}/platform/private/v2/profile?locale=id`, {
-    headers: {
-      'device-id': deviceId || '',
-      'device-type': 'web',
-      'user-timezone': 'Asia/Bangkok',
-      'authorization-token': authToken,
-      'User-Agent': DEFAULT_UA,
-      'Accept': 'application/json, text/plain, */*',
-      'Origin': 'https://stockity1.id',
-      'Referer': 'https://stockity1.id/',
-    },
-  });
-  if (!res.ok) return null;
-  const body = await res.json().catch(() => null);
+/**
+ * Validasi token ke Stockity → profil otoritatif.
+ * Mengembalikan detail kegagalan (status + cuplikan balasan) agar penyebab
+ * sebenarnya terlihat di aplikasi, bukan sekadar "token tidak valid".
+ */
+async function stockityProfile(authToken: string, deviceId: string): Promise<
+  { ok: true; userId: string; email: string; profile: any } |
+  { ok: false; status: number; detail: string }
+> {
+  let res: Response;
+  try {
+    res = await fetch(`${STOCKITY_BASE}/platform/private/v2/profile?locale=id`, {
+      headers: {
+        'device-id': deviceId || '',
+        'device-type': 'web',
+        'user-timezone': 'Asia/Bangkok',
+        'authorization-token': authToken,
+        // Sebagian endpoint Stockity juga membaca cookie authtoken
+        'Cookie': `authtoken=${authToken}; device_id=${deviceId}; device_type=web`,
+        'User-Agent': DEFAULT_UA,
+        'Accept': 'application/json, text/plain, */*',
+        'Origin': 'https://stockity1.id',
+        'Referer': 'https://stockity1.id/',
+      },
+    });
+  } catch (e) {
+    return { ok: false, status: 0, detail: `tidak dapat menghubungi Stockity: ${(e as Error).message}` };
+  }
+
+  const text = await res.text().catch(() => '');
+  if (!res.ok) return { ok: false, status: res.status, detail: text.slice(0, 200) };
+
+  let body: any = null;
+  try { body = JSON.parse(text); } catch { /* bukan JSON */ }
   const d = body?.data ?? {};
   const userId = String(d.id ?? '').trim();
-  if (!userId) return null;
-  return { userId, email: String(d.email ?? '').toLowerCase().trim(), profile: d };
+  if (!userId) return { ok: false, status: res.status, detail: `profil tanpa id: ${text.slice(0, 150)}` };
+
+  return { ok: true, userId, email: String(d.email ?? '').toLowerCase().trim(), profile: d };
 }
 
 Deno.serve(async (req) => {
@@ -77,8 +96,12 @@ Deno.serve(async (req) => {
     { auth: { persistSession: false } },
   );
 
-  const who = await stockityProfile(authToken, deviceId);
-  if (!who) return json({ error: 'Token Stockity tidak valid' }, 401);
+  const check = await stockityProfile(authToken, deviceId);
+  if (!check.ok) {
+    // Sertakan status & cuplikan balasan Stockity agar penyebabnya jelas
+    return json({ error: 'Validasi token Stockity gagal (HTTP ' + check.status + '): ' + check.detail }, 401);
+  }
+  const who = check;
 
   const now = new Date().toISOString();
 

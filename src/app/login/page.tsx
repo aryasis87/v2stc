@@ -715,8 +715,18 @@ function LoginPageContent() {
         // Token Stockity dipakai engine perangkat & pemanggil Edge Function
         await storage.set("stc_stockity_token", login.authToken);
 
+        // Diagnostik: pastikan token benar-benar sah dari sisi PERANGKAT dulu.
+        // Kalau di sini sah tapi Edge Function menolak, berarti Stockity yang
+        // memblokir permintaan dari server Supabase — bukan tokennya yang salah.
+        let deviceTokenOk = false;
+        try {
+          const acc = await import("@/lib/engine/stockityAccount");
+          const prof = await acc.getProfile({ authToken: login.authToken, deviceId: devId });
+          deviceTokenOk = !!prof?.id;
+        } catch { /* biarkan false */ }
+
         const sess = await createSession(login.authToken, devId, "session");
-        if (!sess) throw new Error(lastSessionError || "Gagal membuat sesi. Periksa koneksi lalu coba lagi.");
+        if (!sess) throw new Error((deviceTokenOk ? "[token OK di HP] " : "[token DITOLAK di HP] ") + (lastSessionError || "Gagal membuat sesi."));
 
         await storage.set(
           SESSION_KEYS.IS_PRIVILEGED,
