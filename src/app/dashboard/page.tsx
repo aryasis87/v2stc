@@ -18,6 +18,7 @@ import { storage, isSessionValid, SESSION_KEYS } from '@/lib/storage';
 import { useTradingSettings } from '@/lib/useTradingSettings';
 import { isAiSignalUnlocked, AI_SIGNAL_CONTACT_EMAIL } from '@/lib/aiSignalAccess';
 import { hasRealAccess } from '@/lib/realAccess';
+import { isNativeApp } from '@/lib/engine/wsTransport';
 import { useLanguage } from '@/lib';
 import { langToIntlLocale } from '@/lib/localeUtils';
 import { CurrencyConfig, DEFAULT_CURRENCY_CONFIG, ISO_TO_UNIT } from '@/lib/userProfileApi';
@@ -30,7 +31,7 @@ import {
   PlayCircle, StopCircle, PauseCircle, RefreshCw, Timer, Copy,
   ArrowRight, Radio, BarChart, Waves,
   Wallet, Clock, CreditCard, Eye, EyeOff,
-  ClipboardPaste, Check, Lock,
+  ClipboardPaste, Check, Lock, Smartphone,
 } from 'lucide-react';
 
 // ═══════════════════════════════════════════
@@ -2262,15 +2263,32 @@ const REAL_LOCK_STR: Record<string, { title: string; body: string; hint: string;
   ms: { title: 'Mod REAL Dikunci',     body: 'Akaun anda buat masa ini hanya boleh menggunakan mod DEMO.', hint: 'Untuk membuka mod REAL, daftarkan akaun Stockity baharu melalui halaman pendaftaran STC AutoTrade — percuma dan hanya beberapa minit.', cta: 'Daftar Akaun Baharu', close: 'Tutup' },
 };
 
-const RealLockedModal: React.FC<{ open: boolean; onClose: () => void; onRegister: () => void; lang: string }> = ({ open, onClose, onRegister, lang }) => {
+// v4: alasan REAL terkunci — 'account' (belum daftar afiliasi) atau 'platform'
+// (dibuka di browser; eksekusi order hanya bisa lewat APK karena server Stockity
+// mewajibkan header autentikasi yang tak bisa dikirim browser).
+type RealLockReason = 'account' | 'platform';
+
+const APK_LOCK_STR: Record<string, { title: string; body: string; hint: string; cta: string; close: string }> = {
+  id: { title: 'Buka di Aplikasi Android', body: 'Mode REAL hanya berjalan di aplikasi STC AutoTrade untuk Android.', hint: 'Di aplikasi, order dieksekusi langsung dari koneksi internet perangkat Anda sendiri — lebih aman dan sesuai ketentuan platform. Versi web tetap bisa dipakai untuk mode DEMO dan memantau hasil.', cta: 'Download Aplikasi', close: 'Tutup' },
+  en: { title: 'Open in the Android App', body: 'REAL mode runs only in the STC AutoTrade Android app.', hint: 'In the app, orders execute directly from your own device connection — safer and in line with platform rules. The web version stays available for DEMO mode and monitoring.', cta: 'Download App', close: 'Close' },
+  ru: { title: 'Откройте в приложении Android', body: 'Режим REAL работает только в приложении STC AutoTrade для Android.', hint: 'В приложении сделки исполняются напрямую с вашего устройства — безопаснее и соответствует правилам платформы. Веб-версия остаётся для режима ДЕМО и мониторинга.', cta: 'Скачать приложение', close: 'Закрыть' },
+  es: { title: 'Ábrelo en la app de Android', body: 'El modo REAL solo funciona en la app STC AutoTrade para Android.', hint: 'En la app, las órdenes se ejecutan desde la conexión de tu propio dispositivo: más seguro y conforme a las reglas de la plataforma. La versión web sigue disponible para el modo DEMO y seguimiento.', cta: 'Descargar app', close: 'Cerrar' },
+  ms: { title: 'Buka dalam Aplikasi Android', body: 'Mod REAL hanya berjalan dalam aplikasi STC AutoTrade untuk Android.', hint: 'Dalam aplikasi, pesanan dilaksanakan terus dari sambungan peranti anda sendiri — lebih selamat dan mematuhi peraturan platform. Versi web kekal untuk mod DEMO dan pemantauan.', cta: 'Muat Turun Aplikasi', close: 'Tutup' },
+};
+
+const RealLockedModal: React.FC<{ open: boolean; onClose: () => void; onRegister: () => void; lang: string; reason?: RealLockReason }> = ({ open, onClose, onRegister, lang, reason = 'account' }) => {
   if (!open) return null;
-  const S = REAL_LOCK_STR[lang] ?? REAL_LOCK_STR.en;
+  const S = reason === 'platform'
+    ? (APK_LOCK_STR[lang] ?? APK_LOCK_STR.en)
+    : (REAL_LOCK_STR[lang] ?? REAL_LOCK_STR.en);
   return (
     <div style={{position:'fixed',inset:0,zIndex:80,display:'flex',alignItems:'center',justifyContent:'center',padding:'16px',animation:'fade-in 0.15s ease'}}>
       <div onClick={onClose} style={{position:'absolute',inset:0,background:'rgba(0,0,0,0.72)',backdropFilter:'blur(10px)',WebkitBackdropFilter:'blur(10px)'}}/>
       <div style={{position:'relative',width:'100%',maxWidth:380,background:C.bg,borderRadius:20,border:`1px solid ${C.bdr}`,padding:'24px 22px',animation:'slide-up 0.28s cubic-bezier(0.32,0.72,0,1)',textAlign:'center'}}>
         <div style={{width:52,height:52,margin:'0 auto 14px',borderRadius:16,display:'flex',alignItems:'center',justifyContent:'center',background:`${C.cyan}14`,border:`1px solid ${C.cyan}30`}}>
-          <Lock style={{width:22,height:22,color:C.cyan}}/>
+          {reason === 'platform'
+            ? <Smartphone style={{width:22,height:22,color:C.cyan}}/>
+            : <Lock style={{width:22,height:22,color:C.cyan}}/>}
         </div>
         <p style={{fontSize:16,fontWeight:700,color:C.text,marginBottom:6}}>{S.title}</p>
         <p style={{fontSize:13,color:C.sub,lineHeight:1.5,marginBottom:4}}>{S.body}</p>
@@ -3475,6 +3493,11 @@ export default function DashboardPage() {
   const [realAccess,    setRealAccess]    = useState(false);
   const [realCheckDone, setRealCheckDone] = useState(false);
   const [realLockOpen,  setRealLockOpen]  = useState(false);
+  const [realLockReason, setRealLockReason] = useState<RealLockReason>('account');
+  // v4: browser tidak bisa mengeksekusi order (server Stockity mewajibkan header
+  // auth pada WS; hanya APK yang bisa). Web = DEMO + pemantauan.
+  const [isApk, setIsApk] = useState(true); // asumsi APK sampai terbukti sebaliknya → hindari kedip modal
+  useEffect(() => { setIsApk(isNativeApp()); }, []);
   // Badge kunci di pemilih mode baru tampil setelah status terverifikasi,
   // agar user yang punya akses tidak melihat kilatan ikon gembok.
   AI_LOCKED = aiCheckDone && !aiUnlocked;
@@ -4267,14 +4290,18 @@ export default function DashboardPage() {
   // v4: pengalihan ke mode REAL dijaga terpusat di sini; setting REAL yang
   // tersimpan dari sesi lama juga dipaksa kembali ke DEMO bila tak berhak.
   const handleDemoChange = (v: boolean) => {
-    if (!v && !realAccess) { setRealLockOpen(true); return; }
+    if (!v && !isApk)      { setRealLockReason('platform'); setRealLockOpen(true); return; }
+    if (!v && !realAccess) { setRealLockReason('account');  setRealLockOpen(true); return; }
     setIsDemo(v);
   };
   useEffect(() => {
-    if (!settingsLoaded || !realCheckDone || realAccess) return;
-    if (!_s.isDemo) setIsDemo(true);
+    if (!settingsLoaded) return;
+    // Paksa DEMO bila akun tak berhak REAL, atau bila dibuka di browser
+    // (eksekusi order butuh APK).
+    const mayReal = realCheckDone && realAccess && isApk;
+    if (!mayReal && !_s.isDemo) setIsDemo(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [settingsLoaded, realCheckDone, realAccess, _s.isDemo]);
+  }, [settingsLoaded, realCheckDone, realAccess, isApk, _s.isDemo]);
 
   // Mode aisignal yang tersimpan dari sesi lama diturunkan ke schedule bila
   // akun terkunci — kecuali sesi AI memang sedang berjalan (jangan ganggu).
@@ -4304,8 +4331,9 @@ export default function DashboardPage() {
     if(!selectedRic)return;
     // Pertahanan lapis dua: mode aisignal tersimpan dari sesi lama tetap tak bisa start
     if(tradingMode==='aisignal' && !aiUnlocked){ setAiLockOpen(true); return; }
-    // v4: start di akun REAL butuh real_access — selain itu demo-only
-    if(!isDemo && !realAccess){ setRealLockOpen(true); return; }
+    // v4: start di akun REAL butuh APK + real_access — selain itu demo-only
+    if(!isDemo && !isApk)      { setRealLockReason('platform'); setRealLockOpen(true); return; }
+    if(!isDemo && !realAccess) { setRealLockReason('account');  setRealLockOpen(true); return; }
     if(isBelowMin&&tradingMode!=='indicator'){setError(`Amount di bawah minimum ${CURR_UNIT} ${FMT(MIN_AMOUNT)}.`);return;}
     // Cegah start jika ada mode LAIN yang sedang berjalan (hanya 1 mode boleh aktif)
     const otherRunning = (
@@ -4703,7 +4731,17 @@ export default function DashboardPage() {
         overscrollBehaviorY:'contain',
       }}>
         <AiLockedModal open={aiLockOpen} onClose={()=>setAiLockOpen(false)} lang={language}/>
-        <RealLockedModal open={realLockOpen} onClose={()=>setRealLockOpen(false)} onRegister={()=>{setRealLockOpen(false);router.push('/register');}} lang={language}/>
+        <RealLockedModal
+          open={realLockOpen}
+          reason={realLockReason}
+          onClose={()=>setRealLockOpen(false)}
+          onRegister={()=>{
+            setRealLockOpen(false);
+            if (realLockReason === 'platform') window.open('https://stcautotrade.id/download', '_blank', 'noopener');
+            else router.push('/register');
+          }}
+          lang={language}
+        />
         <CapitalAdviceModal open={adviceOpen} onClose={()=>setAdviceOpen(false)} lang={language} minAmount={currencyConfig.minAmount} currUnit={currencyConfig.currencyUnit}/>
         {error&&(
           <div style={{display:'flex',alignItems:'flex-start',gap:9,padding:'10px 14px',borderRadius:8,marginBottom:g,background:C.cord,border:`1px solid rgba(255,69,58,0.2)`,borderLeft:`2px solid ${C.coral}`}}>

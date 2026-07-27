@@ -45,6 +45,11 @@ function cap(): CapacitorGlobal | null {
   return (window as any).Capacitor ?? null;
 }
 
+/** true bila aplikasi berjalan sebagai APK Android (Capacitor), bukan browser */
+export function isNativeApp(): boolean {
+  return cap()?.isNativePlatform?.() === true;
+}
+
 /** true bila berjalan di APK (Capacitor) dan plugin WS native tersedia */
 export function hasNativeWs(): boolean {
   const c = cap();
