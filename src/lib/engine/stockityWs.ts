@@ -168,7 +168,7 @@ export class StockityWsBrowser {
         }
       }
 
-      const hasRequired = [...this.REQUIRED_CHANNELS].every(c => this.joinedChannels.has(c));
+      const hasRequired = Array.from(this.REQUIRED_CHANNELS).every(c => this.joinedChannels.has(c));
       if (hasRequired) {
         this.opts.onStatusChange?.(true, 'Ready for automated trading');
         return;
@@ -328,16 +328,16 @@ export class StockityWsBrowser {
   }
 
   isConnected(): boolean { return this.ws?.readyState === WebSocket.OPEN; }
-  isRequiredChannelsReady(): boolean { return [...this.REQUIRED_CHANNELS].every(c => this.joinedChannels.has(c)); }
+  isRequiredChannelsReady(): boolean { return Array.from(this.REQUIRED_CHANNELS).every(c => this.joinedChannels.has(c)); }
 
   disconnect() {
     this.isDestroyed = true;
     this.stopHeartbeat();
     if (this.reconnectTimer) { clearTimeout(this.reconnectTimer); this.reconnectTimer = null; }
-    for (const [, pending] of this.pendingTrades.entries()) {
+    this.pendingTrades.forEach((pending) => {
       clearTimeout(pending.timer);
       pending.resolve({ dealId: null, error: 'unknown' });
-    }
+    });
     this.pendingTrades.clear();
     this.ws?.close();
     this.ws = null;
