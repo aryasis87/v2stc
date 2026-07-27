@@ -719,14 +719,15 @@ function LoginPageContent() {
         // Kalau di sini sah tapi Edge Function menolak, berarti Stockity yang
         // memblokir permintaan dari server Supabase — bukan tokennya yang salah.
         let deviceTokenOk = false;
+        let probe = "";
         try {
-          const acc = await import("@/lib/engine/stockityAccount");
-          const prof = await acc.getProfile({ authToken: login.authToken, deviceId: devId });
-          deviceTokenOk = !!prof?.id;
-        } catch { /* biarkan false */ }
+          const p = await import("@/lib/engine/tokenProbe");
+          probe = await p.probeToken(login.authToken, devId);
+          deviceTokenOk = probe.includes("=200");
+        } catch { /* biarkan kosong */ }
 
         const sess = await createSession(login.authToken, devId, "session");
-        if (!sess) throw new Error((deviceTokenOk ? "[token OK di HP] " : "[token DITOLAK di HP] ") + lastLoginShape + " | " + (lastSessionError || "Gagal membuat sesi."));
+        if (!sess) throw new Error((deviceTokenOk ? "[token OK di HP] " : "[token DITOLAK di HP] ") + lastLoginShape + " probe[" + probe + "] | " + (lastSessionError || "Gagal membuat sesi."));
 
         await storage.set(
           SESSION_KEYS.IS_PRIVILEGED,
