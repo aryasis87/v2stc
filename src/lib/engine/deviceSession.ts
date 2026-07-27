@@ -167,10 +167,18 @@ class DeviceSession {
     });
     await ws.connect();
 
-    // Bungkus onLog: tulis ke DB (tabel mode_logs) + teruskan ke UI
+    // Bungkus onLog: tulis ke DB (tabel mode_logs) + teruskan ke UI.
+    // Penanda mode wajib ikut: tanpa itu log jatuh ke 'schedule' dan tidak
+    // pernah muncul di tab modenya sendiri pada halaman Riwayat.
+    const LOG_MODE: Record<string, string> = {
+      fastrade: 'FTT', ctc: 'CTC', aisignal: 'AISIGNAL',
+      indicator: 'INDICATOR', momentum: 'MOMENTUM',
+    };
+    const logMode = LOG_MODE[mode] ?? String(mode).toUpperCase();
+
     const cb = {
       ...callbacks,
-      onLog: (log: any) => { appendLog(log); callbacks.onLog(log); },
+      onLog: (log: any) => { appendLog({ ...log, mode: log?.mode ?? logMode }); callbacks.onLog(log); },
       onStopped: () => { flushLogs(); callbacks.onStopped(); },
     };
 
