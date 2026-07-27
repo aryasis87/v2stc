@@ -928,6 +928,9 @@ export const api = {
     req<{ email: string; userId: string; isActive: boolean; exists: boolean }>('POST', '/auth/register-whitelist', body),
 
   // ── Admin (C2 — semua operasi privileged via backend service_role) ──────────
+  // v4: chat admin, masa aktif, dan reaktivasi DIHAPUS — layanannya hidup di
+  // VPS yang dimatikan. Metodenya disisakan sebagai penolak agar UI lama
+  // menampilkan pesan yang jelas, bukan menggantung.
   admin: {
     me:              (_token?: string) => adminEdge('me'),
     listWhitelist:   () => adminEdge('listWhitelist'),
@@ -948,18 +951,18 @@ export const api = {
     // v4: broadcast email DIHAPUS — layanan email hidup di VPS yang dimatikan.
     sendEmail:       (_b?: unknown): Promise<{ sent: number; failed: number; total: number; errors: string[] }> => Promise.reject(new Error('Fitur kirim email sudah dihapus.')),
     // ── Chat DM antar admin/super-admin ──
-    chatContacts:    () => req<ChatContact[]>('GET', '/admin/chat/contacts'),
-    chatConversation:(withEmail: string, after?: number) => req<ChatMessage[]>('GET', `/admin/chat?with=${encodeURIComponent(withEmail)}${after ? `&after=${after}` : ''}`),
-    chatSend:        (to: string, content: string) => req<ChatMessage>('POST', '/admin/chat', { to, content }),
-    chatDelete:      (id: number) => req<void>('DELETE', `/admin/chat/${id}`),
+    chatContacts:    (): Promise<ChatContact[]> => Promise.reject(new Error('Fitur ini sudah dihapus pada versi 4.')),
+    chatConversation:(_w?: string, _a?: number): Promise<ChatMessage[]> => Promise.reject(new Error('Fitur ini sudah dihapus pada versi 4.')),
+    chatSend:        (_t?: string, _c?: string): Promise<ChatMessage> => Promise.reject(new Error('Fitur ini sudah dihapus pada versi 4.')),
+    chatDelete:      (_id?: number): Promise<void> => Promise.reject(new Error('Fitur ini sudah dihapus pada versi 4.')),
     // ── Masa aktif (super-admin) ──
-    setPeriod:       (email: string, days: number) => req<{ email: string; expires_at: string | null }>('POST', '/admin/period', { email, days }),
+    setPeriod:       (_e?: string, _d?: number): Promise<{ email: string; expires_at: string | null }> => Promise.reject(new Error('Fitur ini sudah dihapus pada versi 4.')),
     // ── Standing & reaktivasi ──
-    standing:        () => req<AdminStanding>('GET', '/admin/standing'),
-    reactivationRequest: (days: number) => req<ReactivationRequest>('POST', '/admin/reactivation/request', { days }),
-    reactivationList:    () => req<ReactivationRequest[]>('GET', '/admin/reactivation/requests'),
-    reactivationApprove: (id: number, amount: number) => req<{ admin_email: string; days: number; amount_usd: number }>('POST', '/admin/reactivation/approve', { id, amount }),
-    reactivationConfirmPayment: (id: number) => req<{ admin_email: string; days: number }>('POST', '/admin/reactivation/confirm-payment', { id }),
-    reactivationReject:  (id: number) => req<void>('POST', '/admin/reactivation/reject', { id }),
+    standing:        (): Promise<AdminStanding> => Promise.reject(new Error('Fitur ini sudah dihapus pada versi 4.')),
+    reactivationRequest: (_d?: number): Promise<ReactivationRequest> => Promise.reject(new Error('Fitur ini sudah dihapus pada versi 4.')),
+    reactivationList:    (): Promise<ReactivationRequest[]> => Promise.reject(new Error('Fitur ini sudah dihapus pada versi 4.')),
+    reactivationApprove: (_i?: number, _a?: number): Promise<{ admin_email: string; days: number; amount_usd: number }> => Promise.reject(new Error('Fitur ini sudah dihapus pada versi 4.')),
+    reactivationConfirmPayment: (_i?: number): Promise<{ admin_email: string; days: number }> => Promise.reject(new Error('Fitur ini sudah dihapus pada versi 4.')),
+    reactivationReject:  (_i?: number): Promise<void> => Promise.reject(new Error('Fitur ini sudah dihapus pada versi 4.')),
   },
 };
