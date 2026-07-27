@@ -50,6 +50,9 @@ function headers(o: StockityRestOptions): Record<string, string> {
  * Ambil candle 5 detik untuk jam berjalan (bentuk respons sama dengan
  * yang dipakai engine server) lalu normalkan ke {timestamp,o,h,l,c}.
  */
+/** Sebab kegagalan candle terakhir — dipakai engine agar alasannya terlihat user */
+export let lastCandleError: string | null = null;
+
 export async function fetchCandles5s(
   symbol: string, opts: StockityRestOptions,
 ): Promise<Candle[]> {
@@ -60,9 +63,14 @@ export async function fetchCandles5s(
   try {
     const res = await CapacitorHttp.get({ url, headers: headers(opts), readTimeout: 8000, connectTimeout: 8000 });
     const raw = (res?.data as any)?.data;
-    if (!Array.isArray(raw)) return [];
+    if (!Array.isArray(raw)) {
+      lastCandleError = `Stockity menolak data candle (HTTP ${res?.status ?? '?'})`;
+      return [];
+    }
+    lastCandleError = null;
     return raw.map(parseCandle).filter((c): c is Candle => c !== null);
-  } catch {
+  } catch (e) {
+    lastCandleError = `Tidak dapat mengambil candle: ${(e as Error)?.message ?? 'koneksi gagal'}`;
     return [];
   }
 }

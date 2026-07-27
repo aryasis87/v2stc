@@ -17,7 +17,7 @@
 // ─────────────────────────────────────────────────────────────────────
 
 import { StockityWsClient, type DealResultPayload, type TradeOrderData } from './stockityWs';
-import { fetchCandles5s, type StockityRestOptions } from './stockityRest';
+import { fetchCandles5s, lastCandleError, type StockityRestOptions } from './stockityRest';
 import type { TrendType, MartingaleSettings, AssetConfig } from './scheduleEngine';
 
 export type FastradeMode = 'FTT' | 'CTC';
@@ -259,6 +259,11 @@ export class FastradeEngine {
       }
       if (attempt < maxAttempts) await this.sleep(1000);
     }
+    // Tanpa candle, arah tidak bisa ditentukan dan entry tak pernah terjadi.
+    // Sebabnya ditampilkan agar tidak terlihat seperti bot diam saja.
+    this.callbacks.onStatusChange(
+      `${this.config.mode}: ${lastCandleError ?? 'data candle tidak tersedia'} — entry ditunda`,
+    );
     return null;
   }
 
