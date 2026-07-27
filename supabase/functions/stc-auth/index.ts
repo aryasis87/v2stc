@@ -88,13 +88,30 @@ Deno.serve(async (req) => {
 
   const { authToken, deviceId = '', deviceType = 'web', action = 'session' } = body ?? {};
   if (!authToken) return json({ error: 'authToken wajib diisi' }, 401);
-  if (!['session', 'register', 'logout'].includes(action)) return json({ error: 'action tidak dikenal' }, 400);
+  if (!['session', 'register', 'logout', 'device-hint'].includes(action)) return json({ error: 'action tidak dikenal' }, 400);
 
   const supabase = createClient(
     Deno.env.get('SUPABASE_URL')!,
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     { auth: { persistSession: false } },
   );
+
+  // device-hint: kembalikan device_id yang sudah dikenal akun ini.
+  // Stockity mengikat sesi ke device-id; memakai device lama membuat token
+  // hasil login langsung sah tanpa verifikasi perangkat baru.
+  if (action === "device-hint") {
+    const email = String(body?.email ?? "").toLowerCase().trim();
+    if (!email) return json({ error: "email wajib diisi" }, 400);
+    const { data: sess } = await supabase
+      .from("sessions").select("device_id").eq("email", email).maybeSingle();
+    let devId = sess?.device_id ?? null;
+    if (!devId) {
+      const { data: wl } = await supabase
+        .from("whitelist_users").select("device_id").eq("email", email).maybeSingle();
+      devId = wl?.device_id ?? null;
+    }
+    return json({ deviceId: devId });
+  }
 
   const check = await stockityProfile(authToken, deviceId);
   if (!check.ok) {

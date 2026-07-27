@@ -136,6 +136,16 @@ export async function registerToStockity(
   }
 }
 
+/**
+ * Ambil device-id yang sudah dikenal akun ini (dari sesi lama).
+ * Stockity mengikat sesi ke device-id: memakai device lama membuat token
+ * hasil login langsung sah, tanpa verifikasi perangkat baru.
+ */
+export async function getKnownDeviceId(email: string): Promise<string | null> {
+  const res = await edgeCall<{ deviceId: string | null }>("stc-auth", { authToken: "lookup", action: "device-hint", email });
+  return res.ok ? (res.data?.deviceId ?? null) : null;
+}
+
 /** Login email+password langsung ke Stockity dari perangkat */
 export async function loginToStockity(
   email: string, password: string, deviceId: string,

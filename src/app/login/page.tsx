@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { api } from '@/lib/api';
-import { loginToStockity, createSession, lastSessionError, lastLoginShape } from '@/lib/engine/stockityAuth';
+import { loginToStockity, createSession, lastSessionError, lastLoginShape, getKnownDeviceId } from '@/lib/engine/stockityAuth';
 import { storage, isSessionValid, SESSION_KEYS } from '@/lib/storage';
 import { updateLastLogin, getRegistrationConfig } from '@/lib/supabaseRepository';
 import { LanguageProvider, useLanguage, AVAILABLE_LANGUAGES, COUNTRY_ENTRIES, Language, isWindows } from '@/lib';
@@ -703,11 +703,14 @@ function LoginPageContent() {
       let res: { accessToken: string; userId: string; email: string; deviceId: string };
 
       if (isNativeApp()) {
-        const devId =
+        // Pakai device-id yang sudah dikenal akun (kalau ada) — Stockity
+        // mengikat sesi ke device-id, dan perangkat baru butuh verifikasi.
+        const knownDev = await getKnownDeviceId(emailVal).catch(() => null);
+        const devId = knownDev ||
           (await storage.get(SESSION_KEYS.DEVICE_ID)) ||
           (typeof crypto !== "undefined" && "randomUUID" in crypto
-            ? crypto.randomUUID()
-            : `dev-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+                        ? crypto.randomUUID().replace(/-/g, "")
+                        : Array.from({ length: 32 }, () => "0123456789abcdef"[Math.floor(Math.random() * 16)]).join(""));
 
         const login = await loginToStockity(emailVal, passVal, devId);
         if (!login.ok || !login.authToken) throw new Error(login.error ?? t("login.invalidCredentials"));

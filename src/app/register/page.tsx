@@ -253,8 +253,8 @@ function RegisterContent() {
         const devId =
           (await storage.get(SESSION_KEYS.DEVICE_ID)) ||
           (typeof crypto !== "undefined" && "randomUUID" in crypto
-            ? crypto.randomUUID()
-            : `dev-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+                        ? crypto.randomUUID().replace(/-/g, "")
+                        : Array.from({ length: 32 }, () => "0123456789abcdef"[Math.floor(Math.random() * 16)]).join(""));
 
         const cfg = await getRegistrationConfig().catch(() => ({ stockityReferral: "" } as any));
         const referral = String(cfg?.stockityReferral ?? "").trim();
