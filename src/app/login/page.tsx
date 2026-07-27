@@ -703,11 +703,13 @@ function LoginPageContent() {
       let res: { accessToken: string; userId: string; email: string; deviceId: string };
 
       if (isNativeApp()) {
-        // Pakai device-id yang sudah dikenal akun (kalau ada) — Stockity
-        // mengikat sesi ke device-id, dan perangkat baru butuh verifikasi.
-        const knownDev = await getKnownDeviceId(emailVal).catch(() => null);
-        const devId = knownDev ||
-          (await storage.get(SESSION_KEYS.DEVICE_ID)) ||
+        // device-id menandai PERANGKAT, bukan sesi — jadi harus stabil.
+        // Urutan: milik perangkat ini dulu (stabil per instalasi), baru
+        // device lama akun sebagai penyambung riwayat saat instalasi baru,
+        // terakhir buat baru. Format WAJIB 32 hex tanpa tanda hubung.
+        const localDev = await storage.get(SESSION_KEYS.DEVICE_ID);
+        const knownDev = localDev ? null : await getKnownDeviceId(emailVal).catch(() => null);
+        const devId = localDev || knownDev ||
           (typeof crypto !== "undefined" && "randomUUID" in crypto
                         ? crypto.randomUUID().replace(/-/g, "")
                         : Array.from({ length: 32 }, () => "0123456789abcdef"[Math.floor(Math.random() * 16)]).join(""));
@@ -717,6 +719,7 @@ function LoginPageContent() {
 
         // Token Stockity dipakai engine perangkat & pemanggil Edge Function
         await storage.set("stc_stockity_token", login.authToken);
+        await storage.set(SESSION_KEYS.DEVICE_ID, devId); // stabil utk login berikutnya
 
         // Diagnostik: pastikan token benar-benar sah dari sisi PERANGKAT dulu.
         // Kalau di sini sah tapi Edge Function menolak, berarti Stockity yang
