@@ -684,6 +684,39 @@ async function deviceAuth(): Promise<{ authToken: string; deviceId: string } | n
   } catch { return null; }
 }
 
+
+// ── v4: sumber status & riwayat saat VPS tidak ada ─────────────────────────
+// Engine berjalan di perangkat, jadi status diambil dari sesi lokal dan
+// riwayat dari tabel mode_logs. Endpoint VPS hanya dipakai bila bukan APK.
+async function deviceModeStatus(mode: string): Promise<any> {
+  try {
+    const { deviceSession } = await import("./engine/deviceSession");
+    const eng: any = mode === "schedule" ? deviceSession.getEngine() : deviceSession.getModeEngine();
+    if (eng?.getStatus) return eng.getStatus();
+  } catch { /* belum ada sesi */ }
+  return { isRunning: false, botState: "STOPPED", sessionPnL: 0 };
+}
+
+async function deviceModeLogs(mode: string, limit: number): Promise<any[]> {
+  try {
+    const { fetchDeviceLogs } = await import("./engine/deviceLogs");
+    return await fetchDeviceLogs(mode, limit);
+  } catch { return []; }
+}
+
+/** Hitung P&L hari ini dari riwayat perangkat (pengganti endpoint VPS) */
+async function deviceTodayProfit(): Promise<any> {
+  const modes = ["schedule", "FTT", "CTC", "AISIGNAL", "INDICATOR", "MOMENTUM"];
+  const all: any[] = [];
+  for (const m of modes) all.push(...(await deviceModeLogs(m, 200)));
+  const startOfDay = new Date(); startOfDay.setHours(0, 0, 0, 0);
+  const today = all.filter(l => (l?.executedAt ?? 0) >= startOfDay.getTime() && l?.result);
+  const wins   = today.filter(l => l.result === "WIN").length;
+  const losses = today.filter(l => l.result === "LOSE").length;
+  const totalPnL = today.reduce((sum, l) => sum + (Number(l.profit) || 0), 0);
+  return { totalPnL, totalTrades: today.length, wins, losses, winRate: today.length ? Math.round((wins / today.length) * 100) : 0 };
+}
+
 export const api = {
   // ── Auth ──────────────────────────────────
   login: (email: string, password: string) =>
@@ -814,7 +847,7 @@ export const api = {
     req<ScheduleConfig>('PUT', '/schedule/config', data),
 
   // ── Schedule Orders ───────────────────────
-  getOrders:   () => req<ScheduleOrder[]>('GET', '/schedule/orders'),
+  getOrders:   async (): Promise<ScheduleOrder[]> => (await deviceAuth()) ? [] : req<ScheduleOrder[]>('GET', '/schedule/orders'),
   addOrders:   (input: string) =>
     req<{ added: number; errors: string[] }>('POST', '/schedule/orders', { input }),
   deleteOrder: (id: string) => req<void>('DELETE', `/schedule/orders/${id}`),
@@ -823,13 +856,13 @@ export const api = {
     req<{ orders: ScheduleOrder[]; errors: string[] }>('POST', '/schedule/parse', { input }),
 
   // ── Schedule Control ──────────────────────
-  scheduleStatus: () => req<ScheduleStatus>('GET', '/schedule/status'),
+  scheduleStatus: async (): Promise<ScheduleStatus> => (await deviceAuth()) ? deviceModeStatus('schedule') : req<ScheduleStatus>('GET', '/schedule/status'),
   scheduleStart:  () => req<{ message: string }>('POST', '/schedule/start'),
   scheduleStop:   () => req<{ message: string }>('POST', '/schedule/stop'),
   schedulePause:  () => req<{ message: string }>('POST', '/schedule/pause'),
   scheduleResume: () => req<{ message: string }>('POST', '/schedule/resume'),
-  scheduleLogs:   (limit = 100) =>
-    req<ExecutionLog[]>('GET', `/schedule/logs?limit=${limit}`),
+  scheduleLogs:   async (limit = 100): Promise<ExecutionLog[]> =>
+    (await deviceAuth()) ? deviceModeLogs('schedule', limit) : req<ExecutionLog[]>('GET', `/schedule/logs?limit=${limit}`),
 
   /**
    * GET /schedule/tracking
@@ -869,9 +902,12 @@ export const api = {
   fastradeStart:  (data: StartFastradePayload) =>
     req<{ message: string; mode: string; status: FastradeStatus }>('POST', '/fastrade/start', data),
   fastradeStop:   () => req<{ message: string }>('POST', '/fastrade/stop'),
-  fastradeStatus: () => req<FastradeStatus>('GET', '/fastrade/status'),
-  fastradeLogs:   (limit = 100) =>
-    req<FastradeLog[]>('GET', `/fastrade/logs?limit=${limit}`),
+  fastradeStatus: async (): Promise<FastradeStatus> => (await deviceAuth()) ? deviceModeStatus('fastrade') : req<FastradeStatus>('GET', '/fastrade/status'),
+  fastradeLogs:   async (limit = 100): Promise<FastradeLog[]> => {
+    if (!(await deviceAuth())) return req<FastradeLog[]>('GET', `/fastrade/logs?limit=${limit}`);
+    const [ftt, ctc] = await Promise.all([deviceModeLogs('FTT', limit), deviceModeLogs('CTC', limit)]);
+    return [...ftt, ...ctc] as FastradeLog[];
+  },
 
   // ── AI Signal ────────────────────────────
   aiSignalGetConfig:    () => req<AISignalConfig>('GET', '/aisignal/config'),
@@ -881,8 +917,8 @@ export const api = {
     req<AISignalConfig>('PUT', '/aisignal/config/asset', { ric, name }),
   aiSignalStart:        () => req<{ message: string }>('POST', '/aisignal/start'),
   aiSignalStop:         () => req<{ message: string }>('POST', '/aisignal/stop'),
-  aiSignalStatus:       () => req<AISignalStatus>('GET', '/aisignal/status'),
-  aiSignalPendingOrders: () => req<AISignalOrder[]>('GET', '/aisignal/orders/pending'),
+  aiSignalStatus:       async (): Promise<AISignalStatus> => (await deviceAuth()) ? deviceModeStatus('aisignal') : req<AISignalStatus>('GET', '/aisignal/status'),
+  aiSignalPendingOrders: async (): Promise<AISignalOrder[]> => (await deviceAuth()) ? [] : req<AISignalOrder[]>('GET', '/aisignal/orders/pending'),
   aiSignalExecutedOrders: () => req<AISignalOrder[]>('GET', '/aisignal/orders/executed'),
   aiSignalReceive:      (trend: string, executionTime: number, originalMessage?: string) =>
     req<{ message: string }>('POST', '/aisignal/signal', { trend, executionTime, originalMessage: originalMessage ?? '' }),
@@ -914,8 +950,8 @@ export const api = {
     req<IndicatorConfig>('PUT', '/indicator/config/account', { isDemoAccount }),
   indicatorStart:        () => req<{ message: string }>('POST', '/indicator/start'),
   indicatorStop:         () => req<{ message: string }>('POST', '/indicator/stop'),
-  indicatorStatus:       () => req<IndicatorStatus>('GET', '/indicator/status'),
-  indicatorLogs:         (limit = 100) => req<IndicatorLog[]>('GET', `/indicator/logs?limit=${limit}`),
+  indicatorStatus:       async (): Promise<IndicatorStatus> => (await deviceAuth()) ? deviceModeStatus('indicator') : req<IndicatorStatus>('GET', '/indicator/status'),
+  indicatorLogs:         async (limit = 100): Promise<IndicatorLog[]> => (await deviceAuth()) ? deviceModeLogs('INDICATOR', limit) : req<IndicatorLog[]>('GET', `/indicator/logs?limit=${limit}`),
 
   /** GET /indicator/presets — tipe indikator dan default settings yang tersedia */
   indicatorPresets: () => req<IndicatorPresets>('GET', '/indicator/presets'),
@@ -941,8 +977,8 @@ export const api = {
     req<MomentumConfig>('PUT', '/momentum/config/account', { isDemoAccount }),
   momentumStart:        () => req<{ message: string }>('POST', '/momentum/start'),
   momentumStop:         () => req<{ message: string }>('POST', '/momentum/stop'),
-  momentumStatus:       () => req<MomentumStatus>('GET', '/momentum/status'),
-  momentumLogs:         (limit = 100) => req<MomentumLog[]>('GET', `/momentum/logs?limit=${limit}`),
+  momentumStatus:       async (): Promise<MomentumStatus> => (await deviceAuth()) ? deviceModeStatus('momentum') : req<MomentumStatus>('GET', '/momentum/status'),
+  momentumLogs:         async (limit = 100): Promise<MomentumLog[]> => (await deviceAuth()) ? deviceModeLogs('MOMENTUM', limit) : req<MomentumLog[]>('GET', `/momentum/logs?limit=${limit}`),
 
   /** GET /momentum/info — deskripsi pola momentum dan anti-overtrading config */
   momentumInfo: () => req<MomentumInfo>('GET', '/momentum/info'),
@@ -959,10 +995,12 @@ export const api = {
   },
 
   /** GET /today-profit/realtime?accountType=real|demo|both — includes active session data */
-  realtimeProfit: (accountType: 'real' | 'demo' | 'both' = 'real') =>
-    req<{ success: boolean; data: TodayProfitSummary }>(
-      'GET', `/today-profit/realtime?accountType=${accountType}`
-    ).then(r => r.data),
+  realtimeProfit: async (accountType: 'real' | 'demo' | 'both' = 'real'): Promise<TodayProfitSummary> => {
+    if (await deviceAuth()) return deviceTodayProfit();
+    const r = await req<{ success: boolean; data: TodayProfitSummary }>(
+      'GET', `/today-profit/realtime?accountType=${accountType}`);
+    return r.data;
+  },
 
   /** GET /today-profit/history?startDate=...&endDate=... */
   profitHistory: (startDate: string, endDate: string) =>
