@@ -28,6 +28,9 @@ const DEFAULT_UA =
 const FN_URL = `${process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''}/functions/v1/stc-auth`;
 const ANON   = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '';
 
+/** Ringkasan struktur respons login terakhir (untuk diagnosa, tanpa nilai rahasia) */
+export let lastLoginShape = "";
+
 export interface StockityLoginResult {
   ok: boolean;
   authToken?: string;
@@ -159,11 +162,20 @@ export async function loginToStockity(
       return { ok: false, error: msg, status };
     }
 
-    const token  = data?.data?.authtoken ?? data?.data?.token ?? '';
-    const userId = String(data?.data?.user_id ?? data?.data?.id ?? '');
-    if (!token) return { ok: false, error: 'Login gagal: token tidak diterima.', status };
+    // Rekam bentuk respons agar salah-ambil-field bisa dikenali dari layar
+    try {
+      const top = typeof data === "string" ? "[string]" : Object.keys(data ?? {}).join(",");
+      const inner = (data && typeof data === "object" && data.data && typeof data.data === "object")
+        ? Object.keys(data.data).join(",") : "-";
+      lastLoginShape = "top=" + top + " data=" + inner;
+    } catch { lastLoginShape = "?"; }
 
-    return { ok: true, authToken: token, userId, status };
+    const token  = data?.data?.authtoken ?? data?.data?.token ?? data?.authtoken ?? data?.token ?? "";
+    const userId = String(data?.data?.user_id ?? data?.data?.id ?? data?.user_id ?? "");
+    if (!token) return { ok: false, error: "Login gagal: token tidak ada di respons (" + lastLoginShape + ").", status };
+
+    lastLoginShape += " tokenLen=" + String(token).length;
+    return { ok: true, authToken: String(token), userId, status };
   } catch (e: any) {
     return { ok: false, error: e?.message ?? 'Tidak dapat menghubungi Stockity.' };
   }

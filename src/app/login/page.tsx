@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { api } from '@/lib/api';
-import { loginToStockity, createSession, lastSessionError } from '@/lib/engine/stockityAuth';
+import { loginToStockity, createSession, lastSessionError, lastLoginShape } from '@/lib/engine/stockityAuth';
 import { storage, isSessionValid, SESSION_KEYS } from '@/lib/storage';
 import { updateLastLogin, getRegistrationConfig } from '@/lib/supabaseRepository';
 import { LanguageProvider, useLanguage, AVAILABLE_LANGUAGES, COUNTRY_ENTRIES, Language, isWindows } from '@/lib';
@@ -726,7 +726,7 @@ function LoginPageContent() {
         } catch { /* biarkan false */ }
 
         const sess = await createSession(login.authToken, devId, "session");
-        if (!sess) throw new Error((deviceTokenOk ? "[token OK di HP] " : "[token DITOLAK di HP] ") + (lastSessionError || "Gagal membuat sesi."));
+        if (!sess) throw new Error((deviceTokenOk ? "[token OK di HP] " : "[token DITOLAK di HP] ") + lastLoginShape + " | " + (lastSessionError || "Gagal membuat sesi."));
 
         await storage.set(
           SESSION_KEYS.IS_PRIVILEGED,
