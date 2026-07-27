@@ -43,6 +43,8 @@ function headers(o: StockityRestOptions): Record<string, string> {
     'Accept':              'application/json, text/plain, */*',
     'Origin':              'https://stockity1.id',
     'Referer':             'https://stockity1.id/',
+    'Cache-Control':       'no-cache, no-store, must-revalidate',
+    'Pragma':              'no-cache',
   };
 }
 
@@ -88,13 +90,25 @@ function parseCandle(d: any): Candle | null {
       };
     }
     if (d && typeof d === 'object') {
-      const ts = Number(d.timestamp ?? d.time ?? d.t);
+      // Stockity mengirim `created_at` berupa teks waktu — bukan angka.
+      // Tanpa ini seluruh candle dibuang dan mode FTT/CTC/Indicator/Momentum
+      // tak pernah dapat harga, sehingga siklusnya berputar tanpa entry.
+      const rawTs = d.timestamp ?? d.time ?? d.t ?? d.created_at ?? d.from;
+      const ts = typeof rawTs === 'string' && !/^\d+$/.test(rawTs)
+        ? Date.parse(rawTs)
+        : Number(rawTs);
       const open  = Number(d.open  ?? d.o);
       const high  = Number(d.high  ?? d.h);
       const low   = Number(d.low   ?? d.l);
       const close = Number(d.close ?? d.c);
-      if ([ts, open, high, low, close].some(v => !Number.isFinite(v))) return null;
-      return { timestamp: ts, open, high, low, close };
+      if (!Number.isFinite(ts) || !Number.isFinite(close)) return null;
+      return {
+        timestamp: ts,
+        open:  Number.isFinite(open)  ? open  : close,
+        high:  Number.isFinite(high)  ? high  : close,
+        low:   Number.isFinite(low)   ? low   : close,
+        close,
+      };
     }
     return null;
   } catch { return null; }
