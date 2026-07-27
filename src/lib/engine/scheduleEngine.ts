@@ -99,6 +99,20 @@ export interface EngineCallbacks {
   onAllCompleted: () => void;
   onStatusChange: (status: string) => void;
   onSessionPnL?: (pnl: number) => void;
+  /**
+   * Dipanggil setiap state sesi berubah (order/PnL/berhenti) agar pemanggil
+   * bisa menyimpannya untuk pemulihan. `final=true` menandai perubahan yang
+   * harus disimpan segera (jangan di-throttle).
+   */
+  onPersist?: (snapshot: EngineSnapshot, final?: boolean) => void;
+}
+
+export interface EngineSnapshot {
+  orders: ScheduledOrder[];
+  config: ScheduleConfig;
+  sessionPnL: number;
+  botState: BotState;
+  startedAt?: number;
 }
 
 // ── Konstanta — SAMA PERSIS dengan engine server ──────────────────────
@@ -152,6 +166,7 @@ export class ScheduleEngine {
   private executionInfoMap = new Map<string, ExecutionInfo>();
   private hasCompleted = false;
   private sessionPnL = 0;
+  private startedAt?: number;
 
   constructor(
     private readonly ws: StockityWsClient,
@@ -165,14 +180,31 @@ export class ScheduleEngine {
 
   // ── Kontrol ────────────────────────────────────
 
-  start() {
+  /**
+   * Mulai sesi. `resumeState` dipakai saat melanjutkan sesi yang tertunda
+   * (aplikasi sempat ditutup) agar PnL & waktu mulai tidak ter-reset.
+   */
+  start(resumeState?: { sessionPnL?: number; startedAt?: number }) {
     if (this.botState === 'RUNNING') return;
     this.botState = 'RUNNING';
     this.hasCompleted = false;
-    this.sessionPnL = 0;
-    this.callbacks.onStatusChange('Bot berjalan');
+    this.sessionPnL = resumeState?.sessionPnL ?? 0;
+    this.startedAt  = resumeState?.startedAt ?? Date.now();
+    this.callbacks.onStatusChange(resumeState ? 'Sesi dilanjutkan' : 'Bot berjalan');
     this.startMonitoringLoop(this.IDLE_TICK_MS);
     this.startCompletionCheck();
+    this.persist(true);
+  }
+
+  /** Kirim snapshot ke pemanggil untuk disimpan (pemulihan sesi) */
+  private persist(final = false) {
+    this.callbacks.onPersist?.({
+      orders: this.orders,
+      config: this.config,
+      sessionPnL: this.sessionPnL,
+      botState: this.botState,
+      startedAt: this.startedAt,
+    }, final);
   }
 
   pause() {
@@ -180,6 +212,7 @@ export class ScheduleEngine {
     this.botState = 'PAUSED';
     this.stopMonitoringLoop();
     this.callbacks.onStatusChange('Bot dijeda');
+    this.persist(true);
   }
 
   resume() {
@@ -187,6 +220,7 @@ export class ScheduleEngine {
     this.botState = 'RUNNING';
     this.startMonitoringLoop(this.IDLE_TICK_MS);
     this.callbacks.onStatusChange('Bot dilanjutkan');
+    this.persist(true);
   }
 
   stop() {
@@ -197,6 +231,7 @@ export class ScheduleEngine {
     this.martingaleStartTime = undefined;
     this.executingOrderIds.clear();
     this.callbacks.onStatusChange('Bot dihentikan');
+    this.persist(true);
   }
 
   setOrders(orders: ScheduledOrder[]) {
@@ -270,7 +305,7 @@ export class ScheduleEngine {
       }
     }
 
-    if (changed) this.callbacks.onOrdersUpdate(this.orders);
+    if (changed) { this.callbacks.onOrdersUpdate(this.orders); this.persist(); }
     this.adjustTickInterval(now);
   }
 
@@ -620,6 +655,7 @@ export class ScheduleEngine {
 
     this.orders.splice(orderIdx, 1);
     this.callbacks.onOrdersUpdate(this.orders);
+    this.persist(true);
 
     this.checkStopConditions();
   }

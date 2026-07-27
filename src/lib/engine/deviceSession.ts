@@ -13,11 +13,14 @@ import { storage, SESSION_KEYS } from '../storage';
 import { StockityWsClient } from './stockityWs';
 import { ScheduleEngine, type ScheduledOrder, type ScheduleConfig, type EngineCallbacks } from './scheduleEngine';
 import { hasNativeWs, unsupportedReason } from './wsTransport';
+import { saveSession, loadSession, clearSession, type PersistedSession } from './sessionStore';
 
 export interface StartScheduleArgs {
   orders: ScheduledOrder[];
   config: ScheduleConfig;
   callbacks: EngineCallbacks;
+  /** State sesi yang dilanjutkan (dari loadSession) — PnL & waktu mulai dipertahankan */
+  resume?: { sessionPnL: number; startedAt?: number };
 }
 
 class DeviceSession {
@@ -37,7 +40,7 @@ class DeviceSession {
    * Melempar bila dijalankan di browser (bukan APK) — pemanggil menampilkan
    * unavailableReason() alih-alih gagal diam-diam.
    */
-  async startSchedule({ orders, config, callbacks }: StartScheduleArgs): Promise<void> {
+  async startSchedule({ orders, config, callbacks, resume }: StartScheduleArgs): Promise<void> {
     if (!this.available()) throw new Error(this.unavailableReason() ?? 'Eksekusi di perangkat tidak tersedia');
 
     // Sesi lama dibersihkan dulu — hanya satu sesi aktif.
@@ -60,11 +63,42 @@ class DeviceSession {
 
     await ws.connect();
 
-    const engine = new ScheduleEngine(ws, callbacks, orders, config);
+    // Bungkus callbacks: simpan snapshot untuk pemulihan, lalu teruskan ke UI.
+    const wrapped: EngineCallbacks = {
+      ...callbacks,
+      onPersist: (snap, final) => {
+        saveSession({
+          config: snap.config,
+          orders: snap.orders,
+          sessionPnL: snap.sessionPnL,
+          botState: snap.botState,
+          startedAt: snap.startedAt,
+        }, final);
+        callbacks.onPersist?.(snap, final);
+      },
+      onAllCompleted: () => {
+        clearSession(); // sesi tuntas → jangan ditawarkan lagi
+        callbacks.onAllCompleted();
+      },
+    };
+
+    const engine = new ScheduleEngine(ws, wrapped, orders, config);
     this.ws = ws;
     this.engine = engine;
-    engine.start();
+    engine.start(resume);
   }
+
+  /**
+   * Sesi tertunda yang bisa dilanjutkan (aplikasi sempat ditutup saat bot
+   * masih berjalan). null bila tidak ada.
+   */
+  async findResumable(): Promise<PersistedSession | null> {
+    if (!this.available()) return null;
+    return loadSession();
+  }
+
+  /** Buang sesi tersimpan tanpa menjalankannya (user memilih "mulai baru") */
+  discardSaved(): void { clearSession(); }
 
   /** Hentikan sesi & tutup koneksi (aman dipanggil berkali-kali) */
   stop(): void {
