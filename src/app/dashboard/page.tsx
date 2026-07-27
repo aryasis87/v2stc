@@ -17,6 +17,7 @@ import AssetIcon from '@/components/common/AssetIcon';
 import { storage, isSessionValid, SESSION_KEYS } from '@/lib/storage';
 import { useTradingSettings } from '@/lib/useTradingSettings';
 import { isAiSignalUnlocked, AI_SIGNAL_CONTACT_EMAIL } from '@/lib/aiSignalAccess';
+import { hasRealAccess } from '@/lib/realAccess';
 import { useLanguage } from '@/lib';
 import { langToIntlLocale } from '@/lib/localeUtils';
 import { CurrencyConfig, DEFAULT_CURRENCY_CONFIG, ISO_TO_UNIT } from '@/lib/userProfileApi';
@@ -1538,13 +1539,9 @@ const AISignalPanel: React.FC<{
   const monCount = status?.monitoringStatus?.active_monitoring_count ?? 0;
   const wsOk = status?.wsConnected ?? false;
  
-  // Listening status dari TelegramSignalService
-  const telegramStatus = (status as any)?.telegramSignalStatus as {
-    isListening?: boolean;
-    hasCallback?: boolean;
-    globalListenerActive?: boolean;
-  } | undefined;
-  const listenerActive = telegramStatus?.globalListenerActive ?? telegramStatus?.isListening ?? isOn;
+  // v4: fitur Telegram dihapus (VPS ditinggalkan) — status listener kini
+  // mengikuti status sesi saja.
+  const listenerActive = isOn;
  
   // Live countdown — update setiap detik
   const [now, setNow] = useState(Date.now());
@@ -2248,6 +2245,39 @@ const AiLockedModal: React.FC<{ open: boolean; onClose: () => void; lang: string
              style={{flex:1,padding:'11px 0',borderRadius:12,background:C.amber,border:'none',cursor:'pointer',fontSize:13,fontWeight:700,color:'#1a1612',textDecoration:'none',display:'flex',alignItems:'center',justifyContent:'center'}}>
             {S.mail}
           </a>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ═══════════════════════════════════════════
+// REAL LOCKED MODAL — v4: mode REAL hanya utk akun baru via selfregister
+// ═══════════════════════════════════════════
+const REAL_LOCK_STR: Record<string, { title: string; body: string; hint: string; cta: string; close: string }> = {
+  id: { title: 'Mode REAL Terkunci',   body: 'Akun Anda saat ini hanya dapat menggunakan mode DEMO.', hint: 'Untuk membuka mode REAL, daftarkan akun Stockity baru melalui halaman pendaftaran STC AutoTrade — gratis dan hanya butuh beberapa menit.', cta: 'Daftar Akun Baru', close: 'Tutup' },
+  en: { title: 'REAL Mode Locked',     body: 'Your account can currently use DEMO mode only.', hint: 'To unlock REAL mode, register a new Stockity account through the STC AutoTrade registration page — free and takes just minutes.', cta: 'Register New Account', close: 'Close' },
+  ru: { title: 'Режим REAL заблокирован', body: 'Ваш аккаунт сейчас может использовать только режим ДЕМО.', hint: 'Чтобы открыть режим REAL, зарегистрируйте новый аккаунт Stockity через страницу регистрации STC AutoTrade — бесплатно и занимает пару минут.', cta: 'Создать новый аккаунт', close: 'Закрыть' },
+  es: { title: 'Modo REAL bloqueado',  body: 'Tu cuenta actualmente solo puede usar el modo DEMO.', hint: 'Para desbloquear el modo REAL, registra una nueva cuenta de Stockity desde la página de registro de STC AutoTrade — gratis y en minutos.', cta: 'Registrar cuenta nueva', close: 'Cerrar' },
+  ms: { title: 'Mod REAL Dikunci',     body: 'Akaun anda buat masa ini hanya boleh menggunakan mod DEMO.', hint: 'Untuk membuka mod REAL, daftarkan akaun Stockity baharu melalui halaman pendaftaran STC AutoTrade — percuma dan hanya beberapa minit.', cta: 'Daftar Akaun Baharu', close: 'Tutup' },
+};
+
+const RealLockedModal: React.FC<{ open: boolean; onClose: () => void; onRegister: () => void; lang: string }> = ({ open, onClose, onRegister, lang }) => {
+  if (!open) return null;
+  const S = REAL_LOCK_STR[lang] ?? REAL_LOCK_STR.en;
+  return (
+    <div style={{position:'fixed',inset:0,zIndex:80,display:'flex',alignItems:'center',justifyContent:'center',padding:'16px',animation:'fade-in 0.15s ease'}}>
+      <div onClick={onClose} style={{position:'absolute',inset:0,background:'rgba(0,0,0,0.72)',backdropFilter:'blur(10px)',WebkitBackdropFilter:'blur(10px)'}}/>
+      <div style={{position:'relative',width:'100%',maxWidth:380,background:C.bg,borderRadius:20,border:`1px solid ${C.bdr}`,padding:'24px 22px',animation:'slide-up 0.28s cubic-bezier(0.32,0.72,0,1)',textAlign:'center'}}>
+        <div style={{width:52,height:52,margin:'0 auto 14px',borderRadius:16,display:'flex',alignItems:'center',justifyContent:'center',background:`${C.cyan}14`,border:`1px solid ${C.cyan}30`}}>
+          <Lock style={{width:22,height:22,color:C.cyan}}/>
+        </div>
+        <p style={{fontSize:16,fontWeight:700,color:C.text,marginBottom:6}}>{S.title}</p>
+        <p style={{fontSize:13,color:C.sub,lineHeight:1.5,marginBottom:4}}>{S.body}</p>
+        <p style={{fontSize:12,color:C.muted,lineHeight:1.55,marginBottom:16}}>{S.hint}</p>
+        <div style={{display:'flex',gap:8}}>
+          <button onClick={onClose} style={{flex:1,padding:'11px 0',borderRadius:12,background:C.card2,border:`1px solid ${C.bdr}`,cursor:'pointer',fontSize:13,fontWeight:600,color:C.sub}}>{S.close}</button>
+          <button onClick={onRegister} style={{flex:1.2,padding:'11px 0',borderRadius:12,background:C.cyan,border:'none',cursor:'pointer',fontSize:13,fontWeight:700,color:'#06251b'}}>{S.cta}</button>
         </div>
       </div>
     </div>
@@ -3441,6 +3471,10 @@ export default function DashboardPage() {
   const [aiCheckDone, setAiCheckDone] = useState(false);
   const [aiLockOpen,  setAiLockOpen]  = useState(false);
   const [adviceOpen,  setAdviceOpen]  = useState(false);
+  // ── v4: akses mode REAL (user lama demo-only) ─────────────────────────────
+  const [realAccess,    setRealAccess]    = useState(false);
+  const [realCheckDone, setRealCheckDone] = useState(false);
+  const [realLockOpen,  setRealLockOpen]  = useState(false);
   // Badge kunci di pemilih mode baru tampil setelah status terverifikasi,
   // agar user yang punya akses tidak melihat kilatan ikon gembok.
   AI_LOCKED = aiCheckDone && !aiUnlocked;
@@ -3450,10 +3484,13 @@ export default function DashboardPage() {
     (async () => {
       try {
         const uid = await storage.get(SESSION_KEYS.USER_ID);
-        const ok  = await isAiSignalUnlocked(uid);
-        if (!cancelled) { setAiUnlocked(ok); setAiCheckDone(true); }
+        const [ok, real] = await Promise.all([isAiSignalUnlocked(uid), hasRealAccess(uid)]);
+        if (!cancelled) {
+          setAiUnlocked(ok); setAiCheckDone(true);
+          setRealAccess(real); setRealCheckDone(true);
+        }
       } catch {
-        if (!cancelled) setAiCheckDone(true); // gagal cek → tetap terkunci (default aman)
+        if (!cancelled) { setAiCheckDone(true); setRealCheckDone(true); } // gagal cek → terkunci (default aman)
       }
     })();
     // Flag 'stc_from_login' di-set halaman login/register tepat sebelum redirect —
@@ -4227,6 +4264,18 @@ export default function DashboardPage() {
 
   const isBelowMin = amount > 0 && amount < MIN_AMOUNT;
 
+  // v4: pengalihan ke mode REAL dijaga terpusat di sini; setting REAL yang
+  // tersimpan dari sesi lama juga dipaksa kembali ke DEMO bila tak berhak.
+  const handleDemoChange = (v: boolean) => {
+    if (!v && !realAccess) { setRealLockOpen(true); return; }
+    setIsDemo(v);
+  };
+  useEffect(() => {
+    if (!settingsLoaded || !realCheckDone || realAccess) return;
+    if (!_s.isDemo) setIsDemo(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [settingsLoaded, realCheckDone, realAccess, _s.isDemo]);
+
   // Mode aisignal yang tersimpan dari sesi lama diturunkan ke schedule bila
   // akun terkunci — kecuali sesi AI memang sedang berjalan (jangan ganggu).
   useEffect(() => {
@@ -4255,6 +4304,8 @@ export default function DashboardPage() {
     if(!selectedRic)return;
     // Pertahanan lapis dua: mode aisignal tersimpan dari sesi lama tetap tak bisa start
     if(tradingMode==='aisignal' && !aiUnlocked){ setAiLockOpen(true); return; }
+    // v4: start di akun REAL butuh real_access — selain itu demo-only
+    if(!isDemo && !realAccess){ setRealLockOpen(true); return; }
     if(isBelowMin&&tradingMode!=='indicator'){setError(`Amount di bawah minimum ${CURR_UNIT} ${FMT(MIN_AMOUNT)}.`);return;}
     // Cegah start jika ada mode LAIN yang sedang berjalan (hanya 1 mode boleh aktif)
     const otherRunning = (
@@ -4486,7 +4537,7 @@ export default function DashboardPage() {
     <SettingsCard
       mode={tradingMode} assets={assets} assetRic={selectedRic}
       onAssetChange={a=>setSelectedRic(a.ric)}
-      isDemo={isDemo} onDemoChange={setIsDemo}
+      isDemo={isDemo} onDemoChange={handleDemoChange}
       duration={duration} onDurationChange={setDuration}
       amount={amount} onAmountChange={setAmount}
       martingale={martingale} onMartingaleChange={setMartingale}
@@ -4652,6 +4703,7 @@ export default function DashboardPage() {
         overscrollBehaviorY:'contain',
       }}>
         <AiLockedModal open={aiLockOpen} onClose={()=>setAiLockOpen(false)} lang={language}/>
+        <RealLockedModal open={realLockOpen} onClose={()=>setRealLockOpen(false)} onRegister={()=>{setRealLockOpen(false);router.push('/register');}} lang={language}/>
         <CapitalAdviceModal open={adviceOpen} onClose={()=>setAdviceOpen(false)} lang={language} minAmount={currencyConfig.minAmount} currUnit={currencyConfig.currencyUnit}/>
         {error&&(
           <div style={{display:'flex',alignItems:'flex-start',gap:9,padding:'10px 14px',borderRadius:8,marginBottom:g,background:C.cord,border:`1px solid rgba(255,69,58,0.2)`,borderLeft:`2px solid ${C.coral}`}}>
