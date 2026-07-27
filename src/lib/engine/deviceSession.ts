@@ -125,6 +125,7 @@ class DeviceSession {
       onLog: (log) => {
         // Riwayat ditulis ke DB (tabel mode_logs) agar halaman Riwayat terisi
         // meski eksekusi terjadi di perangkat, bukan di server.
+        void storage.set('stc_last_mode', 'schedule');
         appendLog({ ...log, mode: 'schedule' });
         callbacks.onLog(log);
       },
@@ -178,7 +179,11 @@ class DeviceSession {
 
     const cb = {
       ...callbacks,
-      onLog: (log: any) => { appendLog({ ...log, mode: log?.mode ?? logMode }); callbacks.onLog(log); },
+      onLog: (log: any) => {
+        void storage.set('stc_last_mode', log?.mode ?? logMode);
+        appendLog({ ...log, mode: log?.mode ?? logMode });
+        callbacks.onLog(log);
+      },
       onStopped: () => { flushLogs(); callbacks.onStopped(); },
     };
 

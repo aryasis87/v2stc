@@ -714,6 +714,10 @@ async function deviceModeStatus(mode: string): Promise<any> {
 
 async function deviceModeLogs(mode: string, limit: number): Promise<any[]> {
   try {
+    // Riwayat akun di server Stockity adalah sumber kebenaran: ditarik dan
+    // disimpan dulu, agar eksekusi tetap tercatat walau catatan engine hilang.
+    const { syncStockityHistory } = await import("./engine/stockityHistory");
+    await syncStockityHistory().catch(() => []);
     const { fetchDeviceLogs } = await import("./engine/deviceLogs");
     return await fetchDeviceLogs(mode, limit);
   } catch { return []; }
