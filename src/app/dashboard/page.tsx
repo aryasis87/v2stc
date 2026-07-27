@@ -19,6 +19,8 @@ import { useTradingSettings } from '@/lib/useTradingSettings';
 import { isAiSignalUnlocked, AI_SIGNAL_CONTACT_EMAIL } from '@/lib/aiSignalAccess';
 import { hasRealAccess } from '@/lib/realAccess';
 import { isNativeApp } from '@/lib/engine/wsTransport';
+import { deviceSession } from '@/lib/engine/deviceSession';
+import type { ScheduledOrder as EngineOrder, ScheduleConfig as EngineConfig } from '@/lib/engine/scheduleEngine';
 import { useLanguage } from '@/lib';
 import { langToIntlLocale } from '@/lib/localeUtils';
 import { CurrencyConfig, DEFAULT_CURRENCY_CONFIG, ISO_TO_UNIT } from '@/lib/userProfileApi';
@@ -3498,6 +3500,14 @@ export default function DashboardPage() {
   // auth pada WS; hanya APK yang bisa). Web = DEMO + pemantauan.
   const [isApk, setIsApk] = useState(true); // asumsi APK sampai terbukti sebaliknya → hindari kedip modal
   useEffect(() => { setIsApk(isNativeApp()); }, []);
+
+  // v4 Fase B: di APK, mode Schedule dieksekusi engine di perangkat (bukan VPS).
+  // Saat aktif, status/order/log berasal dari engine — polling API tidak boleh menimpanya.
+  const [deviceEngineOn, setDeviceEngineOn] = useState(false);
+  const deviceEngineOnRef = useRef(false);
+  useEffect(() => { deviceEngineOnRef.current = deviceEngineOn; }, [deviceEngineOn]);
+  const [resumePrompt, setResumePrompt] = useState<{ orders: number; pnl: number } | null>(null);
+  const resumeDataRef = useRef<any>(null);
   // Badge kunci di pemilih mode baru tampil setelah status terverifikasi,
   // agar user yang punya akses tidak melihat kilatan ikon gembok.
   AI_LOCKED = aiCheckDone && !aiUnlocked;
@@ -4010,9 +4020,12 @@ export default function DashboardPage() {
       if(!isMounted.current)return;
       if(assRes.status==='fulfilled')setAssets(assRes.value);
       if(balRes.status==='fulfilled')setBalance(balRes.value);
-      if(schRes.status==='fulfilled')setScheduleStatus(schRes.value);
-      if(ordRes.status==='fulfilled')setScheduleOrders(ordRes.value);
-      if(logRes.status==='fulfilled')setScheduleLogs(logRes.value);
+      // Engine perangkat (APK) adalah sumber kebenaran saat aktif — jangan ditimpa polling VPS
+      if(!deviceEngineOnRef.current){
+        if(schRes.status==='fulfilled')setScheduleStatus(schRes.value);
+        if(ordRes.status==='fulfilled')setScheduleOrders(ordRes.value);
+        if(logRes.status==='fulfilled')setScheduleLogs(logRes.value);
+      }
       if(ftRes.status==='fulfilled')setFtStatus(ftRes.value);
       if(ftLogRes.status==='fulfilled')setFtLogs(ftLogRes.value);
       if(aiRes.status==='fulfilled')setAiStatus(aiRes.value);
@@ -4170,9 +4183,9 @@ export default function DashboardPage() {
       //    sehingga polling tidak pernah meng-interrupt smooth scrolling.
       React.startTransition(()=>{
         const [sRes,fRes,oRes,logRes,ftlRes,aiRes,aiPendRes,indRes,momRes,balRes] = results;
-        if(sRes.status==='fulfilled')setScheduleStatus(sRes.value);
+        if(sRes.status==='fulfilled'&&!deviceEngineOnRef.current)setScheduleStatus(sRes.value);
         if(fRes.status==='fulfilled')setFtStatus(fRes.value);
-        if(oRes.status==='fulfilled')setScheduleOrders(oRes.value);
+        if(oRes.status==='fulfilled'&&!deviceEngineOnRef.current)setScheduleOrders(oRes.value);
         if(logRes.status==='fulfilled')setScheduleLogs(logRes.value);
         if(ftlRes.status==='fulfilled')setFtLogs(ftlRes.value);
         if(aiRes.status==='fulfilled')setAiStatus(aiRes.value);
@@ -4327,6 +4340,59 @@ export default function DashboardPage() {
     }
   };
 
+  // ── v4: jembatan engine perangkat (mode Schedule di APK) ─────────────────
+  // Callback engine → state UI yang sama dengan yang dipakai jalur VPS,
+  // sehingga seluruh tampilan (panel sesi, riwayat, PnL) bekerja tanpa diubah.
+  const buildEngineCallbacks = useCallback(() => ({
+    onOrdersUpdate: (orders: EngineOrder[]) => setScheduleOrders(orders as unknown as ScheduleOrder[]),
+    onLog: (log: any) => setScheduleLogs(prev => {
+      const next = prev.filter(l => l.id !== log.id);
+      return [log as ExecutionLog, ...next].slice(0, 500);
+    }),
+    onStatusChange: (status: string) => setScheduleStatus(prev => ({ ...(prev ?? {} as any), statusMessage: status })),
+    onSessionPnL: (pnl: number) => setScheduleStatus(prev => ({ ...(prev ?? {} as any), sessionPnL: pnl })),
+    onAllCompleted: () => {
+      setDeviceEngineOn(false);
+      setScheduleStatus(prev => ({ ...(prev ?? {} as any), botState: 'STOPPED', isRunning: false }));
+    },
+  }), []);
+
+  /** Sinkronkan status engine perangkat ke UI setiap detik saat aktif */
+  useEffect(() => {
+    if (!deviceEngineOn) return;
+    const id = setInterval(() => {
+      const eng = deviceSession.getEngine();
+      if (!eng) return;
+      setScheduleStatus(prev => ({ ...(prev ?? {} as any), ...(eng.getStatus() as any) }));
+    }, 1000);
+    return () => clearInterval(id);
+  }, [deviceEngineOn]);
+
+  /** Saat aplikasi dibuka: tawarkan melanjutkan sesi yang tertunda */
+  useEffect(() => {
+    if (!isApk) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const saved = await deviceSession.findResumable();
+        if (cancelled || !saved) return;
+        resumeDataRef.current = saved;
+        setResumePrompt({
+          orders: saved.orders.filter(o => !o.isExecuted && !o.isSkipped).length,
+          pnl: saved.sessionPnL,
+        });
+      } catch { /* tidak ada sesi / offline — abaikan */ }
+    })();
+    return () => { cancelled = true; };
+  }, [isApk]);
+
+  const startDeviceSchedule = useCallback(async (
+    orders: EngineOrder[], config: EngineConfig, resume?: { sessionPnL: number; startedAt?: number },
+  ) => {
+    await deviceSession.startSchedule({ orders, config, callbacks: buildEngineCallbacks(), resume });
+    setDeviceEngineOn(true);
+  }, [buildEngineCallbacks]);
+
   const handleStart = async()=>{
     if(!selectedRic)return;
     // Pertahanan lapis dua: mode aisignal tersimpan dari sesi lama tetap tak bisa start
@@ -4346,7 +4412,22 @@ export default function DashboardPage() {
     if(otherRunning){showBlock(T('dashboard.modePicker.stopActiveFirst'));return;}
     setActionLoading(true);setError(null);
     try{
-      if(tradingMode==='schedule'){
+      if(tradingMode==='schedule' && isApk && deviceSession.available()){
+        // v4: eksekusi di perangkat user (tanpa VPS)
+        const engineConfig: EngineConfig = {
+          asset:{ric:selectedRic,name:selectedAsset?.name??selectedRic,profitRate:selectedAsset?.profitRate},
+          martingale:{isEnabled:martingale.enabled,maxSteps:martingale.maxStep,baseAmount:amount*100,multiplierValue:martingale.multiplier,multiplierType:'FIXED',isAlwaysSignal:martingale.alwaysSignal??false},
+          isDemoAccount:isDemo,currency:CURR_UNIT,currencyIso:CURR_UNIT,duration,
+          stopLoss:stopLoss?stopLoss*100:undefined,stopProfit:stopProfit?stopProfit*100:undefined,
+        };
+        const engineOrders = pendingOrders.map(o => ({
+          id:o.id, time:o.time, trend:o.trend, timeInMillis:o.timeInMillis,
+          isExecuted:false, isSkipped:false,
+          martingaleState:{isActive:false,currentStep:0,maxSteps:martingale.maxStep,isCompleted:false,totalLoss:0,totalRecovered:0},
+        })) as EngineOrder[];
+        if(engineOrders.length===0){ setError(T('dashboard.errors.startFailed')); return; }
+        await startDeviceSchedule(engineOrders, engineConfig);
+      } else if(tradingMode==='schedule'){
         await api.updateConfig({
           asset:{ric:selectedRic,name:selectedAsset?.name??selectedRic,profitRate:selectedAsset?.profitRate,iconUrl:selectedAsset?.iconUrl},
           martingale:{isEnabled:martingale.enabled,maxSteps:martingale.maxStep,baseAmount:amount*100,multiplierValue:martingale.multiplier,multiplierType:'FIXED',isAlwaysSignal:martingale.alwaysSignal??false},
@@ -4408,6 +4489,15 @@ export default function DashboardPage() {
     setStopConfirmOpen(false);
     setActionLoading(true);setError(null);
     try{
+      // v4: sesi engine perangkat dihentikan lokal (tidak ada sesi di server)
+      if(deviceEngineOn){
+        deviceSession.stop();
+        deviceSession.discardSaved();
+        setDeviceEngineOn(false);
+        setScheduleStatus(prev => ({ ...(prev ?? {} as any), botState:'STOPPED', isRunning:false }));
+        setActionLoading(false);
+        return;
+      }
       // Stop berdasarkan mode yang benar-benar sedang berjalan di server
       if(tradingMode==='schedule'||(isSchedRunning||isSchedPaused)) {
         if(isSchedRunning||isSchedPaused) await api.scheduleStop();
@@ -4730,6 +4820,47 @@ export default function DashboardPage() {
         //    saat sudah mentok atas/bawah — menghilangkan rubber-band jank di Android WebView.
         overscrollBehaviorY:'contain',
       }}>
+        {/* v4: sesi perangkat yang tertunda (aplikasi sempat ditutup) */}
+        {resumePrompt && (
+          <div style={{position:'fixed',inset:0,zIndex:80,display:'flex',alignItems:'center',justifyContent:'center',padding:'16px',animation:'fade-in 0.15s ease'}}>
+            <div onClick={()=>{setResumePrompt(null);}} style={{position:'absolute',inset:0,background:'rgba(0,0,0,0.72)',backdropFilter:'blur(10px)',WebkitBackdropFilter:'blur(10px)'}}/>
+            <div style={{position:'relative',width:'100%',maxWidth:380,background:C.bg,borderRadius:20,border:`1px solid ${C.bdr}`,padding:'24px 22px',animation:'slide-up 0.28s cubic-bezier(0.32,0.72,0,1)'}}>
+              <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:12}}>
+                <div style={{width:44,height:44,borderRadius:14,display:'flex',alignItems:'center',justifyContent:'center',background:`${C.cyan}14`,border:`1px solid ${C.cyan}30`,flexShrink:0}}>
+                  <RefreshCw style={{width:20,height:20,color:C.cyan}}/>
+                </div>
+                <p style={{fontSize:16,fontWeight:700,color:C.text}}>Lanjutkan sesi sebelumnya?</p>
+              </div>
+              <p style={{fontSize:13,color:C.sub,lineHeight:1.55,marginBottom:14}}>
+                Ada sesi yang belum selesai: <strong style={{color:C.text}}>{resumePrompt.orders} order</strong> tersisa,
+                P&amp;L berjalan <strong style={{color:resumePrompt.pnl>=0?C.sky:C.coral}}>{resumePrompt.pnl>=0?'+':''}{FMT(resumePrompt.pnl/100)}</strong>.
+                Melanjutkan akan mempertahankan P&amp;L tersebut (batas Stop Loss/Profit tetap dihitung dari awal sesi).
+              </p>
+              <div style={{display:'flex',gap:8}}>
+                <button
+                  onClick={()=>{ deviceSession.discardSaved(); resumeDataRef.current=null; setResumePrompt(null); }}
+                  style={{flex:1,padding:'11px 0',borderRadius:12,background:C.card2,border:`1px solid ${C.bdr}`,cursor:'pointer',fontSize:13,fontWeight:600,color:C.sub}}>
+                  Mulai baru
+                </button>
+                <button
+                  onClick={async()=>{
+                    const saved=resumeDataRef.current; setResumePrompt(null);
+                    if(!saved) return;
+                    try{
+                      await startDeviceSchedule(
+                        saved.orders.filter((o:EngineOrder)=>!o.isSkipped),
+                        saved.config,
+                        { sessionPnL: saved.sessionPnL, startedAt: saved.startedAt },
+                      );
+                    }catch(e:any){ setError(e?.message ?? 'Gagal melanjutkan sesi'); }
+                  }}
+                  style={{flex:1.2,padding:'11px 0',borderRadius:12,background:C.cyan,border:'none',cursor:'pointer',fontSize:13,fontWeight:700,color:'#06251b'}}>
+                  Lanjutkan
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
         <AiLockedModal open={aiLockOpen} onClose={()=>setAiLockOpen(false)} lang={language}/>
         <RealLockedModal
           open={realLockOpen}
