@@ -737,7 +737,11 @@ function LoginPageContent() {
           deviceId:    devId,
         };
       } else {
-        // Web: masih lewat backend selama VPS hidup
+        // v4: trading dijalankan dari perangkat sendiri, jadi login hanya
+        // mungkin di aplikasi. Beri tahu jelas, jangan biarkan gagal jaringan.
+        throw new Error(
+          'Login hanya tersedia di aplikasi Stockity AutoTrade. Silakan buka aplikasinya di ponsel Anda.',
+        );
         res = await api.login(emailVal, passVal);
         const role = await api.admin
           .me(res.accessToken)
