@@ -664,15 +664,10 @@ async function adminEdge(action: string, payload?: unknown): Promise<any> {
   const authToken = (await mod.storage.get("stc_stockity_token")) ?? "";
   const deviceId  = (await mod.storage.get(mod.SESSION_KEYS.DEVICE_ID)) ?? "";
   if (!authToken) throw new Error("Sesi Stockity tidak ditemukan — silakan login ulang");
-  const headers: Record<string, string> = { "Content-Type": "application/json" };
-  if (SB_ANON) { headers.apikey = SB_ANON; headers.Authorization = "Bearer " + SB_ANON; }
-  const res = await fetch(ADMIN_FN, {
-    method: "POST", headers,
-    body: JSON.stringify({ authToken, deviceId, action, payload }),
-  });
-  const body = await res.json().catch(() => null);
-  if (!res.ok) throw new Error((body as any)?.error ?? ("Gagal: " + action));
-  return body;
+  const { edgeCall } = await import("./engine/edgeCall");
+  const res = await edgeCall("stc-admin", { authToken, deviceId, action, payload });
+  if (!res.ok) throw new Error(res.error ?? ("Gagal: " + action));
+  return res.data;
 }
 
 

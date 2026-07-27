@@ -18,6 +18,7 @@
 // ─────────────────────────────────────────────────────────────────────
 
 import { CapacitorHttp } from '@capacitor/core';
+import { edgeCall } from './edgeCall';
 
 const STOCKITY_BASE = 'https://api.stockity1.id';
 const DEFAULT_UA =
@@ -173,37 +174,20 @@ export async function loginToStockity(
  * `action: 'register'` dipakai alur pendaftaran agar akses mode REAL dibuka
  * untuk akun baru (afiliasi).
  */
+/** Pesan kegagalan terakhir dari createSession (untuk ditampilkan ke user) */
+export let lastSessionError = "";
+
 export async function createSession(
   authToken: string, deviceId: string, action: 'session' | 'register' = 'session',
 ): Promise<SessionResult | null> {
-  try {
-    if (!FN_URL.startsWith('http')) return null;
-    const res = await fetch(FN_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(ANON ? { apikey: ANON, Authorization: `Bearer ${ANON}` } : {}),
-      },
-      body: JSON.stringify({ authToken, deviceId, action }),
-    });
-    if (!res.ok) return null;
-    return await res.json();
-  } catch {
-    return null;
-  }
+  const res = await edgeCall<SessionResult>('stc-auth', { authToken, deviceId, action });
+  if (res.ok && res.data) { lastSessionError = ""; return res.data; }
+  lastSessionError = res.error ?? 'Gagal menghubungi server sesi.';
+  return null;
 }
 
 /** Tandai sesi berakhir (best-effort) */
+/** Tandai sesi berakhir (best-effort) */
 export async function endSession(authToken: string, deviceId: string): Promise<void> {
-  try {
-    if (!FN_URL.startsWith('http')) return;
-    await fetch(FN_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(ANON ? { apikey: ANON, Authorization: `Bearer ${ANON}` } : {}),
-      },
-      body: JSON.stringify({ authToken, deviceId, action: 'logout' }),
-    });
-  } catch { /* diabaikan */ }
+  await edgeCall('stc-auth', { authToken, deviceId, action: 'logout' });
 }

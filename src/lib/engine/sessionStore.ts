@@ -12,6 +12,7 @@
 // ─────────────────────────────────────────────────────────────────────
 
 import { storage, SESSION_KEYS } from '../storage';
+import { edgeCall } from './edgeCall';
 import type { ScheduledOrder, ScheduleConfig } from './scheduleEngine';
 
 const FN_URL = `${process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''}/functions/v1/session-state`;
@@ -29,25 +30,12 @@ export interface PersistedSession {
 }
 
 async function call(action: 'save' | 'load' | 'clear' | 'log', state?: unknown, logs?: unknown[]): Promise<any | null> {
-  try {
-    const authToken = await storage.get(SESSION_KEYS.AUTHTOKEN);
-    const deviceId  = await storage.get(SESSION_KEYS.DEVICE_ID);
-    if (!authToken || !FN_URL.startsWith('http')) return null;
-
-    const res = await fetch(FN_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        // apikey diperlukan gateway Supabase walau fungsi memakai --no-verify-jwt
-        ...(ANON ? { apikey: ANON, Authorization: `Bearer ${ANON}` } : {}),
-      },
-      body: JSON.stringify({ authToken, deviceId, action, state, logs }),
-    });
-    if (!res.ok) return null;
-    return await res.json();
-  } catch {
-    return null; // best-effort
-  }
+  const { storage, SESSION_KEYS } = await import("../storage");
+  const authToken = (await storage.get("stc_stockity_token")) ?? (await storage.get(SESSION_KEYS.AUTHTOKEN));
+  const deviceId  = (await storage.get(SESSION_KEYS.DEVICE_ID)) ?? "";
+  if (!authToken) return null;
+  const res = await edgeCall('session-state', { authToken, deviceId, action, state, logs });
+  return res.ok ? res.data : null; // best-effort
 }
 
 let lastSaveAt = 0;
