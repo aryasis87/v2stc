@@ -24,7 +24,22 @@ function emitUnauthorized() {
   }, 50); // sedikit delay agar semua request selesai dulu
 }
 
+/** Benar bila aplikasi berjalan mandiri di perangkat (APK) — backend VPS mati */
+async function deviceOffline(): Promise<boolean> {
+  return (await deviceAuth()) !== null;
+}
+
 async function req<T>(method: string, path: string, body?: unknown, tokenOverride?: string): Promise<T> {
+  // v4: tanpa VPS. Di APK, semua jalur penting sudah dialihkan ke perangkat
+  // sebelum sampai ke sini, jadi apa pun yang masih menembak backend adalah
+  // sisa lama. Daripada gagal dan memunculkan pesan galat, dijawab aman:
+  // konfigurasi mode toh disimpan di layar lalu diserahkan langsung ke engine.
+  const dead = await deviceOffline();
+  if (dead) {
+    if (method !== 'GET') return { ok: true, message: 'ok' } as T;
+    return (/logs|orders|assets|currencies|presets|tracking|history/.test(path) ? [] : {}) as T;
+  }
+
   const token = tokenOverride ?? await getToken();
   const res = await fetch(`${getBase()}/api/v1${path}`, {
     method,
@@ -717,6 +732,28 @@ async function deviceTodayProfit(): Promise<any> {
   return { totalPnL, totalTrades: today.length, wins, losses, winRate: today.length ? Math.round((wins / today.length) * 100) : 0 };
 }
 
+
+// ── v4: daftar order mode Signal disimpan di perangkat ─────────────────────
+// Dulu dikelola VPS. Kini engine berjalan lokal, jadi daftar order pending
+// ikut disimpan di perangkat agar tetap ada saat aplikasi dibuka lagi.
+const ORDERS_KEY = "stc_pending_orders";
+
+async function localOrdersGet(): Promise<ScheduleOrder[]> {
+  try {
+    const mod = await import("./storage");
+    const raw = await mod.storage.get(ORDERS_KEY);
+    const arr = raw ? JSON.parse(raw) : [];
+    return Array.isArray(arr) ? arr : [];
+  } catch { return []; }
+}
+
+async function localOrdersSet(list: ScheduleOrder[]): Promise<void> {
+  try {
+    const mod = await import("./storage");
+    await mod.storage.set(ORDERS_KEY, JSON.stringify(list));
+  } catch { /* abaikan */ }
+}
+
 export const api = {
   // ── Auth ──────────────────────────────────
   login: (email: string, password: string) =>
@@ -824,7 +861,14 @@ export const api = {
   },
 
   /** GET /profile/currencies — daftar semua mata uang yang tersedia */
-  getCurrencies: () => req<StockityCurrency[]>('GET', '/profile/currencies'),
+  getCurrencies: async (): Promise<StockityCurrency[]> => {
+    const dev = await deviceAuth();
+    if (dev) {
+      const m = await import('./engine/stockityAccount');
+      return (await m.getCurrencies(dev)) as StockityCurrency[];
+    }
+    return req<StockityCurrency[]>('GET', '/profile/currencies');
+  },
 
   /** PUT /profile/currency — ubah mata uang aktif user */
   updateCurrency: (currencyIso: string) =>
@@ -847,11 +891,46 @@ export const api = {
     req<ScheduleConfig>('PUT', '/schedule/config', data),
 
   // ── Schedule Orders ───────────────────────
-  getOrders:   async (): Promise<ScheduleOrder[]> => (await deviceAuth()) ? [] : req<ScheduleOrder[]>('GET', '/schedule/orders'),
-  addOrders:   (input: string) =>
-    req<{ added: number; errors: string[] }>('POST', '/schedule/orders', { input }),
-  deleteOrder: (id: string) => req<void>('DELETE', `/schedule/orders/${id}`),
-  clearOrders: () => req<void>('DELETE', '/schedule/orders'),
+  getOrders:   async (): Promise<ScheduleOrder[]> => (await deviceAuth()) ? localOrdersGet() : req<ScheduleOrder[]>('GET', '/schedule/orders'),
+  addOrders: async (input: string): Promise<any> => {
+    if (await deviceAuth()) {
+      // Dulu baris sinyal diurai di VPS. Kini diurai di perangkat: tiap baris
+      // sudah dinormalkan layar jadi "HH:MM call|put".
+      const base = new Date();
+      const parsed: ScheduleOrder[] = String(input).split('\n').map(line => {
+        const m = line.trim().match(/^(\d{1,2}):(\d{2})\s+(call|put)$/i);
+        if (!m) return null;
+        const at = new Date(base);
+        at.setHours(Number(m[1]), Number(m[2]), 0, 0);
+        return {
+          id: `${at.getTime()}-${m[3].toLowerCase()}`,
+          time: `${m[1].padStart(2, '0')}:${m[2]}`,
+          trend: m[3].toLowerCase() as 'call' | 'put',
+          timeInMillis: at.getTime(),
+          isExecuted: false,
+          isSkipped: false,
+        } as ScheduleOrder;
+      }).filter(Boolean) as ScheduleOrder[];
+      const cur = await localOrdersGet();
+      const merged = [...cur, ...parsed.filter(o => !cur.some(c => c.id === o.id))]
+        .sort((a, b) => a.timeInMillis - b.timeInMillis);
+      await localOrdersSet(merged);
+      return { added: parsed.length, total: merged.length };
+    }
+    return req<any>('POST', '/schedule/orders', { input })
+  },
+  deleteOrder: async (id: string): Promise<any> => {
+    if (await deviceAuth()) {
+      const cur = await localOrdersGet();
+      await localOrdersSet(cur.filter(o => o.id !== id));
+      return { ok: true };
+    }
+    return req<any>('DELETE', `/schedule/orders/${encodeURIComponent(id)}`);
+  },
+  clearOrders: async (): Promise<any> => {
+    if (await deviceAuth()) { await localOrdersSet([]); return { ok: true }; }
+    return req<any>('DELETE', '/schedule/orders');
+  },
   parseOrders: (input: string) =>
     req<{ orders: ScheduleOrder[]; errors: string[] }>('POST', '/schedule/parse', { input }),
 
@@ -859,8 +938,22 @@ export const api = {
   scheduleStatus: async (): Promise<ScheduleStatus> => (await deviceAuth()) ? deviceModeStatus('schedule') : req<ScheduleStatus>('GET', '/schedule/status'),
   scheduleStart:  () => req<{ message: string }>('POST', '/schedule/start'),
   scheduleStop:   () => req<{ message: string }>('POST', '/schedule/stop'),
-  schedulePause:  () => req<{ message: string }>('POST', '/schedule/pause'),
-  scheduleResume: () => req<{ message: string }>('POST', '/schedule/resume'),
+  schedulePause: async (): Promise<any> => {
+    if (await deviceAuth()) {
+      const { deviceSession } = await import("./engine/deviceSession");
+      deviceSession.getEngine()?.pause();
+      return { ok: true };
+    }
+    return req<any>('POST', '/schedule/pause');
+  },
+  scheduleResume: async (): Promise<any> => {
+    if (await deviceAuth()) {
+      const { deviceSession } = await import("./engine/deviceSession");
+      deviceSession.getEngine()?.resume();
+      return { ok: true };
+    }
+    return req<any>('POST', '/schedule/resume');
+  },
   scheduleLogs:   async (limit = 100): Promise<ExecutionLog[]> =>
     (await deviceAuth()) ? deviceModeLogs('schedule', limit) : req<ExecutionLog[]>('GET', `/schedule/logs?limit=${limit}`),
 
@@ -870,7 +963,7 @@ export const api = {
    * trackingStatus (WIN/LOSE/SKIPPED/MONITORING/PENDING/FAILED) meski order
    * sudah dihapus dari active list oleh backend.
    */
-  scheduleTracking: () => req<TrackingResponse>('GET', '/schedule/tracking'),
+  scheduleTracking: async (): Promise<TrackingResponse> => (await deviceAuth()) ? ({ orders: [] } as unknown as TrackingResponse) : req<TrackingResponse>('GET', '/schedule/tracking'),
 
   /** GET /schedule/tracking/today — tracking hari ini (waktu Jakarta) */
   scheduleTrackingToday: () => req<TrackingResponse>('GET', '/schedule/tracking/today'),
