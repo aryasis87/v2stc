@@ -68,9 +68,9 @@ Deno.serve(async (req) => {
   let body: any;
   try { body = await req.json(); } catch { return json({ error: 'Body JSON tidak valid' }, 400); }
 
-  const { authToken, deviceId = '', action, state } = body ?? {};
+  const { authToken, deviceId = '', action, state, logs } = body ?? {};
   if (!authToken) return json({ error: 'authToken wajib diisi' }, 401);
-  if (!['save', 'load', 'clear'].includes(action)) return json({ error: 'action tidak dikenal' }, 400);
+  if (!['save', 'load', 'clear', 'log'].includes(action)) return json({ error: 'action tidak dikenal' }, 400);
 
   const who = await verifyStockity(authToken, deviceId);
   if (!who) return json({ error: 'Token Stockity tidak valid' }, 401);
@@ -90,6 +90,23 @@ Deno.serve(async (req) => {
         supabase.from('schedule_status').select('*').eq('user_id', who.userId).maybeSingle(),
       ]);
       return json({ userId: who.userId, config: cfg.data ?? null, status: st.data ?? null });
+    }
+
+    if (action === 'log') {
+      // Riwayat eksekusi dari engine perangkat → tabel yang SAMA dengan engine
+      // server (`mode_logs`), sehingga halaman Riwayat tidak perlu dua sumber.
+      const arr = Array.isArray(logs) ? logs : [];
+      if (arr.length === 0) return json({ ok: true, saved: 0 });
+      const rows = arr.slice(0, 100).map((l: any) => ({
+        id:          String(l.id),
+        user_id:     who.userId,
+        mode:        l.mode ?? 'schedule',
+        data:        l,
+        executed_at: new Date(Number(l.executedAt) || Date.now()).toISOString(),
+      }));
+      const { error } = await supabase.from('mode_logs').upsert(rows, { onConflict: 'id' });
+      if (error) return json({ error: error.message }, 500);
+      return json({ ok: true, saved: rows.length });
     }
 
     if (action === 'clear') {

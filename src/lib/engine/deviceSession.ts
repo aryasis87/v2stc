@@ -14,7 +14,7 @@ import { api } from '../api';
 import { StockityWsClient } from './stockityWs';
 import { ScheduleEngine, type ScheduledOrder, type ScheduleConfig, type EngineCallbacks } from './scheduleEngine';
 import { hasNativeWs, unsupportedReason } from './wsTransport';
-import { saveSession, loadSession, clearSession, type PersistedSession } from './sessionStore';
+import { saveSession, loadSession, clearSession, appendLog, flushLogs, type PersistedSession } from './sessionStore';
 
 /** Kunci cache token Stockity di perangkat (bukan JWT app) */
 const STOCKITY_TOKEN_KEY = 'stc_stockity_token';
@@ -101,7 +101,14 @@ class DeviceSession {
         }, final);
         callbacks.onPersist?.(snap, final);
       },
+      onLog: (log) => {
+        // Riwayat ditulis ke DB (tabel mode_logs) agar halaman Riwayat terisi
+        // meski eksekusi terjadi di perangkat, bukan di server.
+        appendLog({ ...log, mode: 'schedule' });
+        callbacks.onLog(log);
+      },
       onAllCompleted: () => {
+        flushLogs();    // pastikan log terakhir tersimpan
         clearSession(); // sesi tuntas → jangan ditawarkan lagi
         callbacks.onAllCompleted();
       },
@@ -127,6 +134,7 @@ class DeviceSession {
 
   /** Hentikan sesi & tutup koneksi (aman dipanggil berkali-kali) */
   stop(): void {
+    try { flushLogs(); } catch { /* antrean kosong */ }
     try { this.engine?.stop(); } catch { /* sudah berhenti */ }
     try { this.ws?.disconnect(); } catch { /* sudah tertutup */ }
     this.engine = null;

@@ -3,6 +3,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { api, type ExecutionLog, type FastradeLog, type IndicatorLog, type MomentumLog } from '@/lib/api';
 import { storage } from '@/lib/storage';
+import { fetchDeviceLogs } from '@/lib/engine/deviceLogs';
 import { LanguageProvider, useLanguage, formatDate, formatTime, Language } from '@/lib';
 import { useDarkMode } from '@/lib/DarkModeContext';
 import {
@@ -212,12 +213,19 @@ function HistoryPageContent() {
   const loadHistory = useCallback(async (silent = false) => {
     if (!silent) setIsLoading(true); else setRefreshing(true);
     try {
-      const [scheduleLogs, fastradeLogs, indicatorLogs, momentumLogs] = await Promise.all([
+      // v4: mode schedule kini dieksekusi di perangkat → lognya ada di DB
+      // (tabel mode_logs), bukan di memori VPS. Gabungkan kedua sumber lalu
+      // buang duplikat berdasarkan id agar riwayat lama tetap tampil.
+      const [scheduleApi, scheduleDb, fastradeLogs, indicatorLogs, momentumLogs] = await Promise.all([
         api.scheduleLogs(200).catch(() => [] as ExecutionLog[]),
+        fetchDeviceLogs('schedule', 200).catch(() => [] as ExecutionLog[]),
         api.fastradeLogs(200).catch(() => [] as FastradeLog[]),
         api.indicatorLogs(200).catch(() => [] as IndicatorLog[]),
         api.momentumLogs(200).catch(() => [] as MomentumLog[]),
       ]);
+      const seen = new Set<string>();
+      const scheduleLogs = [...(scheduleDb as ExecutionLog[]), ...scheduleApi]
+        .filter(l => l && !seen.has(l.id) && seen.add(l.id));
 
       const combined: CombinedLog[] = [
         ...scheduleLogs.map((l): CombinedLog => ({

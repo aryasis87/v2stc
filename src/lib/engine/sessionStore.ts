@@ -28,7 +28,7 @@ export interface PersistedSession {
   startedAt?: number;
 }
 
-async function call(action: 'save' | 'load' | 'clear', state?: unknown): Promise<any | null> {
+async function call(action: 'save' | 'load' | 'clear' | 'log', state?: unknown, logs?: unknown[]): Promise<any | null> {
   try {
     const authToken = await storage.get(SESSION_KEYS.AUTHTOKEN);
     const deviceId  = await storage.get(SESSION_KEYS.DEVICE_ID);
@@ -41,7 +41,7 @@ async function call(action: 'save' | 'load' | 'clear', state?: unknown): Promise
         // apikey diperlukan gateway Supabase walau fungsi memakai --no-verify-jwt
         ...(ANON ? { apikey: ANON, Authorization: `Bearer ${ANON}` } : {}),
       },
-      body: JSON.stringify({ authToken, deviceId, action, state }),
+      body: JSON.stringify({ authToken, deviceId, action, state, logs }),
     });
     if (!res.ok) return null;
     return await res.json();
@@ -114,6 +114,32 @@ export async function loadSession(): Promise<PersistedSession | null> {
     botState:   st.bot_state,
     startedAt:  st.started_at ? new Date(st.started_at).getTime() : undefined,
   };
+}
+
+// ── Riwayat eksekusi ─────────────────────────────────────────────────
+// Ditulis ke tabel `mode_logs` (sama dengan engine server) lewat Edge
+// Function. Dikumpulkan sebentar lalu dikirim sekaligus: satu order bisa
+// menghasilkan beberapa log (eksekusi → hasil) dalam waktu berdekatan.
+let logQueue: any[] = [];
+let logTimer: ReturnType<typeof setTimeout> | null = null;
+
+export function appendLog(log: unknown): void {
+  logQueue = [...logQueue.filter((l: any) => l.id !== (log as any).id), log];
+  if (logTimer) return;
+  logTimer = setTimeout(() => {
+    logTimer = null;
+    const batch = logQueue;
+    logQueue = [];
+    if (batch.length) void call('log', undefined, batch);
+  }, 1500);
+}
+
+/** Kirim sisa antrean log segera (dipakai saat sesi berakhir) */
+export function flushLogs(): void {
+  if (logTimer) { clearTimeout(logTimer); logTimer = null; }
+  const batch = logQueue;
+  logQueue = [];
+  if (batch.length) void call('log', undefined, batch);
 }
 
 /** Tandai sesi selesai agar tidak ditawarkan untuk dilanjutkan lagi */
