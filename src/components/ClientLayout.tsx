@@ -535,6 +535,11 @@ function ThemeWrapper({ children }: { children: React.ReactNode }) {
     const bgColor = isDarkMode ? DARK_BG : LIGHT_BG;
 
     if (typeof document !== 'undefined') {
+      // Penanda tema dipasang di <html> juga, bukan hanya <body>. Variabel
+      // warna punya aturan @media (prefers-color-scheme: light) yang menyasar
+      // :root; tanpa penanda 'dark' di sana, ponsel bersetelan sistem terang
+      // membuat variabel terang bocor ke mode gelap — kolom isian jadi putih.
+      document.documentElement.setAttribute('data-theme', isDarkMode ? 'dark' : 'light');
       if (isDarkMode) {
         document.body.removeAttribute('data-theme');
       } else {
