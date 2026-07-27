@@ -14,8 +14,9 @@ import {
 } from '@/lib/api';
 import { ChartCard } from '@/components/ChartCard';
 import AssetIcon from '@/components/common/AssetIcon';
-import { storage, isSessionValid } from '@/lib/storage';
+import { storage, isSessionValid, SESSION_KEYS } from '@/lib/storage';
 import { useTradingSettings } from '@/lib/useTradingSettings';
+import { isAiSignalUnlocked, AI_SIGNAL_CONTACT_EMAIL } from '@/lib/aiSignalAccess';
 import { useLanguage } from '@/lib';
 import { langToIntlLocale } from '@/lib/localeUtils';
 import { CurrencyConfig, DEFAULT_CURRENCY_CONFIG, ISO_TO_UNIT } from '@/lib/userProfileApi';
@@ -87,6 +88,8 @@ function getColors(isDark: boolean) {
 // Must be `let` so sub-components always get the current theme on re-render
 let C = getColors(true);
 let T: (k: string) => string = (k: string) => k;
+// Status kunci mode AI Signal — di-set tiap render DashboardPage (pola sama C/T)
+let AI_LOCKED = false;
 
 type TradingMode = 'schedule' | 'fastrade' | 'ctc' | 'aisignal' | 'indicator' | 'momentum';
 type FastTradeTimeframe = '1m' | '5m' | '15m' | '30m' | '1h';
@@ -2154,6 +2157,7 @@ const ModePickerModal: React.FC<{
           {MODES.map(({ v, label, icon, accent, desc }) => {
             const isAct = mode === v;
             const isOtherRunning = locked && !isAct; // mode lain sedang berjalan
+            const isAiLockedRow = v === 'aisignal' && AI_LOCKED; // fitur terkunci per akun
             return (
               <button
                 key={v}
@@ -2167,7 +2171,7 @@ const ModePickerModal: React.FC<{
                   borderRadius:14,cursor:'pointer',
                   background:isAct?`${accent}14`:C.card2,
                   border:`1px solid ${isAct?`${accent}45`:C.bdr}`,
-                  opacity:isOtherRunning?0.55:1,
+                  opacity:(isOtherRunning||isAiLockedRow)?0.55:1,
                   transition:'background 0.15s,border-color 0.15s',
                 }}
               >
@@ -2191,7 +2195,9 @@ const ModePickerModal: React.FC<{
                   </div>
                   <span style={{display:'block',fontSize:11,color:C.muted,marginTop:1}}>{desc}</span>
                 </div>
-                {isAct && (
+                {isAiLockedRow ? (
+                  <Lock style={{width:14,height:14,color:C.amber,flexShrink:0}}/>
+                ) : isAct && (
                   <Check style={{width:16,height:16,color:accent,flexShrink:0}}/>
                 )}
               </button>
@@ -2204,6 +2210,89 @@ const ModePickerModal: React.FC<{
             </div>
           )}
         </div>
+      </div>
+    </div>
+  );
+};
+
+// ═══════════════════════════════════════════
+// AI SIGNAL LOCKED MODAL — fitur terkunci per akun
+// ═══════════════════════════════════════════
+const AI_LOCK_STR: Record<string, { title: string; body: string; hint: string; mail: string; close: string }> = {
+  id: { title: 'Mode AI Signal Terkunci',  body: 'Fitur AI Signal belum aktif di akun Anda.', hint: 'Untuk mengaktifkannya, hubungi tim kami melalui email di bawah dan sertakan User ID Stockity Anda.', mail: 'Hubungi Support', close: 'Tutup' },
+  en: { title: 'AI Signal Mode Locked',    body: 'The AI Signal feature is not active on your account yet.', hint: 'To activate it, contact our team via the email below and include your Stockity User ID.', mail: 'Contact Support', close: 'Close' },
+  ru: { title: 'Режим AI Signal заблокирован', body: 'Функция AI Signal ещё не активна на вашем аккаунте.', hint: 'Чтобы активировать её, напишите нам на email ниже и укажите ваш Stockity User ID.', mail: 'Связаться с поддержкой', close: 'Закрыть' },
+  es: { title: 'Modo AI Signal bloqueado', body: 'La función AI Signal aún no está activa en tu cuenta.', hint: 'Para activarla, contacta a nuestro equipo por el correo de abajo e incluye tu User ID de Stockity.', mail: 'Contactar soporte', close: 'Cerrar' },
+  ms: { title: 'Mod AI Signal Dikunci',    body: 'Ciri AI Signal belum aktif pada akaun anda.', hint: 'Untuk mengaktifkannya, hubungi pasukan kami melalui e-mel di bawah dan sertakan User ID Stockity anda.', mail: 'Hubungi Sokongan', close: 'Tutup' },
+};
+
+const AiLockedModal: React.FC<{ open: boolean; onClose: () => void; lang: string }> = ({ open, onClose, lang }) => {
+  if (!open) return null;
+  const S = AI_LOCK_STR[lang] ?? AI_LOCK_STR.en;
+  return (
+    <div style={{position:'fixed',inset:0,zIndex:80,display:'flex',alignItems:'center',justifyContent:'center',padding:'16px',animation:'fade-in 0.15s ease'}}>
+      <div onClick={onClose} style={{position:'absolute',inset:0,background:'rgba(0,0,0,0.72)',backdropFilter:'blur(10px)',WebkitBackdropFilter:'blur(10px)'}}/>
+      <div style={{position:'relative',width:'100%',maxWidth:380,background:C.bg,borderRadius:20,border:`1px solid ${C.bdr}`,padding:'24px 22px',animation:'slide-up 0.28s cubic-bezier(0.32,0.72,0,1)',textAlign:'center'}}>
+        <div style={{width:52,height:52,margin:'0 auto 14px',borderRadius:16,display:'flex',alignItems:'center',justifyContent:'center',background:`${C.amber}14`,border:`1px solid ${C.amber}30`}}>
+          <Lock style={{width:22,height:22,color:C.amber}}/>
+        </div>
+        <p style={{fontSize:16,fontWeight:700,color:C.text,marginBottom:6}}>{S.title}</p>
+        <p style={{fontSize:13,color:C.sub,lineHeight:1.5,marginBottom:4}}>{S.body}</p>
+        <p style={{fontSize:12,color:C.muted,lineHeight:1.55,marginBottom:14}}>{S.hint}</p>
+        <div style={{padding:'10px 12px',borderRadius:12,background:C.card2,border:`1px solid ${C.bdr}`,marginBottom:16}}>
+          <p style={{fontSize:13,fontWeight:700,color:C.text,userSelect:'all',wordBreak:'break-all'}}>{AI_SIGNAL_CONTACT_EMAIL}</p>
+        </div>
+        <div style={{display:'flex',gap:8}}>
+          <button onClick={onClose} style={{flex:1,padding:'11px 0',borderRadius:12,background:C.card2,border:`1px solid ${C.bdr}`,cursor:'pointer',fontSize:13,fontWeight:600,color:C.sub}}>{S.close}</button>
+          <a href={`mailto:${AI_SIGNAL_CONTACT_EMAIL}?subject=${encodeURIComponent('Aktivasi Mode AI Signal')}`}
+             style={{flex:1,padding:'11px 0',borderRadius:12,background:C.amber,border:'none',cursor:'pointer',fontSize:13,fontWeight:700,color:'#1a1612',textDecoration:'none',display:'flex',alignItems:'center',justifyContent:'center'}}>
+            {S.mail}
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ═══════════════════════════════════════════
+// SARAN MODAL TRADING — muncul sekali tiap login segar
+// ═══════════════════════════════════════════
+const ADVICE_STR: Record<string, { title: string; body1: string; body2: string; tip: string; ok: string }> = {
+  id: { title: 'Saran Modal Trading', body1: 'Untuk pengalaman terbaik di platform ini, kami menyarankan modal trading minimal', body2: '— sekitar 35× order minimum. Dengan buffer ini, akun Anda kuat melewati deret kalah normal dan siklus martingale konservatif (2,5× · 3 step) tanpa langsung terkuras.', tip: 'Modal di bawah itu? Mulai dari mode Demo dulu — gratis, data pasar nyata.', ok: 'Mengerti' },
+  en: { title: 'Trading Capital Advice', body1: 'For the best experience on this platform, we recommend a working balance of at least', body2: '— about 35× the minimum order. This buffer lets your account survive normal losing streaks and a conservative martingale cycle (2.5× · 3 steps) without being wiped.', tip: 'Below that? Start on Demo mode first — free, with real market data.', ok: 'Got it' },
+  ru: { title: 'Рекомендация по капиталу', body1: 'Для комфортной работы на платформе мы рекомендуем рабочий баланс не менее', body2: '— примерно 35× минимальной сделки. Такой запас позволяет счёту пережить обычные серии поражений и консервативный цикл мартингейла (2,5× · 3 шага).', tip: 'Меньше? Начните с режима Демо — бесплатно, на реальных данных.', ok: 'Понятно' },
+  es: { title: 'Consejo de capital', body1: 'Para la mejor experiencia en esta plataforma, recomendamos un balance de trabajo de al menos', body2: '— unas 35× la orden mínima. Con este margen tu cuenta resiste rachas de pérdidas normales y un ciclo de martingala conservador (2,5× · 3 pasos).', tip: '¿Menos que eso? Empieza primero en modo Demo — gratis, con datos reales.', ok: 'Entendido' },
+  ms: { title: 'Saranan Modal Dagangan', body1: 'Untuk pengalaman terbaik di platform ini, kami menyarankan modal dagangan sekurang-kurangnya', body2: '— kira-kira 35× pesanan minimum. Penampan ini membolehkan akaun anda bertahan melalui siri kekalahan biasa dan kitaran martingale konservatif (2.5× · 3 langkah).', tip: 'Kurang daripada itu? Mulakan dengan mod Demo dahulu — percuma, data pasaran sebenar.', ok: 'Faham' },
+};
+
+const CapitalAdviceModal: React.FC<{ open: boolean; onClose: () => void; lang: string; minAmount: number; currUnit: string }> = ({ open, onClose, lang, minAmount, currUnit }) => {
+  if (!open) return null;
+  const S = ADVICE_STR[lang] ?? ADVICE_STR.en;
+  // Rekomendasi = 35× order minimum (IDR: 35 × 14.000 ≈ Rp 500.000) — buffer
+  // yang lolos siklus martingale konservatif berkali-kali; ikut menyesuaikan
+  // otomatis untuk akun mata uang lain.
+  const rec = Math.max(minAmount, 1) * 35;
+  const recLabel = `${currUnit} ${Math.round(rec).toLocaleString('id-ID')}`;
+  return (
+    <div style={{position:'fixed',inset:0,zIndex:80,display:'flex',alignItems:'center',justifyContent:'center',padding:'16px',animation:'fade-in 0.15s ease'}}>
+      <div onClick={onClose} style={{position:'absolute',inset:0,background:'rgba(0,0,0,0.72)',backdropFilter:'blur(10px)',WebkitBackdropFilter:'blur(10px)'}}/>
+      <div style={{position:'relative',width:'100%',maxWidth:400,background:C.bg,borderRadius:20,border:`1px solid ${C.bdr}`,padding:'24px 22px',animation:'slide-up 0.28s cubic-bezier(0.32,0.72,0,1)'}}>
+        <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:14}}>
+          <div style={{width:44,height:44,borderRadius:14,display:'flex',alignItems:'center',justifyContent:'center',background:`${C.sky}14`,border:`1px solid ${C.sky}30`,flexShrink:0}}>
+            <Wallet style={{width:20,height:20,color:C.sky}}/>
+          </div>
+          <p style={{fontSize:16,fontWeight:700,color:C.text}}>{S.title}</p>
+        </div>
+        <p style={{fontSize:13,color:C.sub,lineHeight:1.6}}>
+          {S.body1}{' '}
+          <span style={{fontWeight:800,color:C.sky}}>{recLabel}</span>{' '}
+          {S.body2}
+        </p>
+        <div style={{display:'flex',alignItems:'flex-start',gap:8,padding:'10px 12px',borderRadius:12,background:C.card2,border:`1px solid ${C.bdr}`,margin:'14px 0 16px'}}>
+          <Info style={{width:13,height:13,color:C.sky,flexShrink:0,marginTop:2}}/>
+          <p style={{fontSize:12,color:C.muted,lineHeight:1.5}}>{S.tip}</p>
+        </div>
+        <button onClick={onClose} style={{width:'100%',padding:'12px 0',borderRadius:12,background:C.sky,border:'none',cursor:'pointer',fontSize:14,fontWeight:700,color:'#06251b'}}>{S.ok}</button>
       </div>
     </div>
   );
@@ -3347,6 +3436,37 @@ export default function DashboardPage() {
   // ── Currency config dari Stockity API (amounts, unit, min, max per negara) ──
   const [currencyConfig, setCurrencyConfig] = useState<CurrencyConfig>(DEFAULT_CURRENCY_CONFIG);
 
+  // ── Kunci mode AI Signal per akun + saran modal sekali-per-login ──────────
+  const [aiUnlocked,  setAiUnlocked]  = useState(false);
+  const [aiCheckDone, setAiCheckDone] = useState(false);
+  const [aiLockOpen,  setAiLockOpen]  = useState(false);
+  const [adviceOpen,  setAdviceOpen]  = useState(false);
+  // Badge kunci di pemilih mode baru tampil setelah status terverifikasi,
+  // agar user yang punya akses tidak melihat kilatan ikon gembok.
+  AI_LOCKED = aiCheckDone && !aiUnlocked;
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const uid = await storage.get(SESSION_KEYS.USER_ID);
+        const ok  = await isAiSignalUnlocked(uid);
+        if (!cancelled) { setAiUnlocked(ok); setAiCheckDone(true); }
+      } catch {
+        if (!cancelled) setAiCheckDone(true); // gagal cek → tetap terkunci (default aman)
+      }
+    })();
+    // Flag 'stc_from_login' di-set halaman login/register tepat sebelum redirect —
+    // dikonsumsi sekali di sini sehingga pesan muncul lagi setiap login berikutnya.
+    try {
+      if (sessionStorage.getItem('stc_from_login') === '1') {
+        sessionStorage.removeItem('stc_from_login');
+        setAdviceOpen(true);
+      }
+    } catch { /* sessionStorage tidak tersedia — abaikan */ }
+    return () => { cancelled = true; };
+  }, []);
+
   // Update module-level formatters setiap render — pola sama dengan C dan T di atas
   const intlLocale = langToIntlLocale(language);
   FMT         = (n: number) => Math.round(n).toLocaleString(intlLocale, { maximumFractionDigits: 0 });
@@ -4107,7 +4227,18 @@ export default function DashboardPage() {
 
   const isBelowMin = amount > 0 && amount < MIN_AMOUNT;
 
+  // Mode aisignal yang tersimpan dari sesi lama diturunkan ke schedule bila
+  // akun terkunci — kecuali sesi AI memang sedang berjalan (jangan ganggu).
+  useEffect(() => {
+    if (!settingsLoaded || !aiCheckDone || aiUnlocked) return;
+    const aiRunning = aiStatus?.botState === 'RUNNING' || aiStatus?.isActive === true;
+    if (tradingMode === 'aisignal' && !aiRunning) setTradingMode('schedule');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [settingsLoaded, aiCheckDone, aiUnlocked]);
+
   const handleModeChange = (m:TradingMode)=>{
+    // Mode AI Signal terkunci per akun — aktivasi via support
+    if (m === 'aisignal' && !aiUnlocked) { setAiLockOpen(true); return; }
     // Izinkan ganti pilihan mode kapan saja (proteksi start ada di handleStart)
     if(m!==tradingMode) setTradingMode(m);
     setError(null);
@@ -4122,6 +4253,8 @@ export default function DashboardPage() {
 
   const handleStart = async()=>{
     if(!selectedRic)return;
+    // Pertahanan lapis dua: mode aisignal tersimpan dari sesi lama tetap tak bisa start
+    if(tradingMode==='aisignal' && !aiUnlocked){ setAiLockOpen(true); return; }
     if(isBelowMin&&tradingMode!=='indicator'){setError(`Amount di bawah minimum ${CURR_UNIT} ${FMT(MIN_AMOUNT)}.`);return;}
     // Cegah start jika ada mode LAIN yang sedang berjalan (hanya 1 mode boleh aktif)
     const otherRunning = (
@@ -4518,6 +4651,8 @@ export default function DashboardPage() {
         //    saat sudah mentok atas/bawah — menghilangkan rubber-band jank di Android WebView.
         overscrollBehaviorY:'contain',
       }}>
+        <AiLockedModal open={aiLockOpen} onClose={()=>setAiLockOpen(false)} lang={language}/>
+        <CapitalAdviceModal open={adviceOpen} onClose={()=>setAdviceOpen(false)} lang={language} minAmount={currencyConfig.minAmount} currUnit={currencyConfig.currencyUnit}/>
         {error&&(
           <div style={{display:'flex',alignItems:'flex-start',gap:9,padding:'10px 14px',borderRadius:8,marginBottom:g,background:C.cord,border:`1px solid rgba(255,69,58,0.2)`,borderLeft:`2px solid ${C.coral}`}}>
             <AlertCircle style={{width:13,height:13,flexShrink:0,marginTop:2,color:C.coral}}/>

@@ -6,6 +6,7 @@ import { api, type ProfileBalance } from '@/lib/api';
 import { resolveAvatarUrl } from '@/lib/userProfileApi';
 import { storage, isSessionValid, sessionLogout, getAuthToken, saveCurrencyWithIso } from '@/lib/storage';
 import { checkIsAdmin, checkIsSuperAdmin } from '@/lib/supabaseRepository';
+import { getAiSignalAllowlist, setAiSignalAllowlist } from '@/lib/aiSignalAccess';
 import { LanguageProvider, useLanguage, formatCurrency, formatDate, Language } from '@/lib';
 import { applyLanguageFromCountry } from '@/lib/LanguageContext';
 import { SESSION_KEYS } from '@/lib/storage';
@@ -658,6 +659,157 @@ const EmailComposer: React.FC<{ open: boolean; onClose: () => void }> = ({ open,
 };
 
 // ─────────────────────────────────────────────
+// AKTIVASI AI SIGNAL (admin) — kelola user yang boleh memakai mode AI Signal.
+// Penyimpanan: app_config 'aisignal_access' (lihat lib/aiSignalAccess.ts).
+// ─────────────────────────────────────────────
+type AiWlUser = { userId: string; name?: string; email?: string };
+
+const AiSignalManager: React.FC<{ open: boolean; onClose: () => void }> = ({ open, onClose }) => {
+  const [users, setUsers]         = useState<AiWlUser[]>([]);
+  const [allow, setAllow]         = useState<Set<string>>(new Set());
+  const [loading, setLoading]     = useState(false);
+  const [query, setQuery]         = useState('');
+  const [saving, setSaving]       = useState(false);
+  const [dirty, setDirty]         = useState(false);
+  const [result, setResult]       = useState<{ ok: boolean; text: string } | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    setResult(null); setDirty(false); setQuery('');
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    setLoading(true);
+    Promise.all([api.admin.listWhitelist(), getAiSignalAllowlist()])
+      .then(([rows, list]: [any[], string[]]) => {
+        const mapped: AiWlUser[] = (rows ?? [])
+          .map((r: any) => ({
+            userId: String(r.user_id ?? r.userId ?? '').trim(),
+            name:   (r.name ?? '').trim() || undefined,
+            email:  String(r.email ?? '').toLowerCase().trim() || undefined,
+          }))
+          .filter((u: AiWlUser) => !!u.userId);
+        setUsers(mapped);
+        setAllow(new Set(list));
+      })
+      .catch(() => { setUsers([]); setResult({ ok: false, text: 'Gagal memuat daftar user.' }); })
+      .finally(() => setLoading(false));
+    return () => { document.body.style.overflow = prev; };
+  }, [open]);
+
+  if (!open) return null;
+
+  const q = query.trim().toLowerCase();
+  const filtered = q
+    ? users.filter(u => u.userId.includes(q) || (u.name ?? '').toLowerCase().includes(q) || (u.email ?? '').includes(q))
+    : users;
+
+  const toggle = (uid: string) => {
+    setAllow(prev => {
+      const next = new Set(prev);
+      if (next.has(uid)) next.delete(uid); else next.add(uid);
+      return next;
+    });
+    setDirty(true); setResult(null);
+  };
+
+  const handleSave = async () => {
+    if (saving) return;
+    setSaving(true); setResult(null);
+    try {
+      await setAiSignalAllowlist(Array.from(allow));
+      setDirty(false);
+      setResult({ ok: true, text: `Tersimpan — ${allow.size} user aktif AI Signal.` });
+    } catch (e: any) {
+      setResult({ ok: false, text: e?.message || 'Gagal menyimpan.' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="pf-root" style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 16px' }}>
+      <div onClick={saving ? undefined : onClose} style={{ position: 'absolute', inset: 0, background: 'var(--backdrop)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', animation: 'pf-bd-in 0.2s ease' }} />
+      <div style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: 430, animation: 'pf-pop 0.28s cubic-bezier(0.32,0.72,0,1)' }}>
+        <div style={{ background: 'var(--modal)', border: '1px solid var(--modal-hair)', borderRadius: 22, overflow: 'hidden', boxShadow: '0 24px 60px rgba(0,0,0,0.35)' }}>
+          {/* Header */}
+          <div style={{ padding: '20px 22px', borderBottom: '1px solid var(--hairline)', display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ width: 38, height: 38, borderRadius: 11, background: 'linear-gradient(135deg,#38BDF8,#0284C7)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"/><path d="M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5"/><circle cx="12" cy="12" r="2"/><path d="M16.2 7.8c2.3 2.3 2.3 6.1 0 8.5"/><path d="M19.1 4.9C23 8.8 23 15.2 19.1 19.1"/></svg>
+            </div>
+            <div style={{ flex: 1 }}>
+              <p style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-1)', letterSpacing: -0.3 }}>Aktivasi AI Signal</p>
+              <p style={{ fontSize: 12, color: 'var(--text-3)' }}>{allow.size} user aktif · {users.length} user whitelist</p>
+            </div>
+            <button onClick={saving ? undefined : onClose} style={{ width: 30, height: 30, borderRadius: '50%', background: 'var(--press)', border: 'none', cursor: saving ? 'default' : 'pointer', color: 'var(--text-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+
+          <div style={{ padding: '16px 22px 18px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {/* Cari */}
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Cari User ID / nama / email…"
+              style={{ width: '100%', boxSizing: 'border-box', background: 'var(--input-bg)', border: '1px solid var(--border)', borderRadius: 12, padding: '11px 14px', fontSize: 14, color: 'var(--text-1)', fontFamily: 'inherit', outline: 'none' }}
+            />
+
+            {/* Daftar user + toggle */}
+            <div style={{ maxHeight: '46vh', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {loading && <p style={{ fontSize: 13, color: 'var(--text-3)', textAlign: 'center', padding: '18px 0' }}>Memuat…</p>}
+              {!loading && filtered.length === 0 && (
+                <p style={{ fontSize: 13, color: 'var(--text-3)', textAlign: 'center', padding: '18px 0' }}>
+                  {users.length === 0 ? 'Tidak ada user whitelist ber-User ID.' : 'Tidak ada yang cocok.'}
+                </p>
+              )}
+              {!loading && filtered.map((u) => {
+                const on = allow.has(u.userId);
+                return (
+                  <button key={u.userId} onClick={() => toggle(u.userId)} style={{
+                    display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 12,
+                    cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit',
+                    background: on ? 'var(--accent-dim)' : 'var(--input-bg)',
+                    border: `1px solid ${on ? 'var(--accent-bdr)' : 'var(--border)'}`,
+                  }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-1)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{u.name || u.userId}</p>
+                      <p style={{ fontSize: 11, color: 'var(--text-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>ID: {u.userId}{u.email ? ` · ${u.email}` : ''}</p>
+                    </div>
+                    {/* Switch */}
+                    <div style={{ width: 40, height: 23, borderRadius: 99, flexShrink: 0, position: 'relative', transition: 'background 0.15s', background: on ? 'var(--accent)' : 'var(--press)', border: '1px solid var(--border)' }}>
+                      <div style={{ position: 'absolute', top: 2, left: on ? 19 : 2, width: 17, height: 17, borderRadius: '50%', background: '#fff', transition: 'left 0.15s', boxShadow: '0 1px 3px rgba(0,0,0,0.3)' }} />
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Hasil simpan */}
+            {result && (
+              <p style={{ fontSize: 12, fontWeight: 600, color: result.ok ? 'var(--accent)' : '#F87171' }}>{result.text}</p>
+            )}
+
+            {/* Simpan */}
+            <button onClick={handleSave} disabled={!dirty || saving} style={{
+              width: '100%', padding: '13px 0', borderRadius: 13, border: 'none', cursor: (!dirty || saving) ? 'default' : 'pointer',
+              fontSize: 14, fontWeight: 700, fontFamily: 'inherit',
+              background: (!dirty || saving) ? 'var(--press)' : 'linear-gradient(135deg,#38BDF8,#0284C7)',
+              color: (!dirty || saving) ? 'var(--text-3)' : '#fff',
+            }}>
+              {saving ? 'Menyimpan…' : 'Simpan Perubahan'}
+            </button>
+            <p style={{ fontSize: 11, color: 'var(--text-3)', lineHeight: 1.5 }}>
+              User yang tidak aktif akan melihat mode AI Signal terkunci dan diarahkan
+              menghubungi {`supportstockity@gmail.com`}.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ─────────────────────────────────────────────
 // MAIN PAGE CONTENT
 // ─────────────────────────────────────────────
 function ProfilePageContent() {
@@ -672,6 +824,7 @@ function ProfilePageContent() {
   const [currencyLoading, setCurrencyLoading] = useState(false);
   const [showLogout, setShowLogout]           = useState(false);
   const [emailOpen, setEmailOpen]             = useState(false);
+  const [aiMgrOpen, setAiMgrOpen]             = useState(false);
   const [logoutSplash, setLogoutSplash]       = useState(false);
   const [copied, setCopied]                   = useState(false);
   const [isAdminUser, setIsAdminUser]         = useState(false);
@@ -682,7 +835,7 @@ function ProfilePageContent() {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') { setSheetOpen(false); setLangSheetOpen(false); setShowLogout(false); setEmailOpen(false); }
+      if (e.key === 'Escape') { setSheetOpen(false); setLangSheetOpen(false); setShowLogout(false); setEmailOpen(false); setAiMgrOpen(false); }
     };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
@@ -1011,6 +1164,12 @@ function ProfilePageContent() {
                   label={t('profile.adminPanel')}
                   value={isSuperAdminUser ? 'Super Admin' : 'Admin'}
                   onClick={() => router.push('/admin')}
+                />
+                <TappableRow
+                  icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"/><path d="M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5"/><circle cx="12" cy="12" r="2"/><path d="M16.2 7.8c2.3 2.3 2.3 6.1 0 8.5"/><path d="M19.1 4.9C23 8.8 23 15.2 19.1 19.1"/></svg>}
+                  iconBg="linear-gradient(135deg,#38BDF8,#0284C7)"
+                  label="Aktivasi AI Signal"
+                  onClick={() => setAiMgrOpen(true)}
                   last={!isSuperAdminUser}
                 />
                 {isSuperAdminUser && (
@@ -1164,6 +1323,12 @@ function ProfilePageContent() {
                   label={t('profile.adminPanel')}
                   value={isSuperAdminUser ? 'Super Admin' : 'Admin'}
                   onClick={() => router.push('/admin')}
+                />
+                <TappableRow
+                  icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"/><path d="M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5"/><circle cx="12" cy="12" r="2"/><path d="M16.2 7.8c2.3 2.3 2.3 6.1 0 8.5"/><path d="M19.1 4.9C23 8.8 23 15.2 19.1 19.1"/></svg>}
+                  iconBg="linear-gradient(135deg,#38BDF8,#0284C7)"
+                  label="Aktivasi AI Signal"
+                  onClick={() => setAiMgrOpen(true)}
                   last={!isSuperAdminUser}
                 />
                 {isSuperAdminUser && (
@@ -1221,6 +1386,7 @@ function ProfilePageContent() {
       <LanguageSheet open={langSheetOpen} onClose={() => setLangSheetOpen(false)} />
       <LogoutAlert open={showLogout} onCancel={() => setShowLogout(false)} onConfirm={handleLogout} />
       <EmailComposer open={emailOpen} onClose={() => setEmailOpen(false)} />
+      <AiSignalManager open={aiMgrOpen} onClose={() => setAiMgrOpen(false)} />
     </div>
   );
 }
