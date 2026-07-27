@@ -94,9 +94,15 @@ function parseCandle(d: any): Candle | null {
       // Tanpa ini seluruh candle dibuang dan mode FTT/CTC/Indicator/Momentum
       // tak pernah dapat harga, sehingga siklusnya berputar tanpa entry.
       const rawTs = d.timestamp ?? d.time ?? d.t ?? d.created_at ?? d.from;
-      const ts = typeof rawTs === 'string' && !/^\d+$/.test(rawTs)
+      const parsed = typeof rawTs === 'string' && !/^\d+$/.test(rawTs)
         ? Date.parse(rawTs)
         : Number(rawTs);
+      // Selalu dalam detik: pengelompokan candle per menit menghitung dalam
+      // detik, jadi nilai milidetik harus diturunkan dulu agar tiap menit
+      // tidak pecah menjadi banyak kelompok.
+      const ts = Number.isFinite(parsed)
+        ? (parsed > 1e11 ? Math.floor(parsed / 1000) : Math.floor(parsed))
+        : NaN;
       const open  = Number(d.open  ?? d.o);
       const high  = Number(d.high  ?? d.h);
       const low   = Number(d.low   ?? d.l);
