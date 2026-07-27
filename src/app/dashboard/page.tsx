@@ -4435,6 +4435,31 @@ export default function DashboardPage() {
           stopLoss:stopLoss?stopLoss*100:undefined,stopProfit:stopProfit?stopProfit*100:undefined,
         });
         await api.scheduleStart();
+      } else if(isApk && deviceSession.available()){
+        // v4: mode lain juga dieksekusi di perangkat (tanpa VPS)
+        const baseCfg = {
+          asset:{ric:selectedRic,name:selectedAsset?.name??selectedRic,profitRate:selectedAsset?.profitRate},
+          martingale:{isEnabled:martingale.enabled,maxSteps:martingale.maxStep,baseAmount:amount*100,multiplierValue:martingale.multiplier,multiplierType:'FIXED' as const,isAlwaysSignal:martingale.alwaysSignal??false},
+          isDemoAccount:isDemo,currency:CURR_UNIT,currencyIso:CURR_UNIT,
+          stopLoss:stopLoss?stopLoss*100:undefined,stopProfit:stopProfit?stopProfit*100:undefined,
+        };
+        const cfg =
+          tradingMode==='indicator'
+            ? { ...baseCfg, settings:{ type:indicatorType, period:indicatorPeriod, sensitivity:indicatorSensitivity, rsiOverbought, rsiOversold } }
+          : tradingMode==='momentum'
+            ? { ...baseCfg, patterns:{ candleSabit:momentumPatterns.candleSabit, dojiTerjepit:momentumPatterns.dojiTerjepit, dojiPembatalan:momentumPatterns.dojiPembatalan, bbSarBreak:momentumPatterns.bbSarBreak } }
+          : baseCfg;
+        await deviceSession.startMode({
+          mode: tradingMode as 'fastrade'|'ctc'|'aisignal'|'indicator'|'momentum',
+          config: cfg,
+          callbacks: {
+            onLog: (log:any)=>setScheduleLogs(prev=>[log, ...prev.filter(l=>l.id!==log.id)].slice(0,500)),
+            onStatusChange: (st:string)=>setScheduleStatus(prev=>({ ...(prev ?? {} as any), statusMessage: st })),
+            onSessionPnL: (pnl:number)=>setScheduleStatus(prev=>({ ...(prev ?? {} as any), sessionPnL: pnl })),
+            onStopped: ()=>{ setDeviceEngineOn(false); },
+          },
+        });
+        setDeviceEngineOn(true);
       } else if(tradingMode==='fastrade'||tradingMode==='ctc'){
         await api.fastradeStart({
           mode:tradingMode==='ctc'?'CTC':'FTT',

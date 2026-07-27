@@ -13,6 +13,10 @@ import { storage, SESSION_KEYS } from '../storage';
 import { api } from '../api';
 import { StockityWsClient } from './stockityWs';
 import { ScheduleEngine, type ScheduledOrder, type ScheduleConfig, type EngineCallbacks } from './scheduleEngine';
+import { FastradeEngine } from './fastradeEngine';
+import { AiSignalEngine } from './aiSignalEngine';
+import { IndicatorEngine } from './indicatorEngine';
+import { MomentumEngine } from './momentumEngine';
 import { hasNativeWs, unsupportedReason } from './wsTransport';
 import { saveSession, loadSession, clearSession, appendLog, flushLogs, type PersistedSession } from './sessionStore';
 
@@ -36,6 +40,21 @@ async function getStockityToken(): Promise<{ token: string; deviceId: string }> 
   return { token: cached ?? '', deviceId: (await storage.get(SESSION_KEYS.DEVICE_ID)) ?? '' };
 }
 
+/** Mode yang dieksekusi di perangkat */
+export type DeviceMode = 'schedule' | 'fastrade' | 'ctc' | 'aisignal' | 'indicator' | 'momentum';
+
+export interface StartModeArgs {
+  mode: Exclude<DeviceMode, 'schedule'>;
+  /** Konfigurasi spesifik mode (bentuknya mengikuti tiap engine) */
+  config: any;
+  callbacks: {
+    onLog: (log: any) => void;
+    onStatusChange: (status: string) => void;
+    onStopped: () => void;
+    onSessionPnL?: (pnl: number) => void;
+  };
+}
+
 export interface StartScheduleArgs {
   orders: ScheduledOrder[];
   config: ScheduleConfig;
@@ -47,6 +66,8 @@ export interface StartScheduleArgs {
 class DeviceSession {
   private ws: StockityWsClient | null = null;
   private engine: ScheduleEngine | null = null;
+  private modeEngine: any = null;          // engine mode non-Schedule
+  private activeMode: DeviceMode | null = null;
 
   /** Apakah eksekusi di perangkat tersedia (APK + plugin native siap) */
   available(): boolean { return hasNativeWs(); }
@@ -121,6 +142,60 @@ class DeviceSession {
   }
 
   /**
+   * Jalankan mode selain Schedule (Fastrade/CTC, AI Signal, Indicator,
+   * Momentum) di perangkat. Riwayat tiap mode ikut ditulis ke DB memakai
+   * jalur yang sama dengan Schedule, sehingga halaman Riwayat terisi.
+   */
+  async startMode({ mode, config, callbacks }: StartModeArgs): Promise<void> {
+    if (!this.available()) throw new Error(this.unavailableReason() ?? 'Eksekusi di perangkat tidak tersedia');
+    this.stop();
+
+    const { token: stockityToken, deviceId: srvDeviceId } = await getStockityToken();
+    const deviceId = srvDeviceId || (await storage.get(SESSION_KEYS.DEVICE_ID)) || '';
+    if (!stockityToken || !deviceId) throw new Error('Sesi tidak lengkap — silakan login ulang');
+
+    const deviceType = (await storage.get(SESSION_KEYS.DEVICE_TYPE)) ?? 'web';
+    const rest = { authToken: stockityToken, deviceId, deviceType };
+
+    const ws = new StockityWsClient({
+      authToken: stockityToken, deviceId, deviceType,
+      onStatusChange: (connected, reason) => {
+        if (reason) callbacks.onStatusChange(reason);
+        if (!connected) callbacks.onStatusChange('Koneksi realtime terputus — mencoba menyambung ulang');
+      },
+      onDealResult: (payload) => (this.modeEngine as any)?.handleWsDealResult?.(payload),
+    });
+    await ws.connect();
+
+    // Bungkus onLog: tulis ke DB (tabel mode_logs) + teruskan ke UI
+    const cb = {
+      ...callbacks,
+      onLog: (log: any) => { appendLog(log); callbacks.onLog(log); },
+      onStopped: () => { flushLogs(); callbacks.onStopped(); },
+    };
+
+    let engine: any;
+    if (mode === 'fastrade' || mode === 'ctc') {
+      engine = new FastradeEngine(ws, rest, { ...config, mode: mode === 'ctc' ? 'CTC' : 'FTT' }, cb);
+    } else if (mode === 'aisignal') {
+      engine = new AiSignalEngine(ws, config, cb);
+    } else if (mode === 'indicator') {
+      engine = new IndicatorEngine(ws, rest, config, cb);
+    } else {
+      engine = new MomentumEngine(ws, rest, config, cb);
+    }
+
+    this.ws = ws;
+    this.modeEngine = engine;
+    this.activeMode = mode;
+    engine.start();
+  }
+
+  /** Engine mode non-Schedule yang sedang berjalan (untuk status di UI) */
+  getModeEngine(): any | null { return this.modeEngine; }
+  getActiveMode(): DeviceMode | null { return this.activeMode; }
+
+  /**
    * Sesi tertunda yang bisa dilanjutkan (aplikasi sempat ditutup saat bot
    * masih berjalan). null bila tidak ada.
    */
@@ -136,8 +211,11 @@ class DeviceSession {
   stop(): void {
     try { flushLogs(); } catch { /* antrean kosong */ }
     try { this.engine?.stop(); } catch { /* sudah berhenti */ }
+    try { this.modeEngine?.stop(); } catch { /* sudah berhenti */ }
     try { this.ws?.disconnect(); } catch { /* sudah tertutup */ }
     this.engine = null;
+    this.modeEngine = null;
+    this.activeMode = null;
     this.ws = null;
   }
 }
