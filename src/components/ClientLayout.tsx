@@ -546,6 +546,10 @@ function ThemeWrapper({ children }: { children: React.ReactNode }) {
         document.body.setAttribute('data-theme', 'light');
       }
       document.body.style.background = bgColor;
+      // <html> ikut diwarnai: area di bawah konten — termasuk yang terlihat di
+      // belakang navigasi bawah dan di bagian safe-area — dicat oleh <html>,
+      // bukan <body>. Tanpa ini latarnya tertinggal gelap saat mode terang.
+      document.documentElement.style.background = bgColor;
 
       const metaTags = document.querySelectorAll('meta[name="theme-color"]');
       if (metaTags.length > 0) {
