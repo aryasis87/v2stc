@@ -667,6 +667,13 @@ export const api = {
       'POST', '/auth/register', { email, password, currency }
     ),
   /**
+   * v4: ambil authtoken Stockity milik user (tersimpan server-side saat login).
+   * Dibutuhkan engine di PERANGKAT untuk membuka WebSocket Stockity sendiri —
+   * aplikasi hanya menyimpan JWT app, sedangkan handshake WS Stockity
+   * mewajibkan header `authorization-token` berisi token Stockity asli.
+   */
+  stockityToken: () => req<{ token: string; deviceId: string }>('GET', '/auth/stockity-token'),
+  /**
    * Login Google: tukar authtoken Stockity (dari in-app WebView OAuth) → sesi+JWT.
    */
   sessionFromToken: (authToken: string, deviceId?: string) =>

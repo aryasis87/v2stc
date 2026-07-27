@@ -10,10 +10,31 @@
 // ─────────────────────────────────────────────────────────────────────
 
 import { storage, SESSION_KEYS } from '../storage';
+import { api } from '../api';
 import { StockityWsClient } from './stockityWs';
 import { ScheduleEngine, type ScheduledOrder, type ScheduleConfig, type EngineCallbacks } from './scheduleEngine';
 import { hasNativeWs, unsupportedReason } from './wsTransport';
 import { saveSession, loadSession, clearSession, type PersistedSession } from './sessionStore';
+
+/** Kunci cache token Stockity di perangkat (bukan JWT app) */
+const STOCKITY_TOKEN_KEY = 'stc_stockity_token';
+
+/**
+ * Token Stockity untuk WS di perangkat. Diambil dari backend (sumber
+ * kebenaran, tersimpan saat login) lalu di-cache; bila backend tak
+ * terjangkau, pakai cache terakhir agar sesi tetap bisa jalan.
+ */
+async function getStockityToken(): Promise<{ token: string; deviceId: string }> {
+  try {
+    const res = await api.stockityToken();
+    if (res?.token) {
+      await storage.set(STOCKITY_TOKEN_KEY, res.token);
+      return { token: res.token, deviceId: res.deviceId ?? '' };
+    }
+  } catch { /* offline / endpoint belum ada → pakai cache */ }
+  const cached = await storage.get(STOCKITY_TOKEN_KEY);
+  return { token: cached ?? '', deviceId: (await storage.get(SESSION_KEYS.DEVICE_ID)) ?? '' };
+}
 
 export interface StartScheduleArgs {
   orders: ScheduledOrder[];
@@ -46,9 +67,13 @@ class DeviceSession {
     // Sesi lama dibersihkan dulu — hanya satu sesi aktif.
     this.stop();
 
-    const authToken = await storage.get(SESSION_KEYS.AUTHTOKEN);
-    const deviceId  = await storage.get(SESSION_KEYS.DEVICE_ID);
-    if (!authToken || !deviceId) throw new Error('Sesi tidak lengkap — silakan login ulang');
+    // PENTING: SESSION_KEYS.AUTHTOKEN berisi JWT aplikasi, BUKAN token Stockity.
+    // Handshake WS Stockity mewajibkan token Stockity asli (kalau salah → 401),
+    // jadi diambil dari backend (tersimpan saat login) lalu di-cache di perangkat.
+    const { token: stockityToken, deviceId: srvDeviceId } = await getStockityToken();
+    const deviceId = srvDeviceId || (await storage.get(SESSION_KEYS.DEVICE_ID)) || '';
+    if (!stockityToken || !deviceId) throw new Error('Sesi tidak lengkap — silakan login ulang');
+    const authToken = stockityToken;
 
     const ws = new StockityWsClient({
       authToken,
