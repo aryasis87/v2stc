@@ -1,0 +1,539 @@
+// lib/engine/fastradeEngine.ts
+// ─────────────────────────────────────────────────────────────────────
+// v4 Fase B — ENGINE FASTRADE (FTT & CTC) DI PERANGKAT USER.
+// Port dari botstc: fastrade-base.executor.ts + ftt-executor.ts + ctc-executor.ts
+//
+// Alur inti (dijaga identik dengan server):
+//   1. Tunggu batas menit → ambil candle → harga #1
+//   2. Tunggu batas menit berikutnya → ambil candle → harga #2
+//   3. Trend = naik→call, turun→put  (FTT: harga sama → cycle ulang;
+//      CTC: harga sama → 'put', lalu sinkron ke boundary 5 detik)
+//   4. Eksekusi via WS, tunggu hasil:
+//      WIN  → lanjut trend sama         LOSE → martingale / Always Signal
+//      DRAW → ulangi trend yang sama    martingale habis → REVERSE trend
+//
+// Data candle diambil lewat HTTP native (CapacitorHttp) — bebas CORS,
+// bisa mengirim header autentikasi Stockity seperti di server.
+// ─────────────────────────────────────────────────────────────────────
+
+import { StockityWsClient, type DealResultPayload, type TradeOrderData } from './stockityWs';
+import { fetchCandles5s, type StockityRestOptions } from './stockityRest';
+import type { TrendType, MartingaleSettings, AssetConfig } from './scheduleEngine';
+
+export type FastradeMode = 'FTT' | 'CTC';
+
+export interface FastradeConfig {
+  mode: FastradeMode;
+  asset: AssetConfig;
+  martingale: MartingaleSettings;
+  isDemoAccount: boolean;
+  currency: string;
+  currencyIso: string;
+  stopLoss?: number;
+  stopProfit?: number;
+}
+
+export interface FastradeLog {
+  id: string;
+  orderId: string;
+  trend: TrendType;
+  amount: number;
+  martingaleStep: number;
+  dealId?: string;
+  result?: 'WIN' | 'LOSE' | 'DRAW' | 'FAILED';
+  profit?: number;
+  sessionPnL?: number;
+  executedAt: number;
+  cycleNumber: number;
+  note?: string;
+  isDemoAccount: boolean;
+  mode: FastradeMode;
+}
+
+export interface FastradeCallbacks {
+  onLog: (log: FastradeLog) => void;
+  onStatusChange: (status: string) => void;
+  onStopped: () => void;
+  onSessionPnL?: (pnl: number) => void;
+}
+
+// ── Konstanta — sama dengan engine server ─────────────────────────────
+const FETCH_OFFSET_MS = 500;
+const CYCLE_RESTART_DELAY_MS = 2_000;
+const DIRECT_LOSS_DELAY_MS = 5_000;
+const RESULT_TIMEOUT_MS = 150_000;
+const MAX_RETRIES = 3;
+const TERMINAL_STATUSES = new Set(['won', 'win', 'lost', 'lose', 'loss', 'stand', 'draw', 'tie']);
+
+interface ActiveOrder {
+  id: string;
+  dealId?: string;
+  trend: TrendType;
+  amount: number;
+  step: number;
+  executedAt: number;
+}
+
+const uid = () =>
+  (typeof crypto !== 'undefined' && 'randomUUID' in crypto)
+    ? crypto.randomUUID()
+    : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+export class FastradeEngine {
+  private isRunning = false;
+  private cycleNumber = 0;
+  private currentTrend?: TrendType;
+  private activeOrder?: ActiveOrder;
+
+  private sessionPnL = 0;
+  private totalWins = 0;
+  private totalLosses = 0;
+  private totalTrades = 0;
+
+  private martingaleStep = 0;
+  private martingaleActive = false;
+  private alwaysLoss?: { hasOutstandingLoss: boolean; currentMartingaleStep: number; totalLoss: number };
+
+  private cycleTimer?: ReturnType<typeof setTimeout>;
+  private resultTimer?: ReturnType<typeof setTimeout>;
+  private stopGeneration = 0; // membatalkan callback tertunda saat stop()
+
+  private phase = 'IDLE';
+
+  constructor(
+    private readonly ws: StockityWsClient,
+    private readonly rest: StockityRestOptions,
+    private readonly config: FastradeConfig,
+    private readonly callbacks: FastradeCallbacks,
+  ) {}
+
+  // ── Kontrol ────────────────────────────────────
+
+  start() {
+    if (this.isRunning) return;
+    this.isRunning = true;
+    this.sessionPnL = 0;
+    this.totalWins = this.totalLosses = this.totalTrades = 0;
+    this.resetMartingale();
+    this.callbacks.onStatusChange(`${this.config.mode}: bot berjalan`);
+    this.startNewCycle();
+  }
+
+  stop() {
+    this.isRunning = false;
+    this.stopGeneration++;
+    this.clearCycleTimer();
+    this.clearResultTimer();
+    this.phase = 'IDLE';
+    this.activeOrder = undefined;
+    this.callbacks.onStatusChange(`${this.config.mode}: bot dihentikan`);
+    this.callbacks.onStopped();
+  }
+
+  handleWsDealResult = (payload: DealResultPayload) => this.handleDealResult(payload);
+
+  getStatus() {
+    return {
+      isRunning: this.isRunning,
+      mode: this.config.mode,
+      phase: this.phase,
+      cycleNumber: this.cycleNumber,
+      currentTrend: this.currentTrend ?? null,
+      martingaleStep: this.martingaleStep,
+      martingaleActive: this.martingaleActive,
+      alwaysSignalActive: !!this.alwaysLoss?.hasOutstandingLoss,
+      sessionPnL: this.sessionPnL,
+      totalWins: this.totalWins,
+      totalLosses: this.totalLosses,
+      totalTrades: this.totalTrades,
+      wsConnected: this.ws.isConnected(),
+    };
+  }
+
+  // ── Siklus ─────────────────────────────────────
+
+  private startNewCycle() {
+    if (!this.isRunning) return;
+    this.cycleNumber++;
+    this.currentTrend = undefined;
+    this.phase = 'IDLE';
+    this.clearCycleTimer();
+
+    if (!this.alwaysLoss?.hasOutstandingLoss) this.resetMartingale();
+
+    this.callbacks.onStatusChange(
+      `${this.config.mode} CYCLE ${this.cycleNumber}: menunggu batas menit...`,
+    );
+    this.runCycle().catch(() => {
+      if (this.isRunning) this.scheduleNewCycle(CYCLE_RESTART_DELAY_MS);
+    });
+  }
+
+  private async runCycle(): Promise<void> {
+    const isCtc = this.config.mode === 'CTC';
+
+    // ── Candle 1 ──
+    this.phase = 'WAITING_MINUTE_1';
+    const firstBoundary = this.getNextMinuteBoundary();
+    await this.sleep(Math.max(0, firstBoundary - Date.now()) + FETCH_OFFSET_MS);
+    if (!this.isRunning) return;
+
+    this.phase = 'FETCHING_1';
+    this.callbacks.onStatusChange(`${this.config.mode} CYCLE ${this.cycleNumber}: mengambil candle pertama...`);
+    const price1 = await this.fetchCandleClosePrice();
+    if (price1 === null) { if (this.isRunning) this.scheduleNewCycle(CYCLE_RESTART_DELAY_MS); return; }
+
+    // ── Candle 2 ──
+    this.phase = 'WAITING_MINUTE_2';
+    this.callbacks.onStatusChange(`${this.config.mode} CYCLE ${this.cycleNumber}: menunggu menit kedua...`);
+    await this.sleep(Math.max(0, firstBoundary + 60_000 - Date.now()) + FETCH_OFFSET_MS);
+    if (!this.isRunning) return;
+
+    this.phase = 'FETCHING_2';
+    const price2 = await this.fetchCandleClosePrice();
+    if (price2 === null) { if (this.isRunning) this.scheduleNewCycle(CYCLE_RESTART_DELAY_MS); return; }
+
+    // ── Analisis ──
+    this.phase = 'ANALYZING';
+    const detected = this.determineTrend(price1, price2);
+
+    if (!isCtc && detected === null) {
+      // FTT: harga sama → tidak ada sinyal, ulangi siklus
+      this.callbacks.onStatusChange(`${this.config.mode} CYCLE ${this.cycleNumber}: harga sama — cycle ulang`);
+      if (this.isRunning) this.scheduleNewCycle(CYCLE_RESTART_DELAY_MS);
+      return;
+    }
+
+    const trend: TrendType = detected ?? 'put'; // CTC: harga sama → 'put'
+    this.currentTrend = trend;
+
+    if (isCtc) {
+      // CTC: sinkron ke boundary 5 detik terdekat sebelum eksekusi
+      this.phase = 'WAITING_EXEC_SYNC';
+      const waitForExec = this.calculateOptimalExecutionTime() - Date.now();
+      if (waitForExec > 0) await this.sleep(waitForExec);
+      if (!this.isRunning) return;
+    }
+
+    this.callbacks.onStatusChange(`${this.config.mode} CYCLE ${this.cycleNumber}: eksekusi ${trend.toUpperCase()}`);
+    await this.executeWithTrend(trend, 0);
+  }
+
+  /** Boundary 5 detik terdekat; hindari eksekusi terlalu mepet akhir menit */
+  private calculateOptimalExecutionTime(): number {
+    const now = Date.now();
+    const currentSec = Math.floor(now / 1000);
+    const secInMinute = currentSec % 60;
+    const nextBoundarySec = currentSec + (5 - (secInMinute % 5));
+    const msToBoundary = nextBoundarySec * 1000 - now;
+
+    if (msToBoundary < 200) return now;                    // sudah di boundary
+    if ((nextBoundarySec % 60) === 0) return now;          // tepat akhir menit → langsung
+    if (60 - (nextBoundarySec % 60) < 1) return now + 1000; // terlalu mepet → geser
+    return nextBoundarySec * 1000;
+  }
+
+  private scheduleNewCycle(delayMs: number) {
+    this.clearCycleTimer();
+    const gen = this.stopGeneration;
+    this.cycleTimer = setTimeout(() => {
+      if (!this.isRunning || gen !== this.stopGeneration) return;
+      this.startNewCycle();
+    }, delayMs);
+  }
+
+  private clearCycleTimer() {
+    if (this.cycleTimer) { clearTimeout(this.cycleTimer); this.cycleTimer = undefined; }
+  }
+
+  // ── Candle ─────────────────────────────────────
+
+  /** Harga close candle terakhir; retry 3× seperti server (kegagalan transient) */
+  private async fetchCandleClosePrice(maxAttempts = 3): Promise<number | null> {
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      if (!this.isRunning) return null;
+      const candles = await fetchCandles5s(this.config.asset.ric, this.rest);
+      if (candles.length) {
+        const last = candles.sort((a, b) => a.timestamp - b.timestamp)[candles.length - 1];
+        if (Number.isFinite(last.close)) return last.close;
+      }
+      if (attempt < maxAttempts) await this.sleep(1000);
+    }
+    return null;
+  }
+
+  private determineTrend(p1: number, p2: number): TrendType | null {
+    if (p2 > p1) return 'call';
+    if (p2 < p1) return 'put';
+    return null;
+  }
+
+  private reverseTrend(t: TrendType): TrendType { return t === 'call' ? 'put' : 'call'; }
+
+  // ── Eksekusi ───────────────────────────────────
+
+  private async executeWithTrend(trend: TrendType, step: number, retryCount = 0): Promise<void> {
+    if (!this.isRunning) return;
+
+    if (retryCount >= MAX_RETRIES) {
+      this.callbacks.onStatusChange(`${this.config.mode}: trade gagal ${MAX_RETRIES}× — bot dihentikan`);
+      this.stop();
+      return;
+    }
+
+    // Always Signal: step 0 di-override ke step kerugian yang tertunda
+    const effectiveStep = (this.alwaysLoss?.hasOutstandingLoss && step === 0)
+      ? this.alwaysLoss.currentMartingaleStep
+      : step;
+
+    const amount = this.calcAmount(effectiveStep);
+    this.phase = 'EXECUTING';
+
+    let tradeData: TradeOrderData;
+    try {
+      tradeData = this.buildInstantTrade(trend, amount);
+    } catch (err: any) {
+      this.emitLog({ orderId: uid(), trend, amount, martingaleStep: effectiveStep, result: 'FAILED',
+        note: `Build error: ${err?.message}` });
+      if (this.isRunning) this.scheduleNewCycle(CYCLE_RESTART_DELAY_MS);
+      return;
+    }
+
+    const orderId = uid();
+    const result = await this.ws.placeTrade(tradeData);
+
+    if (result.error === 'amount_min' || result.error === 'amount_max') {
+      const why = result.error === 'amount_min' ? 'di bawah minimum' : 'melebihi maksimum';
+      this.emitLog({ orderId, trend, amount, martingaleStep: effectiveStep, result: 'FAILED',
+        note: `Amount ${why} Stockity` });
+      this.callbacks.onStatusChange(`${this.config.mode}: amount ${why} Stockity — bot dihentikan`);
+      setTimeout(() => this.stop(), 300);
+      return;
+    }
+
+    if (!result.dealId && result.error !== 'duplicate') {
+      // gagal transient → coba lagi
+      await this.sleep(500);
+      return this.executeWithTrend(trend, step, retryCount + 1);
+    }
+
+    this.totalTrades++;
+    this.activeOrder = {
+      id: orderId, dealId: result.dealId ?? undefined, trend,
+      amount, step: effectiveStep, executedAt: Date.now(),
+    };
+    this.phase = 'WAITING_RESULT';
+    this.emitLog({ orderId, trend, amount, martingaleStep: effectiveStep, dealId: result.dealId ?? undefined });
+    this.startResultTimeout(orderId);
+  }
+
+  private buildInstantTrade(trend: TrendType, amount: number): TradeOrderData {
+    const createdAtSeconds = Math.floor(Date.now() / 1000) + 1;
+    const remainingInMinute = 60 - (createdAtSeconds % 60);
+    // Ambang 48s (bukan 45s) — sama dengan perbaikan di engine server
+    const expireAt = remainingInMinute >= 48
+      ? createdAtSeconds + remainingInMinute
+      : createdAtSeconds + remainingInMinute + 60;
+
+    const duration = expireAt - createdAtSeconds;
+    if (duration < 45)  throw new Error(`Duration terlalu pendek: ${duration}s`);
+    if (duration > 125) throw new Error(`Duration terlalu panjang: ${duration}s`);
+
+    return {
+      amount,
+      createdAt: createdAtSeconds * 1000,
+      dealType: this.config.isDemoAccount ? 'demo' : 'real',
+      expireAt,
+      iso: this.config.currencyIso,
+      optionType: 'turbo',
+      ric: this.config.asset.ric,
+      trend,
+    };
+  }
+
+  // ── Hasil ──────────────────────────────────────
+
+  private handleDealResult(payload: DealResultPayload) {
+    const s = (payload.status || payload.result || '').toLowerCase();
+    if (!TERMINAL_STATUSES.has(s)) return; // bo:opened tak pernah dianggap hasil
+
+    const active = this.activeOrder;
+    if (!active) return;
+
+    const dealId = String(payload.id ?? '');
+    const isWin  = s === 'won' || s === 'win';
+    const isDraw = s === 'stand' || s === 'draw' || s === 'tie';
+
+    // Cocokkan: dealId → uuid → fallback amount+trend dalam jendela waktu
+    let isMatch = active.dealId === dealId;
+    if (!isMatch && payload.uuid && payload.uuid !== dealId) isMatch = active.dealId === payload.uuid;
+    if (!isMatch) {
+      const amountOk = payload.amount === undefined || payload.amount === active.amount;
+      const trendOk  = !payload.trend || payload.trend === active.trend;
+      isMatch = amountOk && trendOk && (Date.now() - active.executedAt < 120_000);
+    }
+    if (!isMatch) return;
+
+    this.clearResultTimer();
+    this.activeOrder = undefined;
+
+    const profitRate = (this.config.asset.profitRate ?? 85) / 100;
+    let pnl = 0;
+    if (isWin) { pnl = Math.floor(active.amount * profitRate); this.totalWins++; }
+    else if (!isDraw) { pnl = -active.amount; this.totalLosses++; }
+
+    this.sessionPnL += pnl;
+    this.callbacks.onSessionPnL?.(this.sessionPnL);
+
+    this.emitLog({
+      orderId: active.id, trend: active.trend, amount: active.amount,
+      martingaleStep: active.step, dealId,
+      result: isWin ? 'WIN' : isDraw ? 'DRAW' : 'LOSE',
+      profit: pnl, note: `Result: ${isWin ? 'WIN' : isDraw ? 'DRAW' : 'LOSE'}`,
+    });
+
+    if (this.checkStopConditions()) return;
+
+    if (isWin) this.onWin(active);
+    else if (isDraw) this.onDraw(active);
+    else this.onLose(active);
+  }
+
+  private onWin(order: ActiveOrder) {
+    const trend = this.currentTrend ?? order.trend;
+    this.alwaysLoss = undefined;
+    this.resetMartingale();
+    this.callbacks.onStatusChange(`${this.config.mode} WIN — lanjut ${trend.toUpperCase()}`);
+    this.afterDelay(200, () => this.executeWithTrend(trend, 0));
+  }
+
+  private onDraw(order: ActiveOrder) {
+    const trend = this.currentTrend ?? order.trend;
+    this.callbacks.onStatusChange(`${this.config.mode} DRAW — ulangi ${trend.toUpperCase()}`);
+    this.afterDelay(200, () => this.executeWithTrend(trend, this.martingaleStep));
+  }
+
+  private onLose(order: ActiveOrder) {
+    const m = this.config.martingale;
+    const trend = this.currentTrend ?? order.trend;
+
+    // Always Signal: tunggu sinyal candle berikutnya, bawa kerugian ke step berikut
+    if (m.isEnabled && m.isAlwaysSignal) {
+      const nextStep = (this.alwaysLoss?.currentMartingaleStep ?? 0) + 1;
+      if (nextStep <= m.maxSteps) {
+        this.alwaysLoss = {
+          hasOutstandingLoss: true,
+          currentMartingaleStep: nextStep,
+          totalLoss: (this.alwaysLoss?.totalLoss ?? 0) + order.amount,
+        };
+      } else {
+        this.alwaysLoss = undefined;
+      }
+      this.callbacks.onStatusChange(`${this.config.mode} LOSE — Always Signal step ${nextStep}`);
+      this.scheduleNewCycle(CYCLE_RESTART_DELAY_MS);
+      return;
+    }
+
+    // Martingale reguler
+    if (m.isEnabled && m.maxSteps > 0) {
+      const nextStep = this.martingaleStep + 1;
+      if (nextStep <= m.maxSteps) {
+        this.martingaleStep = nextStep;
+        this.martingaleActive = true;
+        this.callbacks.onStatusChange(`${this.config.mode} LOSE — martingale ${nextStep}/${m.maxSteps}`);
+        this.afterDelay(200, () => this.executeWithTrend(trend, nextStep));
+        return;
+      }
+      // Step habis → balik arah, mulai dari step 0
+      const reversed = this.reverseTrend(trend);
+      this.currentTrend = reversed;
+      this.resetMartingale();
+      this.callbacks.onStatusChange(`${this.config.mode}: martingale maksimum — REVERSE → ${reversed.toUpperCase()}`);
+      this.afterDelay(200, () => this.executeWithTrend(reversed, 0));
+      return;
+    }
+
+    // Tanpa martingale → jeda lalu siklus baru
+    this.resetMartingale();
+    this.callbacks.onStatusChange(`${this.config.mode} LOSE — tunggu ${DIRECT_LOSS_DELAY_MS / 1000}s`);
+    this.scheduleNewCycle(DIRECT_LOSS_DELAY_MS);
+  }
+
+  private startResultTimeout(orderId: string) {
+    this.clearResultTimer();
+    const gen = this.stopGeneration;
+    this.resultTimer = setTimeout(() => {
+      if (!this.isRunning || gen !== this.stopGeneration) return;
+      if (this.activeOrder?.id !== orderId) return;
+      this.activeOrder = undefined;
+      this.callbacks.onStatusChange(`${this.config.mode}: hasil tidak diterima — cycle ulang`);
+      this.scheduleNewCycle(CYCLE_RESTART_DELAY_MS);
+    }, RESULT_TIMEOUT_MS);
+  }
+
+  private clearResultTimer() {
+    if (this.resultTimer) { clearTimeout(this.resultTimer); this.resultTimer = undefined; }
+  }
+
+  private checkStopConditions(): boolean {
+    const { stopLoss, stopProfit } = this.config;
+    if (stopLoss && stopLoss > 0 && this.sessionPnL <= -stopLoss) {
+      this.callbacks.onStatusChange(`Stop Loss tercapai (PnL: ${this.sessionPnL})`);
+      setTimeout(() => this.stop(), 300);
+      return true;
+    }
+    if (stopProfit && stopProfit > 0 && this.sessionPnL >= stopProfit) {
+      this.callbacks.onStatusChange(`Stop Profit tercapai (PnL: +${this.sessionPnL})`);
+      setTimeout(() => this.stop(), 300);
+      return true;
+    }
+    return false;
+  }
+
+  // ── Helper ─────────────────────────────────────
+
+  private resetMartingale() {
+    this.martingaleStep = 0;
+    this.martingaleActive = false;
+  }
+
+  private calcAmount(step: number): number {
+    const m = this.config.martingale;
+    if (!m.isEnabled || step === 0) return m.baseAmount;
+    if (m.multiplierType === 'FIXED') return Math.floor(m.baseAmount * Math.pow(m.multiplierValue, step));
+    const mult = 1 + m.multiplierValue / 100;
+    return Math.floor(m.baseAmount * Math.pow(mult, step));
+  }
+
+  private emitLog(p: {
+    orderId: string; trend: TrendType; amount: number; martingaleStep: number;
+    dealId?: string; result?: FastradeLog['result']; profit?: number; note?: string;
+  }) {
+    this.callbacks.onLog({
+      id: `${p.orderId}_s${p.martingaleStep}${p.result ? '_r' : ''}`,
+      orderId: p.orderId, trend: p.trend, amount: p.amount,
+      martingaleStep: p.martingaleStep, dealId: p.dealId, result: p.result,
+      profit: p.profit, sessionPnL: this.sessionPnL,
+      executedAt: Date.now(), cycleNumber: this.cycleNumber, note: p.note,
+      isDemoAccount: this.config.isDemoAccount, mode: this.config.mode,
+    });
+  }
+
+  private getNextMinuteBoundary(): number {
+    const now = Date.now();
+    return now + (60_000 - (now % 60_000));
+  }
+
+  /** setTimeout yang otomatis batal bila stop() dipanggil */
+  private afterDelay(ms: number, fn: () => void) {
+    const gen = this.stopGeneration;
+    setTimeout(() => {
+      if (!this.isRunning || gen !== this.stopGeneration) return;
+      fn();
+    }, ms);
+  }
+
+  private sleep(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+}
