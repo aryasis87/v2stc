@@ -111,6 +111,30 @@ export async function loadSession(): Promise<PersistedSession | null> {
 let logQueue: any[] = [];
 let logTimer: ReturnType<typeof setTimeout> | null = null;
 
+/** Cermin riwayat di perangkat — dipakai bila penulisan ke server gagal */
+const LOG_MIRROR_KEY = 'stc_mode_logs_local';
+
+async function mirrorLocally(batch: any[]): Promise<void> {
+  try {
+    const { storage } = await import('../storage');
+    const raw = await storage.get(LOG_MIRROR_KEY);
+    const cur: any[] = raw ? JSON.parse(raw) : [];
+    const ids = new Set(batch.map(l => String(l?.id)));
+    const merged = [...batch, ...cur.filter(l => !ids.has(String(l?.id)))].slice(0, 500);
+    await storage.set(LOG_MIRROR_KEY, JSON.stringify(merged));
+  } catch { /* cermin bersifat tambahan */ }
+}
+
+/** Riwayat tersimpan di perangkat (dipakai halaman Riwayat sebagai cadangan) */
+export async function readLocalLogs(): Promise<any[]> {
+  try {
+    const { storage } = await import('../storage');
+    const raw = await storage.get(LOG_MIRROR_KEY);
+    const arr = raw ? JSON.parse(raw) : [];
+    return Array.isArray(arr) ? arr : [];
+  } catch { return []; }
+}
+
 export function appendLog(log: unknown): void {
   logQueue = [...logQueue.filter((l: any) => l.id !== (log as any).id), log];
   if (logTimer) return;
@@ -118,7 +142,7 @@ export function appendLog(log: unknown): void {
     logTimer = null;
     const batch = logQueue;
     logQueue = [];
-    if (batch.length) void call('log', undefined, batch);
+    if (batch.length) { void mirrorLocally(batch); void call('log', undefined, batch); }
   }, 1500);
 }
 
@@ -127,7 +151,7 @@ export function flushLogs(): void {
   if (logTimer) { clearTimeout(logTimer); logTimer = null; }
   const batch = logQueue;
   logQueue = [];
-  if (batch.length) void call('log', undefined, batch);
+  if (batch.length) { void mirrorLocally(batch); void call('log', undefined, batch); }
 }
 
 /** Tandai sesi selesai agar tidak ditawarkan untuk dilanjutkan lagi */

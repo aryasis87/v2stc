@@ -3506,6 +3506,16 @@ export default function DashboardPage() {
   const [deviceEngineOn, setDeviceEngineOn] = useState(false);
   const deviceEngineOnRef = useRef(false);
   useEffect(() => { deviceEngineOnRef.current = deviceEngineOn; }, [deviceEngineOn]);
+
+  // Engine hidup di luar React: saat pindah halaman lalu kembali, komponen
+  // dipasang ulang dan penanda ini kembali false — status sesi yang sedang
+  // berjalan lalu tertimpa data 'berhenti', membuat tampilan berkedip dan
+  // seolah tersangkut. Karena itu penandanya dipulihkan dari engine.
+  useEffect(() => {
+    const eng: any = deviceSession.getEngine() ?? deviceSession.getModeEngine();
+    const running = deviceSession.isRunning() || eng?.getStatus?.()?.isRunning === true;
+    if (running) setDeviceEngineOn(true);
+  }, []);
   const [resumePrompt, setResumePrompt] = useState<{ orders: number; pnl: number } | null>(null);
   const resumeDataRef = useRef<any>(null);
   // Badge kunci di pemilih mode baru tampil setelah status terverifikasi,

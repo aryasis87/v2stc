@@ -14,6 +14,7 @@
 // ─────────────────────────────────────────────────────────────────────
 
 import { supabase } from '../supabase';
+import { readLocalLogs } from './sessionStore';
 import { storage, SESSION_KEYS } from '../storage';
 
 export interface DeviceLogRow {
@@ -42,14 +43,23 @@ export async function fetchDeviceLogs(mode: string | null = 'schedule', limit = 
     if (mode) q = q.eq('mode', mode);
 
     const { data, error } = await q;
-    if (error || !Array.isArray(data)) return [];
+    // Riwayat perangkat dipakai sebagai cadangan: bila penulisan ke server
+    // gagal (jaringan/izin), halaman Riwayat tetap menampilkan eksekusi nyata.
+    const local = (await readLocalLogs())
+      .filter(l => !mode || String(l?.mode ?? 'schedule') === mode)
+      .slice(0, limit);
+    if (error || !Array.isArray(data)) return local;
 
     // Kolom `data` menyimpan objek log apa adanya (bentuknya sama dengan
     // ExecutionLog dari API), jadi pemanggil tidak perlu memetakan ulang.
-    return data
+    const rows = data
       .map((r: any) => r.data)
       .filter((l: any) => l && typeof l === 'object');
+
+    // Gabungkan dengan cermin perangkat, dedup berdasarkan id
+    const ids = new Set(rows.map((l: any) => String(l?.id)));
+    return [...rows, ...local.filter(l => !ids.has(String(l?.id)))].slice(0, limit);
   } catch {
-    return [];
+    return readLocalLogs().catch(() => []);
   }
 }
