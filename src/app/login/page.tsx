@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { api } from '@/lib/api';
-import { loginToStockity, createSession, lastSessionError, lastLoginShape, getKnownDeviceId } from '@/lib/engine/stockityAuth';
+import { loginToStockity, createSession, lastSessionError, getKnownDeviceId } from '@/lib/engine/stockityAuth';
 import { storage, isSessionValid, SESSION_KEYS } from '@/lib/storage';
 import { updateLastLogin, getRegistrationConfig } from '@/lib/supabaseRepository';
 import { LanguageProvider, useLanguage, AVAILABLE_LANGUAGES, COUNTRY_ENTRIES, Language, isWindows } from '@/lib';
@@ -721,19 +721,9 @@ function LoginPageContent() {
         await storage.set("stc_stockity_token", login.authToken);
         await storage.set(SESSION_KEYS.DEVICE_ID, devId); // stabil utk login berikutnya
 
-        // Diagnostik: pastikan token benar-benar sah dari sisi PERANGKAT dulu.
-        // Kalau di sini sah tapi Edge Function menolak, berarti Stockity yang
-        // memblokir permintaan dari server Supabase — bukan tokennya yang salah.
-        let deviceTokenOk = false;
-        let probe = "";
-        try {
-          const p = await import("@/lib/engine/tokenProbe");
-          probe = await p.probeToken(login.authToken, devId);
-          deviceTokenOk = probe.includes("=200");
-        } catch { /* biarkan kosong */ }
 
         const sess = await createSession(login.authToken, devId, "session");
-        if (!sess) throw new Error((deviceTokenOk ? "[token OK di HP] " : "[token DITOLAK di HP] ") + lastLoginShape + " probe[" + probe + "] | " + (lastSessionError || "Gagal membuat sesi."));
+        if (!sess) throw new Error(lastSessionError || "Gagal membuat sesi. Periksa koneksi lalu coba lagi.");
 
         await storage.set(
           SESSION_KEYS.IS_PRIVILEGED,
