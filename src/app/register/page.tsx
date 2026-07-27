@@ -8,6 +8,10 @@ import Image from 'next/image';
 import { api } from '@/lib/api';
 import { storage, isSessionValid, saveUserSession } from '@/lib/storage';
 import { useLanguage, Language } from '@/lib';
+import { registerToStockity, createSession } from '@/lib/engine/stockityAuth';
+import { isNativeApp } from '@/lib/engine/wsTransport';
+import { getRegistrationConfig } from '@/lib/supabaseRepository';
+import { SESSION_KEYS } from '@/lib/storage';
 
 // ── Microcopy khusus register (fallback ke EN bila bahasa tak tersedia) ──────
 type RegTxt = {
@@ -240,7 +244,39 @@ function RegisterContent() {
 
     setLoading(true);
     try {
-      const res = await api.register(email.trim(), password, 'IDR');
+      // v4: di APK, daftar langsung ke Stockity dari koneksi perangkat user.
+      // Kode afiliasi diambil dari app_config lalu dikirim lewat traffic-tracker
+      // + cookie `a` agar pendaftaran terhitung sebagai referral kita.
+      let res: { accessToken: string; userId: string; email: string; deviceId: string };
+
+      if (isNativeApp()) {
+        const devId =
+          (await storage.get(SESSION_KEYS.DEVICE_ID)) ||
+          (typeof crypto !== "undefined" && "randomUUID" in crypto
+            ? crypto.randomUUID()
+            : `dev-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+
+        const cfg = await getRegistrationConfig().catch(() => ({ stockityReferral: "" } as any));
+        const referral = String(cfg?.stockityReferral ?? "").trim();
+
+        const reg = await registerToStockity(email.trim(), password, devId, referral, "IDR");
+        if (!reg.ok || !reg.authToken) throw new Error(reg.error ?? "Registrasi gagal");
+
+        await storage.set("stc_stockity_token", reg.authToken);
+
+        // action "register" membuka akses mode REAL untuk akun baru (afiliasi)
+        const sess = await createSession(reg.authToken, devId, "register");
+
+        res = {
+          accessToken: reg.authToken,
+          userId:      sess?.userId ?? reg.userId ?? "",
+          email:       sess?.email  ?? email.trim(),
+          deviceId:    devId,
+        };
+      } else {
+        // Web: masih lewat backend selama VPS hidup
+        res = await api.register(email.trim(), password, 'IDR');
+      }
       setSuccess(true);
       await finishRegister(res);
     } catch (err: unknown) {

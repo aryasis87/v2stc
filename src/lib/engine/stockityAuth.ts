@@ -60,6 +60,78 @@ function headers(deviceId: string): Record<string, string> {
   };
 }
 
+/**
+ * Daftarkan "kunjungan" afiliasi ke traffic-tracker Stockity.
+ * INI yang mengikat kode afiliasi ke device_id; `track_token` hasilnya WAJIB
+ * dipakai saat sign_up agar registrasi ter-atribusi ke afiliasi kita.
+ */
+async function fireTrafficTracker(deviceId: string, referral: string): Promise<string | null> {
+  try {
+    const res = await CapacitorHttp.post({
+      url: `${STOCKITY_BASE}/traffic-tracker/v1/track?a=${encodeURIComponent(referral)}&t=0&locale=id`,
+      headers: headers(deviceId),
+      data: {},
+      readTimeout: 15000,
+      connectTimeout: 15000,
+    });
+    const d: any = res?.data ?? {};
+    return d?.data?.track_token ?? d?.track_token ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/** Token pelacakan cadangan bila tracker gagal (format sama dengan web client) */
+function buildTrackToken(): string {
+  const rnd = () => Math.random().toString(16).slice(2, 10);
+  return `${rnd()}${rnd()}${rnd()}${rnd()}`;
+}
+
+/**
+ * Registrasi akun Stockity baru langsung dari perangkat, LENGKAP dengan
+ * atribusi afiliasi (kode `a` dari app_config, dikirim via traffic-tracker
+ * + cookie) — inilah yang membuat pendaftaran terhitung sebagai referral kita.
+ */
+export async function registerToStockity(
+  email: string, password: string, deviceId: string,
+  referral: string, currency = 'IDR',
+): Promise<StockityLoginResult> {
+  try {
+    const trackToken = (referral ? await fireTrafficTracker(deviceId, referral) : null) ?? buildTrackToken();
+
+    const res = await CapacitorHttp.post({
+      url: `${STOCKITY_BASE}/passport/v1/sign_up?locale=id`,
+      headers: {
+        ...headers(deviceId),
+        // Atribusi afiliasi, sama seperti web client
+        ...(referral ? { Cookie: `a=${referral}` } : {}),
+      },
+      data: { email: email.toLowerCase().trim(), password, currency, i_agree: true, track_token: trackToken },
+      readTimeout: 25000,
+      connectTimeout: 25000,
+    });
+
+    const status = res?.status ?? 0;
+    const data: any = res?.data ?? {};
+
+    if (status >= 400) {
+      const msg =
+        data?.errors?.[0]?.context?.message ||
+        data?.errors?.[0]?.message ||
+        'Pendaftaran gagal. Periksa email dan kata sandi Anda.';
+      return { ok: false, error: msg, status };
+    }
+
+    const token  = data?.data?.authtoken ?? data?.data?.token ?? '';
+    const userId = String(data?.data?.user_id ?? data?.data?.id ?? '');
+    if (!token) return { ok: false, error: 'Pendaftaran gagal: token tidak diterima.', status };
+
+    return { ok: true, authToken: token, userId, status };
+  } catch (e: any) {
+    return { ok: false, error: e?.message ?? 'Tidak dapat menghubungi Stockity.' };
+  }
+}
+
 /** Login email+password langsung ke Stockity dari perangkat */
 export async function loginToStockity(
   email: string, password: string, deviceId: string,

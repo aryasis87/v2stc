@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { api } from '@/lib/api';
+import { loginToStockity, createSession } from '@/lib/engine/stockityAuth';
 import { storage, isSessionValid, SESSION_KEYS } from '@/lib/storage';
 import { updateLastLogin, getRegistrationConfig } from '@/lib/supabaseRepository';
 import { LanguageProvider, useLanguage, AVAILABLE_LANGUAGES, COUNTRY_ENTRIES, Language, isWindows } from '@/lib';
@@ -697,14 +698,54 @@ function LoginPageContent() {
     setLoginStep('auth');
 
     try {
-      const res = await api.login(emailVal, passVal);
+      // v4: di APK, login langsung ke Stockity dari koneksi perangkat user
+      // (tanpa VPS/proxy). Sesi lalu dibuat lewat Edge Function stc-auth.
+      let res: { accessToken: string; userId: string; email: string; deviceId: string };
+
+      if (isNativeApp()) {
+        const devId =
+          (await storage.get(SESSION_KEYS.DEVICE_ID)) ||
+          (typeof crypto !== "undefined" && "randomUUID" in crypto
+            ? crypto.randomUUID()
+            : `dev-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+
+        const login = await loginToStockity(emailVal, passVal, devId);
+        if (!login.ok || !login.authToken) throw new Error(login.error ?? t("login.invalidCredentials"));
+
+        // Token Stockity dipakai engine perangkat & pemanggil Edge Function
+        await storage.set("stc_stockity_token", login.authToken);
+
+        const sess = await createSession(login.authToken, devId, "session");
+        if (!sess) throw new Error("Gagal membuat sesi. Periksa koneksi lalu coba lagi.");
+
+        await storage.set(
+          SESSION_KEYS.IS_PRIVILEGED,
+          sess.isAdmin ? "true" : "false",
+        );
+
+        res = {
+          accessToken: login.authToken,
+          userId:      sess.userId || login.userId || "",
+          email:       sess.email  || emailVal,
+          deviceId:    devId,
+        };
+      } else {
+        // Web: masih lewat backend selama VPS hidup
+        res = await api.login(emailVal, passVal);
+        const role = await api.admin
+          .me(res.accessToken)
+          .catch(() => ({ isAdmin: false, isSuperAdmin: false }));
+        await storage.set(
+          SESSION_KEYS.IS_PRIVILEGED,
+          role.isAdmin || role.isSuperAdmin ? "true" : "false",
+        );
+      }
 
       // Gate whitelist DIHAPUS (2026-07): semua pengguna dengan akun Stockity
       // yang valid boleh masuk TANPA harus terdaftar lebih dulu. Backend tetap
       // auto-register ke whitelist saat login. Status admin tetap diambil (untuk
       // fitur admin), tapi TIDAK lagi memblokir akses.
-      const role = await api.admin.me(res.accessToken).catch(() => ({ isAdmin: false, isSuperAdmin: false }));
-      await storage.set(SESSION_KEYS.IS_PRIVILEGED, (role.isAdmin || role.isSuperAdmin) ? 'true' : 'false');
+
 
       setLoginStep('saving');
       if (remember) {
