@@ -1172,15 +1172,7 @@ function ProfilePageContent() {
                   onClick={() => setAiMgrOpen(true)}
                   last={!isSuperAdminUser}
                 />
-                {isSuperAdminUser && (
-                  <TappableRow
-                    icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 5L2 7"/></svg>}
-                    iconBg="linear-gradient(135deg,#0E9F6E,#2DD4A7)"
-                    label="Kirim Email"
-                    onClick={() => setEmailOpen(true)}
-                    last
-                  />
-                )}
+                {/* v4: broadcast email dihapus (layanan email ada di VPS yang dimatikan) */}
               </Card>
             )}
             <Card>
@@ -1331,15 +1323,7 @@ function ProfilePageContent() {
                   onClick={() => setAiMgrOpen(true)}
                   last={!isSuperAdminUser}
                 />
-                {isSuperAdminUser && (
-                  <TappableRow
-                    icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 5L2 7"/></svg>}
-                    iconBg="linear-gradient(135deg,#0E9F6E,#2DD4A7)"
-                    label="Kirim Email"
-                    onClick={() => setEmailOpen(true)}
-                    last
-                  />
-                )}
+                {/* v4: broadcast email dihapus (layanan email ada di VPS yang dimatikan) */}
               </Card>
             </div>
           )}

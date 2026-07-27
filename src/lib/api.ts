@@ -652,6 +652,29 @@ export interface AdminStanding {
   pendingRequest: ReactivationRequest | null;
 }
 
+
+// ── v4: pemanggil Edge Function stc-admin (pengganti /admin/* di VPS) ───────
+// Autentikasi memakai authtoken Stockity dari cache perangkat; Edge Function
+// memvalidasi ke Stockity lalu memeriksa admin_users/super_admins.
+const ADMIN_FN = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? "") + "/functions/v1/stc-admin";
+const SB_ANON  = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
+
+async function adminEdge(action: string, payload?: unknown): Promise<any> {
+  const mod = await import("./storage");
+  const authToken = (await mod.storage.get("stc_stockity_token")) ?? "";
+  const deviceId  = (await mod.storage.get(mod.SESSION_KEYS.DEVICE_ID)) ?? "";
+  if (!authToken) throw new Error("Sesi Stockity tidak ditemukan — silakan login ulang");
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (SB_ANON) { headers.apikey = SB_ANON; headers.Authorization = "Bearer " + SB_ANON; }
+  const res = await fetch(ADMIN_FN, {
+    method: "POST", headers,
+    body: JSON.stringify({ authToken, deviceId, action, payload }),
+  });
+  const body = await res.json().catch(() => null);
+  if (!res.ok) throw new Error((body as any)?.error ?? ("Gagal: " + action));
+  return body;
+}
+
 export const api = {
   // ── Auth ──────────────────────────────────
   login: (email: string, password: string) =>
@@ -906,25 +929,24 @@ export const api = {
 
   // ── Admin (C2 — semua operasi privileged via backend service_role) ──────────
   admin: {
-    me:              (token?: string) => req<{ isAdmin: boolean; isSuperAdmin: boolean }>('GET', '/admin/me', undefined, token),
-    listWhitelist:   () => req<any[]>('GET', '/admin/whitelist'),
-    stats:           () => req<{ total: number; active: number; inactive: number; recent: number; recentAdded: number }>('GET', '/admin/stats'),
-    addWhitelist:    (b: { email: string; name?: string; userId?: string; deviceId?: string; isPrimary?: boolean; addedBy?: string }) => req<void>('POST', '/admin/whitelist', b),
-    updateWhitelist: (b: { oldEmail: string; email?: string; name?: string; userId?: string; deviceId?: string; isActive?: boolean; lastLogin?: number | null }) => req<void>('PATCH', '/admin/whitelist', b),
-    toggleWhitelist: (email: string, isActive: boolean) => req<void>('POST', '/admin/whitelist/toggle', { email, isActive }),
-    deleteWhitelist: (id: string) => req<void>('DELETE', `/admin/whitelist?id=${encodeURIComponent(id)}`),
-    importWhitelist: (rows: any[], addedBy?: string) => req<{ success: number; skipped: number }>('POST', '/admin/whitelist/import', { rows, addedBy }),
-    listAdmins:      () => req<any[]>('GET', '/admin/admins'),
-    addAdmin:        (email: string, name?: string, role?: string) => req<void>('POST', '/admin/admins', { email, name, role }),
-    updateAdmin:     (id: string, updates: { name?: string; role?: 'admin' | 'super_admin'; is_active?: boolean }) => req<void>('PATCH', `/admin/admins/${encodeURIComponent(id)}`, updates),
-    removeAdmin:     (id: string) => req<void>('DELETE', `/admin/admins?id=${encodeURIComponent(id)}`),
-    listSuperAdmins: () => req<any[]>('GET', '/admin/super-admins'),
-    addSuperAdmin:   (email: string) => req<void>('POST', '/admin/super-admins', { email }),
-    deleteSuperAdmin:(email: string) => req<void>('DELETE', `/admin/super-admins?email=${encodeURIComponent(email)}`),
-    upsertConfig:    (key: string, value: unknown) => req<void>('PUT', '/admin/config', { key, value }),
-    // ── Broadcast email (super-admin) ──
-    sendEmail:       (b: { target: 'one' | 'all' | 'custom'; email?: string; emails?: string[]; subject: string; message: string; html?: boolean }) =>
-      req<{ sent: number; failed: number; total: number; errors: string[] }>('POST', '/admin/email/send', b),
+    me:              (_token?: string) => adminEdge('me'),
+    listWhitelist:   () => adminEdge('listWhitelist'),
+    stats:           () => adminEdge('stats'),
+    addWhitelist:    (b) => adminEdge('addWhitelist', b),
+    updateWhitelist: (b) => adminEdge('updateWhitelist', b),
+    toggleWhitelist: (email, isActive) => adminEdge('toggleWhitelist', { email, isActive }),
+    deleteWhitelist: (id) => adminEdge('deleteWhitelist', { emailOrId: id }),
+    importWhitelist: (rows, addedBy) => adminEdge('importWhitelist', { rows, addedBy }),
+    listAdmins:      () => adminEdge('listAdmins'),
+    addAdmin:        (email, name, role) => adminEdge('addAdmin', { email, name, role }),
+    updateAdmin:     (id, updates) => adminEdge('updateAdmin', { id, ...updates }),
+    removeAdmin:     (id) => adminEdge('removeAdmin', { emailOrId: id }),
+    listSuperAdmins: () => adminEdge('listSuperAdmins'),
+    addSuperAdmin:   (email) => adminEdge('addSuperAdmin', { email }),
+    deleteSuperAdmin:(email) => adminEdge('deleteSuperAdmin', { email }),
+    upsertConfig:    (key, value) => adminEdge('upsertConfig', { key, value }),
+    // v4: broadcast email DIHAPUS — layanan email hidup di VPS yang dimatikan.
+    sendEmail:       (_b?: unknown): Promise<{ sent: number; failed: number; total: number; errors: string[] }> => Promise.reject(new Error('Fitur kirim email sudah dihapus.')),
     // ── Chat DM antar admin/super-admin ──
     chatContacts:    () => req<ChatContact[]>('GET', '/admin/chat/contacts'),
     chatConversation:(withEmail: string, after?: number) => req<ChatMessage[]>('GET', `/admin/chat?with=${encodeURIComponent(withEmail)}${after ? `&after=${after}` : ''}`),
