@@ -675,6 +675,20 @@ async function adminEdge(action: string, payload?: unknown): Promise<any> {
   return body;
 }
 
+
+// ── v4: data akun langsung dari perangkat (pengganti /profile/* di VPS) ─────
+// Disambung di sini agar seluruh pemanggil lama tetap bekerja tanpa diubah.
+async function deviceAuth(): Promise<{ authToken: string; deviceId: string } | null> {
+  try {
+    const cap = (window as any)?.Capacitor;
+    if (cap?.isNativePlatform?.() !== true) return null;
+    const mod = await import("./storage");
+    const authToken = (await mod.storage.get("stc_stockity_token")) ?? "";
+    const deviceId  = (await mod.storage.get(mod.SESSION_KEYS.DEVICE_ID)) ?? "";
+    return authToken ? { authToken, deviceId } : null;
+  } catch { return null; }
+}
+
 export const api = {
   // ── Auth ──────────────────────────────────
   login: (email: string, password: string) =>
@@ -707,8 +721,28 @@ export const api = {
   me: () => req<{ userId: string; email: string; deviceId: string; currency: string; currencyIso: string }>('GET', '/auth/me'),
 
   // ── Profile ───────────────────────────────
-  balance: () => req<ProfileBalance>('GET', '/profile/balance'),
-  getProfile: () => req<{
+  balance: async (): Promise<ProfileBalance> => {
+    const a = await deviceAuth();
+    if (a) {
+      const m = await import("./engine/stockityAccount");
+      const b = await m.getBalance(a);
+      if (b) return { demo_balance: b.demoBalance, real_balance: b.realBalance, currency: b.currency };
+    }
+    return req<ProfileBalance>('GET', '/profile/balance');
+  },
+  getProfile: async (): Promise<any> => {
+    const a = await deviceAuth();
+    if (a) {
+      const m = await import("./engine/stockityAccount");
+      const p = await m.getProfile(a);
+      if (p) return {
+        id: p.id, email: p.email, firstName: p.first_name, lastName: p.last_name,
+        nickname: p.nickname, phone: p.phone, country: p.country,
+        registrationCountryIso: p.registration_country_iso ?? p.country,
+        currency: p.currency, registeredAt: p.created_at,
+      };
+    }
+    return req<{
     id: number;
     email: string;
     firstName?: string;
@@ -725,7 +759,8 @@ export const api = {
     avatar?: string;
     personalDataLocked?: boolean;
     docsVerified?: boolean;
-  }>('GET', '/profile'),
+    }>('GET', '/profile');
+  },
 
   /**
    * GET /profile/currency-config
@@ -734,13 +769,31 @@ export const api = {
    * Gunakan ini sebagai pengganti fetchPlatformCurrencies di loginpage/dashboard
    * agar tidak ada direct hit ke Stockity dari browser.
    */
-  currencyConfig: () => req<{
-    currencyIso:  string;
-    currencyUnit: string;
-    minAmount:    number;
-    maxAmount:    number;
-    quickAmounts: number[];
-  }>('GET', '/profile/currency-config'),
+  currencyConfig: async (): Promise<{
+    currencyIso: string; currencyUnit: string;
+    minAmount: number; maxAmount: number; quickAmounts: number[];
+  }> => {
+    const a = await deviceAuth();
+    if (a) {
+      // Dari perangkat: mata uang otoritatif diambil dari saldo (bank/v1/read),
+      // nominal memakai default platform yang sudah dipakai aplikasi.
+      const [m, u] = await Promise.all([
+        import("./engine/stockityAccount"),
+        import("./userProfileApi"),
+      ]);
+      const bal = await m.getBalance(a);
+      const iso = bal?.currency ?? u.DEFAULT_CURRENCY_CONFIG.currencyIso;
+      return {
+        ...u.DEFAULT_CURRENCY_CONFIG,
+        currencyIso:  iso,
+        currencyUnit: (u.ISO_TO_UNIT as any)?.[iso] ?? u.DEFAULT_CURRENCY_CONFIG.currencyUnit,
+      };
+    }
+    return req<{
+      currencyIso: string; currencyUnit: string;
+      minAmount: number; maxAmount: number; quickAmounts: number[];
+    }>('GET', '/profile/currency-config');
+  },
 
   /** GET /profile/currencies — daftar semua mata uang yang tersedia */
   getCurrencies: () => req<StockityCurrency[]>('GET', '/profile/currencies'),
@@ -750,7 +803,15 @@ export const api = {
     req<void>('PUT', '/profile/currency', { currencyIso }),
 
   // ── Assets ───────────────────────────────
-  getAssets: () => req<StockityAsset[]>('GET', '/schedule/assets'),
+  getAssets: async (): Promise<StockityAsset[]> => {
+    const a = await deviceAuth();
+    if (a) {
+      const m = await import("./engine/stockityAccount");
+      const list = await m.getAssets(a);
+      if (list.length) return list as StockityAsset[];
+    }
+    return req<StockityAsset[]>('GET', '/schedule/assets');
+  },
 
   // ── Schedule Config ───────────────────────
   getConfig:    () => req<ScheduleConfig>('GET', '/schedule/config'),
