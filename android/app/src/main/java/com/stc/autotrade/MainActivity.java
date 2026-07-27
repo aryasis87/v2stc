@@ -10,12 +10,17 @@ import androidx.core.view.WindowInsetsControllerCompat;
 import com.getcapacitor.BridgeActivity;
 import com.stc.autotrade.plugins.ApkInstallerPlugin;
 import com.stc.autotrade.plugins.StcWebViewPlugin;
+import com.stc.autotrade.plugins.StockityWsPlugin;
 
 public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         // ✅ Daftarkan plugin sebelum super.onCreate()
         registerPlugin(StcWebViewPlugin.class);
+
+        // v4 Fase B — WebSocket Stockity via native (JS tidak bisa set header
+        // `authorization-token`; semua jalur JS terbukti ditolak 401).
+        registerPlugin(StockityWsPlugin.class);
 
         // ╔══════════════════════════════════════════════════════════════════╗
         // ║  PLAY STORE BUILD — ApkInstallerPlugin DINONAKTIFKAN            ║

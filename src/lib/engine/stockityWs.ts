@@ -1,24 +1,24 @@
 // lib/engine/stockityWs.ts
 // ─────────────────────────────────────────────────────────────────────
-// v4 FASE B — FONDASI ENGINE CLIENT-SIDE
-// Port browser dari botstc/src/schedule/websocket-client.ts (Node 'ws').
-// Eksekusi order Stockity via WebSocket Phoenix (wss://ws.stockity1.id)
-// LANGSUNG dari device user — WebSocket bebas CORS.
+// v4 FASE B — ENGINE CLIENT-SIDE (eksekusi di perangkat user, tanpa VPS)
+// Port dari botstc/src/schedule/websocket-client.ts (Node 'ws').
 //
-// PERBEDAAN PENTING vs versi server:
-//   Browser TIDAK BISA menyetel custom header (authorization-token,
-//   device-id, Cookie, Origin) pada handshake WebSocket. Autentikasi
-//   harus lewat jalur lain — modul ini menyediakan 2 strategi yang
-//   HARUS diverifikasi dengan token nyata saat pengujian Fase B:
-//     • 'query' : token & device dikirim sebagai query param URL
-//     • 'join'  : token dikirim di payload phx_join tiap channel
-//   (APK native/Kotlin bebas masalah ini — bisa set header seperti server.)
+// HASIL UJI (2026-07-27, token nyata): handshake wss://ws.stockity1.id
+// MEWAJIBKAN header "authorization-token". Ditolak 401: query param
+// (authtoken/token/auth_token/authorization_token/api_token),
+// Sec-WebSocket-Protocol, cookie tanpa header, dan kredensial di payload
+// phx_join. Karena WebSocket API browser tidak bisa menyetel header,
+// koneksi dibuka lewat lapisan transport (./wsTransport) yang memakai
+// plugin native Android StockityWs. Browser murni TIDAK didukung —
+// pemanggil harus menampilkan unsupportedReason() ke user.
 //
-// Perilaku yang DIPERTAHANKAN identik dengan server:
+// Perilaku DIPERTAHANKAN identik dengan engine server:
 //   join channel + retry, heartbeat 25s, reconnect backoff, dual-ID
 //   (bo:opened numeric → resolve pending FIFO; bo:closed uuid → emit),
 //   close_deal_batch, mapping error deal_amount_min/max/duplicate.
 // ─────────────────────────────────────────────────────────────────────
+
+import { createTransport, type WsTransport } from './wsTransport';
 
 export interface TradeOrderData {
   amount: number;
@@ -47,54 +47,38 @@ export interface DealResultPayload {
   [key: string]: any;
 }
 
-export type WsAuthStrategy = 'query' | 'join';
-
 export interface StockityWsOptions {
   authToken: string;
   deviceId: string;
   deviceType?: string;
-  /** Strategi autentikasi handshake — default 'query'; fallback uji: 'join' */
-  authStrategy?: WsAuthStrategy;
+  userAgent?: string;
   wsUrl?: string;
   onDealResult?: (payload: DealResultPayload) => void;
   onStatusChange?: (connected: boolean, reason?: string) => void;
 }
 
-const DEFAULT_WS_URL = 'wss://ws.stockity1.id/?v=2&vsn=2.0.0';
-
-export class StockityWsBrowser {
-  private ws: WebSocket | null = null;
+export class StockityWsClient {
+  private transport: WsTransport | null = null;
   private refCounter = 1;
   private joinedChannels = new Set<string>();
   private heartbeatTimer: ReturnType<typeof setInterval> | null = null;
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private reconnectAttempts = 0;
+  private connected = false;
+  private isDestroyed = false;
+
   private readonly MAX_RECONNECT = 10;
   private readonly HEARTBEAT_INTERVAL_MS = 25_000;
   private readonly CHANNEL_JOIN_DELAY_MS = 400;
-  private isDestroyed = false;
 
   private pendingTrades = new Map<number, { resolve: (r: PlaceTradeResult) => void; timer: ReturnType<typeof setTimeout> }>();
 
   private readonly CHANNELS = ['connection', 'tournament', 'user', 'cfd_zero_spread', 'bo', 'asset', 'account'];
-  private readonly REQUIRED_CHANNELS = new Set(['bo', 'account', 'asset']);
+  private readonly REQUIRED_CHANNELS = ['bo', 'account', 'asset'];
 
   constructor(private readonly opts: StockityWsOptions) {}
 
   private getRef(): number { return this.refCounter++; }
-
-  private buildUrl(): string {
-    const base = this.opts.wsUrl ?? DEFAULT_WS_URL;
-    if ((this.opts.authStrategy ?? 'query') !== 'query') return base;
-    const u = new URL(base);
-    // Kandidat nama param — server Phoenix umum menerima token via params;
-    // nama persisnya diverifikasi saat uji dengan token nyata.
-    u.searchParams.set('authtoken', this.opts.authToken);
-    u.searchParams.set('authorization-token', this.opts.authToken);
-    u.searchParams.set('device_id', this.opts.deviceId);
-    u.searchParams.set('device_type', this.opts.deviceType ?? 'web');
-    return u.toString();
-  }
 
   connect(): Promise<void> {
     return new Promise((resolve, reject) => {
@@ -104,40 +88,51 @@ export class StockityWsBrowser {
       const doResolve = () => { if (!settled) { settled = true; resolve(); } };
       const doReject  = (err: Error) => { if (!settled) { settled = true; reject(err); } };
 
+      const connectTimeout = setTimeout(() => {
+        doReject(new Error('WebSocket connection timeout'));
+        this.transport?.close();
+      }, 20_000);
+
       try {
-        this.ws = new WebSocket(this.buildUrl());
+        this.transport = createTransport({
+          authToken:  this.opts.authToken,
+          deviceId:   this.opts.deviceId,
+          deviceType: this.opts.deviceType,
+          userAgent:  this.opts.userAgent,
+          url:        this.opts.wsUrl,
+          onOpen: async () => {
+            clearTimeout(connectTimeout);
+            this.connected = true;
+            this.reconnectAttempts = 0;
+            this.opts.onStatusChange?.(true, 'Connected to Stockity WebSocket');
+            await this.sleep(300);
+            await this.joinChannelsWithRetry();
+            this.startHeartbeat();
+            doResolve();
+          },
+          onMessage: (data) => this.handleMessage(data),
+          onClose: (code) => {
+            this.connected = false;
+            this.stopHeartbeat();
+            this.opts.onStatusChange?.(false, `Closed: ${code}`);
+            if (!this.isDestroyed && settled) this.scheduleReconnect();
+          },
+          onError: (message) => {
+            this.connected = false;
+            clearTimeout(connectTimeout);
+            this.opts.onStatusChange?.(false, message);
+            doReject(new Error(message));
+          },
+        });
 
-        const connectTimeout = setTimeout(() => {
-          doReject(new Error('WebSocket connection timeout'));
-          this.ws?.close();
-        }, 20_000);
-
-        this.ws.addEventListener('open', async () => {
+        this.transport.connect().catch((e) => {
           clearTimeout(connectTimeout);
-          this.reconnectAttempts = 0;
-          this.opts.onStatusChange?.(true, 'Connected to Stockity WebSocket');
-          await this.sleep(300);
-          await this.joinChannelsWithRetry();
-          this.startHeartbeat();
-          doResolve();
+          doReject(e as Error);
         });
-
-        this.ws.addEventListener('message', (ev) => {
-          this.handleMessage(typeof ev.data === 'string' ? ev.data : '');
-        });
-
-        this.ws.addEventListener('error', () => {
-          this.opts.onStatusChange?.(false, 'WebSocket error');
-          clearTimeout(connectTimeout);
-          doReject(new Error('WebSocket error'));
-        });
-
-        this.ws.addEventListener('close', (ev) => {
-          this.stopHeartbeat();
-          this.opts.onStatusChange?.(false, `Closed: ${ev.code}`);
-          if (!this.isDestroyed && settled) this.scheduleReconnect();
-        });
-      } catch (err) { doReject(err as Error); }
+      } catch (err) {
+        clearTimeout(connectTimeout);
+        doReject(err as Error);
+      }
     });
   }
 
@@ -146,30 +141,19 @@ export class StockityWsBrowser {
     let retryCount = 0;
     const maxRetries = 3;
 
-    // Strategi 'join': sertakan kredensial di payload phx_join
-    const joinPayload: Record<string, any> =
-      this.opts.authStrategy === 'join'
-        ? {
-            authtoken:   this.opts.authToken,
-            device_id:   this.opts.deviceId,
-            device_type: this.opts.deviceType ?? 'web',
-          }
-        : {};
-
     while (retryCount < maxRetries) {
       for (const channel of this.CHANNELS) {
-        if (this.isDestroyed || !this.ws) break;
+        if (this.isDestroyed || !this.transport) break;
         if (this.joinedChannels.has(channel)) continue;
 
-        const sent = this.sendMsg({ topic: channel, event: 'phx_join', payload: joinPayload, ref: this.getRef() });
+        const sent = this.sendMsg({ topic: channel, event: 'phx_join', payload: {}, ref: this.getRef() });
         if (sent) {
           this.joinedChannels.add(channel);
           await this.sleep(this.CHANNEL_JOIN_DELAY_MS);
         }
       }
 
-      const hasRequired = Array.from(this.REQUIRED_CHANNELS).every(c => this.joinedChannels.has(c));
-      if (hasRequired) {
+      if (this.REQUIRED_CHANNELS.every(c => this.joinedChannels.has(c))) {
         this.opts.onStatusChange?.(true, 'Ready for automated trading');
         return;
       }
@@ -179,14 +163,16 @@ export class StockityWsBrowser {
     }
 
     const hasEssential = ['bo', 'account'].every(c => this.joinedChannels.has(c));
-    this.opts.onStatusChange?.(hasEssential, hasEssential ? 'Connected with essential channels' : 'Failed to join essential channels');
+    this.opts.onStatusChange?.(
+      hasEssential,
+      hasEssential ? 'Connected with essential channels' : 'Failed to join essential channels',
+    );
   }
 
   private sendMsg(msg: { topic: string; event: string; payload: Record<string, any>; ref: number | null }): boolean {
-    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return false;
+    if (!this.transport || !this.connected) return false;
     try {
-      this.ws.send(JSON.stringify(msg));
-      return true;
+      return this.transport.send(JSON.stringify(msg));
     } catch { return false; }
   }
 
@@ -209,15 +195,14 @@ export class StockityWsBrowser {
     }
     const delay = Math.min(1500 * Math.pow(2, Math.min(this.reconnectAttempts, 5)), 45_000);
     this.reconnectAttempts++;
-    this.reconnectTimer = setTimeout(async () => {
-      try {
-        this.joinedChannels.clear();
-        await this.connect();
-      } catch { /* reconnect berikutnya dijadwalkan oleh handler close */ }
+    this.reconnectTimer = setTimeout(() => {
+      this.joinedChannels.clear();
+      this.connect().catch(() => { /* percobaan berikutnya dijadwalkan handler close */ });
     }, delay);
   }
 
   private handleMessage(raw: string) {
+    if (!raw) return;
     try {
       const msg = JSON.parse(raw);
       const event: string = msg.event ?? '';
@@ -269,7 +254,7 @@ export class StockityWsBrowser {
         return;
       }
 
-      // Dual-ID Stockity: opened=numeric (resolve pending FIFO saja),
+      // Dual-ID Stockity: opened=numeric (hanya resolve pending, FIFO),
       // closed/deal_result=uuid (emit ke executor).
       const numericId = payload.id != null ? String(payload.id) : undefined;
       const uuidStr: string | undefined = payload.uuid ?? payload.deal_id ?? payload.dealId;
@@ -327,11 +312,12 @@ export class StockityWsBrowser {
     });
   }
 
-  isConnected(): boolean { return this.ws?.readyState === WebSocket.OPEN; }
-  isRequiredChannelsReady(): boolean { return Array.from(this.REQUIRED_CHANNELS).every(c => this.joinedChannels.has(c)); }
+  isConnected(): boolean { return this.connected && !!this.transport?.isConnected(); }
+  isRequiredChannelsReady(): boolean { return this.REQUIRED_CHANNELS.every(c => this.joinedChannels.has(c)); }
 
   disconnect() {
     this.isDestroyed = true;
+    this.connected = false;
     this.stopHeartbeat();
     if (this.reconnectTimer) { clearTimeout(this.reconnectTimer); this.reconnectTimer = null; }
     this.pendingTrades.forEach((pending) => {
@@ -339,8 +325,8 @@ export class StockityWsBrowser {
       pending.resolve({ dealId: null, error: 'unknown' });
     });
     this.pendingTrades.clear();
-    this.ws?.close();
-    this.ws = null;
+    this.transport?.close();
+    this.transport = null;
   }
 
   private sleep(ms: number): Promise<void> {
