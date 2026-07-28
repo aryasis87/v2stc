@@ -780,19 +780,25 @@ const OrderInputModal: React.FC<{open:boolean;onClose:()=>void;orders:ScheduleOr
   };
 
   // Ambil Sinyal — isi otomatis satu sinyal tiap 3 menit untuk 6 jam ke depan.
-  // Arahnya acak; dimulai dari menit berikutnya agar order pertama tidak
-  // terlewat saat daftar baru dimasukkan.
+  //
+  // Sinyalnya SAMA untuk semua pengguna: jamnya dipatok ke kelipatan 3 menit
+  // dan arahnya diturunkan dari jam itu sendiri, bukan diacak. Jadi siapa pun
+  // yang menekan tombol ini pada rentang waktu yang sama mendapat daftar identik.
   const handleGenerate = () => {
-    const start = new Date();
-    start.setSeconds(0, 0);
-    start.setMinutes(start.getMinutes() + 1);
+    const SLOT_MS = 3 * 60_000;
+    // Mulai dari slot 3 menit berikutnya (+1 menit jeda agar tidak terlewat)
+    const first = Math.ceil((Date.now() + 60_000) / SLOT_MS) * SLOT_MS;
 
     const lines: string[] = [];
     for (let i = 0; i < (6 * 60) / 3; i++) {
-      const at = new Date(start.getTime() + i * 3 * 60_000);
+      const ms = first + i * SLOT_MS;
+      const at = new Date(ms);
       const hh = String(at.getHours()).padStart(2, '0');
       const mm = String(at.getMinutes()).padStart(2, '0');
-      lines.push(`${hh}:${mm} ${Math.random() < 0.5 ? 'b' : 's'}`);
+      // Arah ditentukan dari nomor slot — tetap dan berulang sama
+      const slot = Math.floor(ms / SLOT_MS);
+      const dir = ((slot * 2654435761) >>> 0) % 2 === 0 ? 'b' : 's';
+      lines.push(`${hh}:${mm} ${dir}`);
     }
     setInput(lines.join('\n'));
   };
