@@ -1,9 +1,10 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { LayoutDashboard, History, Globe, User } from 'lucide-react';
 import { useDarkMode } from '@/lib/DarkModeContext';
+import { deviceSession } from '@/lib/engine/deviceSession';
 
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -26,6 +27,9 @@ export function BottomNav() {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => { setMounted(true); }, []);
+
+  const [blocked, setBlocked] = useState(false);
+  const blockTimer = useRef<number | undefined>(undefined);
 
   if (!mounted) return null;
 
@@ -50,12 +54,29 @@ export function BottomNav() {
         activePill: 'rgba(5,150,105,0.09)',
       };
 
+  // Sesi trading berjalan di halaman dashboard. Meninggalkannya membongkar
+  // tampilan sesi yang sedang aktif, jadi perpindahan ditahan dulu dan user
+  // diberi tahu — bukan dibiarkan pergi lalu bingung sesinya kenapa.
+  const isSessionRunning = (): boolean => {
+    try {
+      const eng: any = deviceSession.getEngine() ?? deviceSession.getModeEngine();
+      return deviceSession.isRunning() || eng?.getStatus?.()?.isRunning === true;
+    } catch { return false; }
+  };
+
   // Dispatch loading event — hanya jika berpindah ke halaman berbeda
-  const handleNavClick = (href: string) => {
+  const handleNavClick = (e: React.MouseEvent, href: string) => {
     const isActive = pathname === href || pathname.startsWith(href + '/');
-    if (!isActive) {
-      window.dispatchEvent(new CustomEvent('stc:navstart'));
+    if (isActive) return;
+
+    if (isSessionRunning()) {
+      e.preventDefault();
+      setBlocked(true);
+      window.clearTimeout(blockTimer.current);
+      blockTimer.current = window.setTimeout(() => setBlocked(false), 3200);
+      return;
     }
+    window.dispatchEvent(new CustomEvent('stc:navstart'));
   };
 
   return (
@@ -86,6 +107,25 @@ export function BottomNav() {
           transition: color 0.2s ease;
         }
       `}</style>
+
+      {blocked && (
+        <div
+          style={{
+            position: 'fixed',
+            bottom: 'calc(78px + env(safe-area-inset-bottom, 0px))',
+            left: 16, right: 16, zIndex: 60,
+            padding: '12px 16px', borderRadius: 14,
+            background: isDarkMode ? 'rgba(28,29,33,0.97)' : 'rgba(255,255,255,0.98)',
+            border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.12)' : 'rgba(2,6,23,0.10)'}`,
+            boxShadow: '0 12px 32px -10px rgba(0,0,0,0.45)',
+            color: isDarkMode ? '#E8EAED' : '#1a1612',
+            fontSize: 13, lineHeight: 1.5, textAlign: 'center',
+          }}
+        >
+          Mode masih aktif — jangan tinggalkan halaman ini. Hentikan sesinya dulu
+          sebelum berpindah menu.
+        </div>
+      )}
 
       <div
         suppressHydrationWarning
@@ -132,7 +172,7 @@ export function BottomNav() {
                   color: col,
                   background: isActive ? theme.activePill : 'transparent',
                 }}
-                onClick={() => handleNavClick(href)}
+                onClick={(e) => handleNavClick(e, href)}
               >
                 <Icon size={20} strokeWidth={isActive ? 2.2 : 1.8} />
                 <span className="bnav-label" style={{ color: col }}>

@@ -143,7 +143,14 @@ export async function registerToStockity(
  */
 export async function getKnownDeviceId(email: string): Promise<string | null> {
   const res = await edgeCall<{ deviceId: string | null }>("stc-auth", { authToken: "lookup", action: "device-hint", email });
-  return res.ok ? (res.data?.deviceId ?? null) : null;
+  const found = res.ok ? (res.data?.deviceId ?? null) : null;
+
+  // Stockity hanya menerima device-id 32 heksadesimal tanpa strip. Banyak akun
+  // lama tersimpan sebagai UUID bertanda strip (36 karakter) — memakainya
+  // membuat login ditolak, itulah sebab user lama gagal masuk sementara
+  // pendaftar baru berhasil. Nilai yang tidak sesuai diabaikan saja; pemanggil
+  // akan membuat device-id baru yang sah.
+  return found && /^[0-9a-f]{32}$/i.test(found) ? found : null;
 }
 
 /** Login email+password langsung ke Stockity dari perangkat */
