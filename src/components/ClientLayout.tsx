@@ -27,7 +27,10 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
   const authCheckRef  = useRef(false);
   const splashStartRef = useRef(Date.now());
 
-  const isPublic = PUBLIC_ROUTES.some(
+  // Halaman muka bersifat terbuka: di web ia adalah halaman unduh aplikasi,
+  // sedangkan di dalam APK ia hanya meneruskan ke dashboard. Tanpa ini
+  // pengunjung web langsung dilempar ke layar masuk dan tak pernah melihatnya.
+  const isPublic = pathname === '/' || PUBLIC_ROUTES.some(
     route => pathname === route || pathname.startsWith(`${route}/`)
   );
 
