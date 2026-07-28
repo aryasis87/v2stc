@@ -4938,10 +4938,21 @@ export default function DashboardPage() {
           open={realLockOpen}
           reason={realLockReason}
           onClose={()=>setRealLockOpen(false)}
-          onRegister={()=>{
+          onRegister={async ()=>{
             setRealLockOpen(false);
-            if (realLockReason === 'platform') window.open('https://stcautotrade.id/download', '_blank', 'noopener');
-            else router.push('/register');
+            if (realLockReason === 'platform') {
+              window.open('https://stcautotrade.id/download', '_blank', 'noopener');
+              return;
+            }
+            // Mode REAL hanya terbuka untuk akun Stockity yang baru didaftarkan
+            // lewat halaman daftar. Sesi lama diakhiri dulu supaya pendaftaran
+            // berjalan bersih dan tidak dikembalikan ke dashboard oleh penjaga sesi.
+            try {
+              const { sessionLogout } = await import('@/lib/storage');
+              await sessionLogout();
+            } catch { /* biarkan — pengalihan tetap dilakukan */ }
+            try { await storage.remove('stc_stockity_token'); } catch { /* opsional */ }
+            window.location.href = '/register/';
           }}
           lang={language}
         />
