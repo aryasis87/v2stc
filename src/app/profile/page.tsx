@@ -1181,6 +1181,7 @@ function ProfilePageContent() {
                 iconBg="linear-gradient(135deg,#F87171,#E11D48)" label={t('profile.logout')} danger onClick={() => setShowLogout(true)} last
               />
             </Card>
+            <HelpButton />
             <p style={{ textAlign: 'center', fontSize: 11, color: 'var(--text-3)', marginTop: 6 }}>STC AutoTrade · v{APP_VERSION_NAME}</p>
           </div>
         </div>
@@ -1360,6 +1361,7 @@ function ProfilePageContent() {
                 last
               />
             </Card>
+            <HelpButton />
             <p style={{ textAlign: 'center', fontSize: 12, color: 'var(--text-3)', paddingBottom: 4 }}>STC AutoTrade · v{APP_VERSION_NAME}</p>
           </div>
 
@@ -1378,6 +1380,56 @@ function ProfilePageContent() {
 // ─────────────────────────────────────────────
 // EXPORT
 // ─────────────────────────────────────────────
+
+/**
+ * Tombol bantuan: mengarah ke tautan bantuan yang diatur admin
+ * (app_config → whatsappHelpUrl). Keterangan kecil di bawahnya memberi tahu
+ * bahwa layanan tersedia sepanjang waktu, agar pengguna tidak ragu menghubungi.
+ */
+const HelpButton: React.FC = () => {
+  const [url, setUrl] = useState<string>('');
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const { getRegistrationConfig } = await import('@/lib/supabaseRepository');
+        const cfg = await getRegistrationConfig();
+        const u = (cfg?.whatsappHelpUrl ?? '').trim();
+        if (alive && u) setUrl(u);
+      } catch { /* tanpa tautan, tombol tidak ditampilkan */ }
+    })();
+    return () => { alive = false; };
+  }, []);
+
+  if (!url) return null;
+
+  return (
+    <div style={{ marginTop: 14, textAlign: 'center' }}>
+      <a
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{
+          display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+          width: '100%', padding: '13px 18px', borderRadius: 14,
+          background: 'var(--s2)', border: '1px solid var(--bdr)',
+          color: 'var(--text)', fontSize: 14, fontWeight: 600, textDecoration: 'none',
+        }}
+      >
+        Ada permasalahan?
+      </a>
+      <p style={{ marginTop: 7, fontSize: 11, color: 'var(--text-3)' }}>
+        <span style={{
+          display: 'inline-block', width: 6, height: 6, borderRadius: 99,
+          background: '#30D158', marginRight: 6, verticalAlign: 'middle',
+        }} />
+        Layanan bantuan online 24 jam
+      </p>
+    </div>
+  );
+};
+
 export default function ProfilePage() {
   return <ProfilePageContent />;
 }

@@ -2146,6 +2146,17 @@ const MobileSessionSheet: React.FC<{
 // ═══════════════════════════════════════════
 // MODE PICKER MODAL
 // ═══════════════════════════════════════════
+
+/** Penjelasan singkat tiap mode, ditulis untuk orang awam */
+const MODE_INFO: Record<string, string> = {
+  schedule:  'Anda menuliskan sendiri jam dan arahnya, lalu bot mengeksekusi tepat pada jam tersebut. Cocok bila Anda sudah punya daftar sinyal.',
+  fastrade:  'Bot membandingkan harga dua menit berturut-turut, lalu ikut arah yang sedang menang. Berjalan terus tanpa perlu Anda masukkan sinyal.',
+  ctc:       'Mirip Fastrade, tetapi arahnya dibalik dari hasil perbandingan. Dipakai saat pasar sering berbalik arah setelah bergerak.',
+  aisignal:  'Bot menentukan arah sendiri lalu langsung mengeksekusi. Anda cukup mengatur nominal dan batas berhenti.',
+  indicator: 'Bot membaca indikator seperti RSI atau moving average, lalu masuk saat syaratnya terpenuhi. Anda bisa memilih indikatornya.',
+  momentum:  'Bot mengamati pola candle tertentu, dan hanya masuk ketika pola itu muncul. Ordernya lebih jarang tetapi lebih terpilih.',
+};
+
 const ModePickerModal: React.FC<{
   open: boolean; onClose: () => void;
   mode: TradingMode; onModeChange: (m: TradingMode) => void;
@@ -2153,6 +2164,7 @@ const ModePickerModal: React.FC<{
 }> = ({ open, onClose, mode, onModeChange, locked, blockedModes }) => {
   if (!open) return null;
 
+  const [infoOpen, setInfoOpen] = useState<string | null>(null);
   const MODES = [
     { v: 'schedule'  as TradingMode, label: 'Signal Mode',           icon: <Calendar  style={{ width: 16, height: 16 }} />, accent: C.cyan,   desc: 'Manual Input Signal' },
     { v: 'fastrade'  as TradingMode, label: 'Fastrade FTT Mode',    icon: <Zap       style={{ width: 16, height: 16 }} />, accent: C.cyan,   desc: 'Fast Trade Execution' },
@@ -2203,9 +2215,11 @@ const ModePickerModal: React.FC<{
             const isAct = mode === v;
             const isOtherRunning = locked && !isAct; // mode lain sedang berjalan
             const isAiLockedRow = v === 'aisignal' && AI_LOCKED; // fitur terkunci per akun
+            const infoShown = infoOpen === v;
             return (
+              <div key={v} style={{display:'flex',flexDirection:'column',gap:0}}>
+              <div style={{display:'flex',alignItems:'stretch',gap:6}}>
               <button
-                key={v}
                 type="button"
                 onClick={() => {
                   onModeChange(v);
@@ -2246,6 +2260,33 @@ const ModePickerModal: React.FC<{
                   <Check style={{width:16,height:16,color:accent,flexShrink:0}}/>
                 )}
               </button>
+              {/* Tombol penjelasan — membuka keterangan singkat mode ini */}
+              <button
+                type="button"
+                aria-label={`Penjelasan ${label}`}
+                onClick={() => setInfoOpen(infoShown ? null : v)}
+                style={{
+                  width:38,flexShrink:0,borderRadius:14,cursor:'pointer',
+                  background:infoShown?`${accent}14`:C.card2,
+                  border:`1px solid ${infoShown?`${accent}45`:C.bdr}`,
+                  display:'flex',alignItems:'center',justifyContent:'center',
+                }}
+              >
+                <ChevronDown style={{
+                  width:15,height:15,color:infoShown?accent:C.muted,
+                  transform:infoShown?'rotate(180deg)':'none',transition:'transform 0.18s',
+                }}/>
+              </button>
+              </div>
+              {infoShown && (
+                <div style={{
+                  margin:'6px 0 2px',padding:'11px 13px',borderRadius:12,
+                  background:`${accent}0A`,border:`1px solid ${accent}22`,
+                }}>
+                  <p style={{fontSize:12,lineHeight:1.65,color:C.sub,margin:0}}>{MODE_INFO[v]}</p>
+                </div>
+              )}
+              </div>
             );
           })}
           {locked && (
