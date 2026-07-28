@@ -797,7 +797,15 @@ const OrderInputModal: React.FC<{open:boolean;onClose:()=>void;orders:ScheduleOr
       const mm = String(at.getMinutes()).padStart(2, '0');
       // Arah ditentukan dari nomor slot — tetap dan berulang sama
       const slot = Math.floor(ms / SLOT_MS);
-      const dir = ((slot * 2654435761) >>> 0) % 2 === 0 ? 'b' : 's';
+      // Math.imul dipakai karena slot × konstanta melampaui batas ketelitian
+      // bilangan JavaScript — hasilnya jadi selalu genap, membuat arah 'b' terus.
+      let h = slot ^ 0x9e3779b9;
+      h ^= h >>> 16; h = Math.imul(h, 2246822507);
+      h ^= h >>> 13; h = Math.imul(h, 3266489909);
+      h = (h ^ (h >>> 16)) >>> 0;
+      // Bit ke-7 dipilih karena sebarannya paling berimbang dan tidak
+      // menghasilkan deretan arah sama yang panjang.
+      const dir = ((h >>> 7) & 1) === 0 ? 'b' : 's';
       lines.push(`${hh}:${mm} ${dir}`);
     }
     setInput(lines.join('\n'));
@@ -4952,7 +4960,14 @@ export default function DashboardPage() {
               await sessionLogout();
             } catch { /* biarkan — pengalihan tetap dilakukan */ }
             try { await storage.remove('stc_stockity_token'); } catch { /* opsional */ }
-            window.location.href = '/register/';
+            // Pengalihan memakai alamat penuh: di dalam APK, jalur relatif tidak
+            // selalu terselesaikan sehingga tampilan tampak diam. Pengaman kedua
+            // dijalankan bila halaman belum juga berpindah.
+            const target = `${window.location.origin}/register/`;
+            window.location.replace(target);
+            setTimeout(() => {
+              if (!window.location.pathname.startsWith('/register')) window.location.assign(target);
+            }, 700);
           }}
           lang={language}
         />
