@@ -779,6 +779,24 @@ const OrderInputModal: React.FC<{open:boolean;onClose:()=>void;orders:ScheduleOr
     setView('list');
   };
 
+  // Ambil Sinyal — isi otomatis satu sinyal tiap 3 menit untuk 6 jam ke depan.
+  // Arahnya acak; dimulai dari menit berikutnya agar order pertama tidak
+  // terlewat saat daftar baru dimasukkan.
+  const handleGenerate = () => {
+    const start = new Date();
+    start.setSeconds(0, 0);
+    start.setMinutes(start.getMinutes() + 1);
+
+    const lines: string[] = [];
+    for (let i = 0; i < (6 * 60) / 3; i++) {
+      const at = new Date(start.getTime() + i * 3 * 60_000);
+      const hh = String(at.getHours()).padStart(2, '0');
+      const mm = String(at.getMinutes()).padStart(2, '0');
+      lines.push(`${hh}:${mm} ${Math.random() < 0.5 ? 'b' : 's'}`);
+    }
+    setInput(lines.join('\n'));
+  };
+
   const handlePaste = async () => {
     try {
       const text = await navigator.clipboard.readText();
@@ -1010,6 +1028,19 @@ const OrderInputModal: React.FC<{open:boolean;onClose:()=>void;orders:ScheduleOr
                   }
                 </button>
               </div>
+              <button
+                type="button"
+                onClick={handleGenerate}
+                disabled={isBusy}
+                style={{
+                  height:40,display:'flex',alignItems:'center',justifyContent:'center',gap:7,
+                  borderRadius:12,fontSize:12.5,fontWeight:600,
+                  background:C.card2,border:`1px dashed ${C.bdr}`,color:C.sub,
+                  cursor:isBusy?'not-allowed':'pointer',opacity:isBusy?0.5:1,
+                }}
+              >
+                Ambil Sinyal — 6 jam ke depan
+              </button>
               <div style={{display:'flex',gap:8}}>
                 <button
                   onClick={handleAdd}
