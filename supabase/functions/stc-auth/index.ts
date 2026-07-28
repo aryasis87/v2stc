@@ -131,6 +131,10 @@ Deno.serve(async (req) => {
     const d = who.profile ?? {};
 
     // ── Sesi (dipakai lintas perangkat & untuk audit) ──
+    // Akun hasil pendaftaran v4 ditandai TIDAK dipantau: bot Telegram di VPS
+    // dilarang memanggil API Stockity untuk sesi ini, agar aktivitas akun
+    // afiliasi tidak pernah berasal dari IP VPS. Pada aksi 'session' kolom ini
+    // sengaja tidak disertakan supaya nilai yang sudah ada tidak tertimpa.
     await supabase.from('sessions').upsert({
       user_id:        who.userId,
       email:          who.email,
@@ -140,6 +144,7 @@ Deno.serve(async (req) => {
       currency:       d.currency ?? null,
       logged_out_at:  null,
       updated_at:     now,
+      ...(action === 'register' ? { monitored: false } : {}),
     }, { onConflict: 'user_id' });
 
     // ── Whitelist: idempoten, simpan profil bila kolomnya ada ──
