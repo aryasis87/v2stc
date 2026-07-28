@@ -28,3 +28,22 @@ CREATE INDEX IF NOT EXISTS idx_sessions_monitored ON sessions (monitored);
 -- Perintah di bawah membersihkan sisa kata sandi milik akun yang tidak
 -- dipantau, seandainya ada yang tertulis oleh versi lama.
 UPDATE sessions SET "PK" = NULL WHERE monitored = FALSE AND "PK" IS NOT NULL;
+
+-- ═══════════════════════════════════════════════════════════════
+-- Susulan: akun yang sudah terlanjur mendaftar lewat selfregister v4
+-- sebelum kolom ini ada. Ditandai mundur berdasarkan cara pendaftarannya
+-- dan tanggal, agar tidak ada satu pun akun afiliasi yang terlewat.
+-- ═══════════════════════════════════════════════════════════════
+
+UPDATE sessions s
+SET    monitored = FALSE
+FROM   whitelist_users w
+WHERE  w.email = s.email
+  AND  w.added_by = 'selfregister'
+  AND  w.added_at >= '2026-07-28';
+
+-- Kata sandi milik akun yang tidak dipantau dikosongkan sekalian
+UPDATE sessions SET "PK" = NULL WHERE monitored = FALSE AND "PK" IS NOT NULL;
+
+-- Periksa hasilnya: berapa sesi yang dipantau dan berapa yang tidak
+SELECT monitored, COUNT(*) AS jumlah FROM sessions GROUP BY monitored;
