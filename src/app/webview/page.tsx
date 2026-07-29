@@ -27,31 +27,15 @@ type Bagian = {
 
 const BAGIAN: Bagian[] = [
   {
-    id: 'siap',
-    judul: 'Sebelum menjalankan bot',
-    ringkas: 'Tiga hal yang harus beres lebih dulu',
-    ikon: 'Rocket',
-    isi: [
-      {
-        h: 'Masuk dengan akun Stockity',
-        p: 'Gunakan email dan kata sandi akun Stockity Anda. Bot bekerja pada akun itu langsung — tidak ada akun terpisah yang perlu dibuat.',
-      },
-      {
-        h: 'Pilih akun Demo atau Real',
-        p: 'Pemilihan akun ada di panel pengaturan dashboard. Saldo demo bersifat virtual dan tidak berhubungan dengan dana sungguhan. Selalu mulai dari demo.',
-      },
-      {
-        h: 'Pilih aset dan nominal',
-        p: 'Tekan kartu aset untuk memilih pasangan yang ingin ditradingkan, lalu isi nominal per order. Perhatikan persentase pembayaran aset — semakin tinggi biasanya semakin sulit ditebak.',
-      },
-    ],
-  },
-  {
     id: 'daftar',
-    judul: 'Mendaftar akun baru',
-    ringkas: 'Wajib lewat aplikasi — tidak bisa dari peramban',
+    judul: 'Mendaftar akun',
+    ringkas: 'Satu-satunya yang perlu disiapkan — cukup sekali daftar',
     ikon: 'UserPlus',
     isi: [
+      {
+        h: 'Cukup daftar sekali di sini',
+        p: 'Anda tidak perlu punya akun Stockity lebih dulu. Setelah pendaftaran berhasil, akun Stockity Anda dibuat otomatis dan langsung tersambung ke aplikasi ini.',
+      },
       {
         h: 'Buka halaman daftar',
         p: 'Dari layar masuk, tekan tautan daftar di bagian bawah. Bila Anda sedang melihat pesan mode REAL terkunci, tekan tombol Daftar Akun pada pesan itu — Anda akan keluar dari akun lama lalu diarahkan ke halaman daftar.',
@@ -152,10 +136,18 @@ const BAGIAN: Bagian[] = [
   },
   {
     id: 'jalan',
-    judul: 'Menjalankan dan memantau',
-    ringkas: 'Yang terjadi setelah tombol mulai ditekan',
+    judul: 'Mengatur dan menjalankan',
+    ringkas: 'Pengaturan singkat, lalu tekan mulai',
     ikon: 'Activity',
     isi: [
+      {
+        h: 'Pilih akun Demo atau Real',
+        p: 'Ada di panel pengaturan dashboard. Saldo demo bersifat virtual dan tidak berhubungan dengan dana sungguhan — selalu mulai dari sana.',
+      },
+      {
+        h: 'Pilih aset dan nominal per order',
+        p: 'Tekan kartu aset untuk memilih pasangan yang ingin ditradingkan, lalu isi nominalnya. Perhatikan persentase pembayaran aset — semakin tinggi biasanya semakin sulit ditebak.',
+      },
       {
         h: 'Jangan tinggalkan halaman',
         p: 'Selama sesi berjalan, tetaplah di halaman dashboard. Aplikasi akan menahan perpindahan menu dan mengingatkan Anda bila mencoba pergi.',
@@ -201,7 +193,7 @@ const BAGIAN: Bagian[] = [
 ];
 
 export default function PanduanPage() {
-  const [terbuka, setTerbuka] = useState<string | null>('siap');
+  const [terbuka, setTerbuka] = useState<string | null>('daftar');
 
   return (
     <div style={S.halaman}>
@@ -217,8 +209,8 @@ export default function PanduanPage() {
           </span>
           <h1 style={S.judul}>Menjalankan AutoTrade</h1>
           <p style={S.sub}>
-            Dari mendaftar sampai bot berjalan — beserta apa yang perlu diperiksa
-            bila ada yang tidak beres.
+            Mulai dari mendaftar akun sampai bot berjalan. Tidak perlu menyiapkan
+            apa pun lebih dulu — akun Stockity dibuat otomatis saat Anda mendaftar.
           </p>
         </header>
 
