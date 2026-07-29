@@ -2,14 +2,14 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
-import { LayoutDashboard, History, Globe, User } from 'lucide-react';
+import { LayoutDashboard, History, BookOpen, User } from 'lucide-react';
 import { useDarkMode } from '@/lib/DarkModeContext';
 import { deviceSession } from '@/lib/engine/deviceSession';
 
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/history',   label: 'Riwayat',   icon: History },
-  { href: '/webview',   label: 'Trade',     icon: Globe },
+  { href: '/webview',   label: 'Panduan',   icon: BookOpen },
   { href: '/profile',   label: 'Profil',    icon: User },
 ];
 
@@ -34,7 +34,7 @@ export function BottomNav() {
   if (!mounted) return null;
 
   // Sembunyikan nav di halaman webview agar konten full-screen
-  if (pathname === '/webview') return null;
+  // Halaman panduan kini bagian dari aplikasi, jadi navigasi tetap tampil.
 
   const theme = isDarkMode
     ? {
