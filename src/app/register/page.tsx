@@ -19,6 +19,7 @@ type RegTxt = {
   submit: string; submitting: string; have: string; signinLink: string;
   mismatch: string; mustAgree: string; shortPass: string;
   successTitle: string; successSub: string;
+  infoJudul: string; infoTeks: string;
 };
 const REG_TEXT: Record<string, RegTxt> = {
   id: {
@@ -32,6 +33,8 @@ const REG_TEXT: Record<string, RegTxt> = {
     mustAgree: 'Anda harus menyetujui ketentuan terlebih dahulu',
     shortPass: 'Password minimal 6 karakter',
     successTitle: 'Akun dibuat!', successSub: 'Menyiapkan dashboard…',
+    infoJudul: 'Akun Stockity dibuat otomatis',
+    infoTeks: 'Anda tidak perlu mendaftar dua kali. Setelah menekan Daftar, akun Stockity Anda langsung dibuat dan tersambung ke aplikasi ini.',
   },
   en: {
     title: 'Create your account',
@@ -44,6 +47,8 @@ const REG_TEXT: Record<string, RegTxt> = {
     mustAgree: 'You must agree to the terms first',
     shortPass: 'Password must be at least 6 characters',
     successTitle: 'Account created!', successSub: 'Preparing dashboard…',
+    infoJudul: 'Your Stockity account is created automatically',
+    infoTeks: 'No need to sign up twice. Once you tap Register, your Stockity account is created and connected to this app right away.',
   },
 };
 const regText = (lang: string): RegTxt => REG_TEXT[lang] ?? REG_TEXT.en;
@@ -355,7 +360,32 @@ function RegisterContent() {
                   Sudah punya akun? Masuk
                 </a>
               </div>
-            ) : (
+            ) : ( <>
+            {/* Keterangan singkat: banyak pengguna baru mengira harus
+                mendaftar terpisah di Stockity lebih dulu. */}
+            <div style={{
+              display: 'flex', gap: 11, alignItems: 'flex-start',
+              padding: '13px 14px', marginBottom: 16, borderRadius: 14,
+              background: 'rgba(76,175,80,0.08)',
+              border: '1px solid rgba(76,175,80,0.22)',
+            }}>
+              <span style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                width: 26, height: 26, borderRadius: 8, flexShrink: 0,
+                background: 'rgba(76,175,80,0.16)', color: '#5cc763', fontSize: 14,
+              }}>✓</span>
+              <span>
+                <span style={{
+                  display: 'block', fontSize: 13.5, fontWeight: 600,
+                  color: '#fff', marginBottom: 3,
+                }}>{txt.infoJudul}</span>
+                <span style={{
+                  display: 'block', fontSize: 12.5, lineHeight: 1.6,
+                  color: 'rgba(235,235,245,0.62)',
+                }}>{txt.infoTeks}</span>
+              </span>
+            </div>
+
             <form onSubmit={handleSubmit} noValidate>
               <div className="rg-group">
                 {/* EMAIL */}
@@ -457,6 +487,7 @@ function RegisterContent() {
                 {loading ? txt.submitting : txt.submit}
               </button>
             </form>
+            </>
             )}
 
             <div className="rg-bottom">
