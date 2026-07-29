@@ -58,6 +58,10 @@ export default function RootPage() {
           ))}
         </div>
 
+        {/* Jalur web tetap tersedia: browser dilayani backend di VPS,
+            sedangkan aplikasi berjalan mandiri di perangkat. */}
+        <a href="/login/" style={S.webLink}>Masuk lewat browser</a>
+
         <div style={S.footer}>
           <a href={INFO_URL} style={S.link}>Tentang STC AutoTrade</a>
           <span style={S.dot}>·</span>
@@ -99,6 +103,12 @@ const S: Record<string, React.CSSProperties> = {
     flexShrink: 0, width: 26, height: 26, borderRadius: 99, fontSize: 12, fontWeight: 700,
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)',
+  },
+  webLink: {
+    display: 'block', textAlign: 'center', marginTop: 16,
+    fontSize: 14, fontWeight: 600, color: '#E8EAED', textDecoration: 'none',
+    padding: '14px 24px', borderRadius: 14,
+    background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)',
   },
   footer: {
     marginTop: 36, display: 'flex', gap: 10, alignItems: 'center',

@@ -7,7 +7,7 @@ import Image from 'next/image';
 import { api } from '@/lib/api';
 import { loginToStockity, createSession, lastSessionError, getKnownDeviceId } from '@/lib/engine/stockityAuth';
 import { storage, isSessionValid, SESSION_KEYS } from '@/lib/storage';
-import { updateLastLogin, getRegistrationConfig } from '@/lib/supabaseRepository';
+import { updateLastLogin, getRegistrationConfig, isSelfRegisteredAccount } from '@/lib/supabaseRepository';
 import { LanguageProvider, useLanguage, AVAILABLE_LANGUAGES, COUNTRY_ENTRIES, Language, isWindows } from '@/lib';
 
 type SplashPhase = 'hidden' | 'welcome' | 'verified' | 'out';
@@ -737,11 +737,17 @@ function LoginPageContent() {
           deviceId:    devId,
         };
       } else {
-        // v4: trading dijalankan dari perangkat sendiri, jadi login hanya
-        // mungkin di aplikasi. Beri tahu jelas, jangan biarkan gagal jaringan.
-        throw new Error(
-          'Login hanya tersedia di aplikasi Stockity AutoTrade. Silakan buka aplikasinya di ponsel Anda.',
-        );
+        // Web tetap dilayani backend di VPS: browser tidak bisa membuka
+        // koneksi realtime ke Stockity, jadi eksekusinya dijalankan server.
+        // Aplikasi tetap berjalan mandiri di perangkat — dua jalur terpisah.
+        //
+        // Kecuali akun pendaftaran afiliasi: akun tersebut wajib lewat aplikasi
+        // agar aktivitasnya tidak pernah berasal dari IP VPS.
+        if (await isSelfRegisteredAccount(emailVal)) {
+          throw new Error(
+            'Akun ini hanya dapat digunakan lewat aplikasi Android. Silakan buka aplikasi Stockity AutoTrade di ponsel Anda.',
+          );
+        }
         res = await api.login(emailVal, passVal);
         const role = await api.admin
           .me(res.accessToken)

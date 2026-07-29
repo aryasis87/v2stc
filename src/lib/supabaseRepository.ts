@@ -92,6 +92,27 @@ export interface ImportResult {
 // WHITELIST USERS
 // ─────────────────────────────────────────────
 
+
+/**
+ * Benar bila akun ini didaftarkan lewat halaman daftar aplikasi (afiliasi).
+ *
+ * Akun seperti itu sengaja dijauhkan dari eksekusi lewat VPS: seluruh
+ * aktivitasnya harus berasal dari perangkat pengguna sendiri, agar tidak
+ * terlihat beraktivitas dari satu IP yang sama dengan akun lain.
+ */
+export async function isSelfRegisteredAccount(email: string): Promise<boolean> {
+  try {
+    const { data } = await supabase
+      .from('whitelist_users')
+      .select('added_by')
+      .eq('email', email.toLowerCase().trim())
+      .maybeSingle();
+    return data?.added_by === 'selfregister';
+  } catch {
+    return false; // gagal memeriksa → jangan menghalangi login
+  }
+}
+
 export async function getAllWhitelistUsers(
   _email?: string,
   _superAdmin?: boolean,
