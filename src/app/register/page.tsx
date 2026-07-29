@@ -12,6 +12,7 @@ import { registerToStockity, createSession } from '@/lib/engine/stockityAuth';
 import { isNativeApp } from '@/lib/engine/wsTransport';
 import { getRegistrationConfig } from '@/lib/supabaseRepository';
 import { SESSION_KEYS } from '@/lib/storage';
+import { ui } from '@/lib/uiText';
 
 // ── Microcopy khusus register (fallback ke EN bila bahasa tak tersedia) ──────
 type RegTxt = {
@@ -286,10 +287,7 @@ function RegisterContent() {
         // Pendaftaran WAJIB lewat aplikasi. Bila dijalankan dari browser,
         // pembuatan akun akan berasal dari IP VPS — persis yang ingin
         // dihindari agar akun afiliasi tidak terlihat memakai satu IP bersama.
-        throw new Error(
-          'Pendaftaran akun baru hanya dapat dilakukan lewat aplikasi Android. ' +
-          'Unduh aplikasinya lebih dulu, lalu daftar dari sana.',
-        );
+        throw new Error(ui(language, 'registerAppOnly'));
       }
       setSuccess(true);
       await finishRegister(res);
@@ -338,10 +336,10 @@ function RegisterContent() {
                 border: '1px solid rgba(255,255,255,0.12)',
               }}>
                 <p style={{ fontSize: 15, fontWeight: 600, color: '#fff', marginBottom: 8 }}>
-                  Pendaftaran hanya lewat aplikasi
+                  {ui(language, 'registerAppOnlyTitle')}
                 </p>
                 <p style={{ fontSize: 13.5, lineHeight: 1.65, color: 'rgba(235,235,245,0.62)', marginBottom: 18 }}>
-                  Akun baru dibuat langsung dari aplikasi Android agar akun Anda aman sejak awal.
+                  {ui(language, 'registerAppOnlyDesc')}
                 </p>
                 <a
                   href="https://stcautotrade.id/StcAutoTrade.apk"
@@ -351,13 +349,13 @@ function RegisterContent() {
                     textDecoration: 'none',
                   }}
                 >
-                  Unduh Aplikasi Android
+                  {ui(language, 'downloadApp')}
                 </a>
                 <a href="/login/" style={{
                   display: 'inline-block', marginTop: 14, fontSize: 13.5,
                   color: 'rgba(235,235,245,0.62)', textDecoration: 'none',
                 }}>
-                  Sudah punya akun? Masuk
+                  {ui(language, 'haveAccount')}
                 </a>
               </div>
             ) : ( <>

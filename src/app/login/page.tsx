@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { api } from '@/lib/api';
 import { loginToStockity, createSession, lastSessionError, getKnownDeviceId } from '@/lib/engine/stockityAuth';
 import { storage, isSessionValid, SESSION_KEYS } from '@/lib/storage';
+import { ui } from '@/lib/uiText';
 import { updateLastLogin, getRegistrationConfig, isSelfRegisteredAccount } from '@/lib/supabaseRepository';
 import { LanguageProvider, useLanguage, AVAILABLE_LANGUAGES, COUNTRY_ENTRIES, Language, isWindows } from '@/lib';
 
@@ -744,9 +745,7 @@ function LoginPageContent() {
         // Kecuali akun pendaftaran afiliasi: akun tersebut wajib lewat aplikasi
         // agar aktivitasnya tidak pernah berasal dari IP VPS.
         if (await isSelfRegisteredAccount(emailVal)) {
-          throw new Error(
-            'Akun ini hanya dapat digunakan lewat aplikasi Android. Silakan buka aplikasi Stockity AutoTrade di ponsel Anda.',
-          );
+          throw new Error(ui(language, 'affiliateWebBlocked'));
         }
         res = await api.login(emailVal, passVal);
         const role = await api.admin

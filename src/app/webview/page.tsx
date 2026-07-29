@@ -8,6 +8,8 @@
 // disediakan di bagian bawah.
 
 import { useState } from 'react';
+import { useLanguage } from '@/lib';
+import { panduan } from '@/lib/guideText';
 import { BookOpen, Rocket, UserPlus, Layers, TrendingUp, ShieldCheck, Activity, LifeBuoy, ChevronDown, Info, ExternalLink } from 'lucide-react';
 
 /** Peta ikon per bagian — dipisah agar data panduan tetap berupa teks biasa */
@@ -17,182 +19,10 @@ const IKON: Record<string, typeof BookOpen> = {
 
 const TRADE_URL = 'https://stockity.id';
 
-type Bagian = {
-  id: string;
-  judul: string;
-  ringkas: string;
-  ikon: string;
-  isi: { h: string; p: string }[];
-};
-
-const BAGIAN: Bagian[] = [
-  {
-    id: 'daftar',
-    judul: 'Mendaftar akun',
-    ringkas: 'Satu-satunya yang perlu disiapkan — cukup sekali daftar',
-    ikon: 'UserPlus',
-    isi: [
-      {
-        h: 'Cukup daftar sekali di sini',
-        p: 'Anda tidak perlu punya akun Stockity lebih dulu. Setelah pendaftaran berhasil, akun Stockity Anda dibuat otomatis dan langsung tersambung ke aplikasi ini.',
-      },
-      {
-        h: 'Buka halaman daftar',
-        p: 'Dari layar masuk, tekan tautan daftar di bagian bawah. Bila Anda sedang melihat pesan mode REAL terkunci, tekan tombol Daftar Akun pada pesan itu — Anda akan keluar dari akun lama lalu diarahkan ke halaman daftar.',
-      },
-      {
-        h: 'Isi email dan kata sandi',
-        p: 'Gunakan email yang bisa Anda buka saat itu juga. Kata sandi sebaiknya khusus untuk akun ini, jangan yang dipakai di layanan lain — akun ini berkaitan langsung dengan uang.',
-      },
-      {
-        h: 'Tulis nama sesuai dokumen identitas',
-        p: 'Nama akan dicocokkan saat verifikasi dan saat menarik dana ke rekening. Perbedaan satu huruf pun bisa membuat penarikan tertahan di kemudian hari.',
-      },
-      {
-        h: 'Akun langsung siap dipakai',
-        p: 'Setelah pendaftaran berhasil, Anda otomatis masuk dan mode REAL terbuka. Mulailah tetap dari akun demo untuk menguji pengaturan Anda lebih dulu.',
-      },
-      {
-        h: 'Kenapa harus lewat aplikasi',
-        p: 'Pendaftaran dari peramban tidak diizinkan agar akun Anda terhubung langsung dari perangkat sendiri sejak awal. Bila membuka halaman daftar di peramban, yang muncul hanya tautan unduh aplikasi.',
-      },
-    ],
-  },
-  {
-    id: 'mode',
-    judul: 'Memilih mode',
-    ringkas: 'Enam mode, masing-masing punya cara kerja berbeda',
-    ikon: 'Layers',
-    isi: [
-      {
-        h: 'Signal',
-        p: 'Anda memasukkan sendiri daftar jam dan arahnya, misal "10:03 b". Bot mengeksekusi tepat pada jam itu. Tombol Ambil Sinyal mengisi daftar otomatis untuk enam jam ke depan.',
-      },
-      {
-        h: 'Fastrade FTT',
-        p: 'Bot mengambil harga pada dua pergantian menit berturut-turut, lalu masuk mengikuti arah yang menang. Order pertama baru muncul sekitar dua menit setelah start.',
-      },
-      {
-        h: 'Fastrade CTC',
-        p: 'Cara membacanya sama dengan FTT, tetapi arah ordernya dibalik. Dipakai saat pasar sering berbalik setelah bergerak.',
-      },
-      {
-        h: 'AI Signal',
-        p: 'Bot menentukan arah sendiri pada tiap pergantian menit lalu langsung mengeksekusi. Anda cukup mengatur nominal dan batas berhenti.',
-      },
-      {
-        h: 'Indicator',
-        p: 'Bot membaca indikator teknikal seperti RSI atau moving average, dan hanya masuk ketika syaratnya terpenuhi. Jenis indikator serta periodenya bisa Anda pilih.',
-      },
-      {
-        h: 'Momentum',
-        p: 'Bot menunggu pola candle tertentu muncul, seperti doji atau candle sabit. Ordernya paling jarang di antara semua mode, tetapi paling terpilih.',
-      },
-    ],
-  },
-  {
-    id: 'martingale',
-    judul: 'Mengatur martingale',
-    ringkas: 'Fitur paling berisiko — pahami sebelum menyalakannya',
-    ikon: 'TrendingUp',
-    isi: [
-      {
-        h: 'Max Step',
-        p: 'Batas berapa kali order boleh diperbesar setelah kalah. Angka ini wajib diisi. Tanpa batas, satu rangkaian kekalahan dapat menghabiskan modal dalam hitungan menit.',
-      },
-      {
-        h: 'Multiplier',
-        p: 'Pengali nominal pada tiap langkah. Perlu diingat, kebutuhan modal tumbuh berlipat sementara peluang menang tidak berubah sama sekali.',
-      },
-      {
-        h: 'Always Signal',
-        p: 'Bila aktif, kerugian yang belum tertutup dibawa ke sinyal berikutnya alih-alih dilanjutkan langsung. Pastikan Anda paham cara kerjanya sebelum menyalakannya di akun real.',
-      },
-      {
-        h: 'Hitung mundur dari modal',
-        p: 'Tentukan berapa langkah yang sanggup ditanggung modal Anda, lalu pakai angka itu — bukan angka yang Anda inginkan.',
-      },
-    ],
-  },
-  {
-    id: 'batas',
-    judul: 'Memasang batas otomatis',
-    ringkas: 'Bagian yang membuat bot berhenti tanpa perlu diawasi',
-    ikon: 'ShieldCheck',
-    isi: [
-      {
-        h: 'Stop Loss',
-        p: 'Bot berhenti sendiri saat kerugian sesi mencapai angka ini. Isi kolomnya sebelum menekan mulai — inilah pengaman utama Anda.',
-      },
-      {
-        h: 'Stop Profit',
-        p: 'Bot berhenti saat keuntungan mencapai target. Sama pentingnya, karena keuntungan yang dibiarkan berjalan sering kembali ke pasar pada sesi yang sama.',
-      },
-      {
-        h: 'Kenapa harus otomatis',
-        p: 'Keputusan berhenti di tengah kekalahan beruntun adalah keputusan tersulit yang ada. Batas yang dijalankan bot tidak bisa ditawar saat Anda sedang tertekan.',
-      },
-    ],
-  },
-  {
-    id: 'jalan',
-    judul: 'Mengatur dan menjalankan',
-    ringkas: 'Pengaturan singkat, lalu tekan mulai',
-    ikon: 'Activity',
-    isi: [
-      {
-        h: 'Pilih akun Demo atau Real',
-        p: 'Ada di panel pengaturan dashboard. Saldo demo bersifat virtual dan tidak berhubungan dengan dana sungguhan — selalu mulai dari sana.',
-      },
-      {
-        h: 'Pilih aset dan nominal per order',
-        p: 'Tekan kartu aset untuk memilih pasangan yang ingin ditradingkan, lalu isi nominalnya. Perhatikan persentase pembayaran aset — semakin tinggi biasanya semakin sulit ditebak.',
-      },
-      {
-        h: 'Jangan tinggalkan halaman',
-        p: 'Selama sesi berjalan, tetaplah di halaman dashboard. Aplikasi akan menahan perpindahan menu dan mengingatkan Anda bila mencoba pergi.',
-      },
-      {
-        h: 'Membaca status',
-        p: 'Tulisan status menunjukkan apa yang sedang dikerjakan bot — menunggu candle, menunggu batas menit, atau mengeksekusi. Bila diam terlalu lama, status itu yang pertama diperiksa.',
-      },
-      {
-        h: 'Riwayat order',
-        p: 'Setiap order yang selesai tercatat di halaman Riwayat, lengkap dengan hasil dan keuntungannya. Riwayat juga ditarik dari akun Stockity, jadi tetap ada meski aplikasi ditutup di tengah jalan.',
-      },
-      {
-        h: 'Menghentikan sesi',
-        p: 'Tekan tombol berhenti di panel kendali. Order yang sedang berjalan tetap diselesaikan sampai hasilnya keluar.',
-      },
-    ],
-  },
-  {
-    id: 'masalah',
-    judul: 'Bila terjadi masalah',
-    ringkas: 'Pemeriksaan cepat sebelum menghubungi bantuan',
-    ikon: 'LifeBuoy',
-    isi: [
-      {
-        h: 'Bot berjalan tapi tidak ada order',
-        p: 'Periksa tulisan statusnya. Mode Fastrade, Indicator, dan Momentum menunggu syarat tertentu terpenuhi lebih dulu, sehingga jeda beberapa menit adalah hal wajar.',
-      },
-      {
-        h: 'Order gagal dikirim',
-        p: 'Umumnya karena nominal di bawah minimum atau di atas maksimum yang diizinkan Stockity. Sesuaikan nominalnya, lalu jalankan ulang.',
-      },
-      {
-        h: 'Mode REAL terkunci',
-        p: 'Mode real hanya terbuka untuk akun yang didaftarkan lewat halaman daftar di aplikasi. Tekan tombol daftar akun pada pesan yang muncul untuk membuatnya.',
-      },
-      {
-        h: 'Masih bermasalah',
-        p: 'Buka halaman Profil dan tekan tombol bantuan di bagian bawah. Layanan tersedia sepanjang waktu.',
-      },
-    ],
-  },
-];
-
 export default function PanduanPage() {
+  const { language } = useLanguage();
+  const teks = panduan(language);
+  const BAGIAN = teks.bagian;
   const [terbuka, setTerbuka] = useState<string | null>('daftar');
 
   return (
@@ -205,12 +35,11 @@ export default function PanduanPage() {
         <header style={S.kepala}>
           <span style={S.lencana}>
             <BookOpen size={13} strokeWidth={2.2} />
-            Panduan
+            {teks.lencana}
           </span>
-          <h1 style={S.judul}>Menjalankan AutoTrade</h1>
+          <h1 style={S.judul}>{teks.judulHalaman}</h1>
           <p style={S.sub}>
-            Mulai dari mendaftar akun sampai bot berjalan. Tidak perlu menyiapkan
-            apa pun lebih dulu — akun Stockity dibuat otomatis saat Anda mendaftar.
+            {teks.pengantar}
           </p>
         </header>
 
@@ -271,19 +100,17 @@ export default function PanduanPage() {
         <div style={S.catatan}>
           <Info size={15} strokeWidth={2} style={{ flexShrink: 0, marginTop: 1, opacity: 0.7 }} />
           <p style={S.catatanTeks}>
-            Bot menjalankan aturan Anda lebih cepat dan lebih konsisten — tetapi ia tidak
-            memperbaiki aturan yang keliru. Aturan yang salah akan diulang dengan rapi.
+            {teks.catatan}
           </p>
         </div>
 
         <a href={TRADE_URL} target="_blank" rel="noopener noreferrer" style={S.tautan}>
-          Buka Stockity di peramban
+          {teks.tautan}
           <ExternalLink size={15} strokeWidth={2} />
         </a>
 
         <p style={S.risiko}>
-          Trading mengandung risiko kehilangan modal. Gunakan hanya dana yang Anda siap
-          kehilangannya.
+          {teks.risiko}
         </p>
       </div>
     </div>
