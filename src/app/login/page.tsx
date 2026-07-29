@@ -442,10 +442,13 @@ const LOGIN_STYLES = `
   .toast-close:hover { color: #fff; }
 
   /* ── Page footer ────────────────────────────────────────────────────── */
+  /* Mengalir normal di bawah kartu, bukan menempel di dasar layar —
+     posisi menempel membuatnya bertumpuk dengan isi kartu saat tingginya
+     berubah, misalnya ketika pesan galat muncul. */
   .page-footer {
     text-align:center; font-size:11.5px; color:var(--text-3); z-index:2;
-    position:absolute; left:0; right:0;
-    bottom:max(16px, calc(env(safe-area-inset-bottom, 0px) + 12px));
+    width:100%; max-width:392px; margin:22px auto 0;
+    padding-bottom:max(4px, env(safe-area-inset-bottom, 0px));
   }
   .page-footer a { color:var(--text-3); font-weight:500; text-decoration:none; transition:color .14s; }
   .page-footer a:hover { color:var(--text-2); }
