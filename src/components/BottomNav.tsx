@@ -4,13 +4,15 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { LayoutDashboard, History, BookOpen, User } from 'lucide-react';
 import { useDarkMode } from '@/lib/DarkModeContext';
+import { useLanguage } from '@/lib';
+import { ui } from '@/lib/uiText';
 import { deviceSession } from '@/lib/engine/deviceSession';
 
 const NAV_ITEMS = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/history',   label: 'Riwayat',   icon: History },
-  { href: '/webview',   label: 'Panduan',   icon: BookOpen },
-  { href: '/profile',   label: 'Profil',    icon: User },
+  { href: '/dashboard', labelKey: 'navDashboard', icon: LayoutDashboard },
+  { href: '/history',   labelKey: 'navHistory',   icon: History },
+  { href: '/webview',   labelKey: 'navGuide',     icon: BookOpen },
+  { href: '/profile',   labelKey: 'navProfile',   icon: User },
 ];
 
 /**
@@ -24,6 +26,7 @@ const NAV_ITEMS = [
 export function BottomNav() {
   const pathname = usePathname();
   const { isDarkMode } = useDarkMode();
+  const { language } = useLanguage();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => { setMounted(true); }, []);
@@ -122,8 +125,7 @@ export function BottomNav() {
             fontSize: 13, lineHeight: 1.5, textAlign: 'center',
           }}
         >
-          Mode masih aktif — jangan tinggalkan halaman ini. Hentikan sesinya dulu
-          sebelum berpindah menu.
+{ui(language, 'sessionRunning')}
         </div>
       )}
 
@@ -159,7 +161,7 @@ export function BottomNav() {
             transition: 'background 0.3s ease',
           }}
         >
-          {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
+          {NAV_ITEMS.map(({ href, labelKey, icon: Icon }) => {
             const isActive = pathname === href || pathname.startsWith(href + '/');
             const col = isActive ? theme.activeColor : theme.itemColor;
 
@@ -176,7 +178,7 @@ export function BottomNav() {
               >
                 <Icon size={20} strokeWidth={isActive ? 2.2 : 1.8} />
                 <span className="bnav-label" style={{ color: col }}>
-                  {label}
+                  {ui(language, labelKey)}
                 </span>
               </Link>
             );

@@ -15,6 +15,7 @@ import {
 import { ChartCard } from '@/components/ChartCard';
 import AssetIcon from '@/components/common/AssetIcon';
 import { storage, isSessionValid, SESSION_KEYS } from '@/lib/storage';
+import { ui } from '@/lib/uiText';
 import { useTradingSettings } from '@/lib/useTradingSettings';
 import { isAiSignalUnlocked, AI_SIGNAL_CONTACT_EMAIL } from '@/lib/aiSignalAccess';
 import { hasRealAccess } from '@/lib/realAccess';
@@ -91,6 +92,8 @@ function getColors(isDark: boolean) {
 // Module-level colors — updated each render by DashboardPage via C = colors
 // Must be `let` so sub-components always get the current theme on re-render
 let C = getColors(true);
+/** Bahasa aktif — dipakai komponen di berkas ini lewat ui() */
+let T_LANG = 'id';
 let T: (k: string) => string = (k: string) => k;
 // Status kunci mode AI Signal — di-set tiap render DashboardPage (pola sama C/T)
 let AI_LOCKED = false;
@@ -1053,7 +1056,7 @@ const OrderInputModal: React.FC<{open:boolean;onClose:()=>void;orders:ScheduleOr
                   cursor:isBusy?'not-allowed':'pointer',opacity:isBusy?0.5:1,
                 }}
               >
-                Ambil Sinyal — 6 jam ke depan
+                {ui(T_LANG, 'fetchSignals')}
               </button>
               <div style={{display:'flex',gap:8}}>
                 <button
@@ -2148,13 +2151,13 @@ const MobileSessionSheet: React.FC<{
 // ═══════════════════════════════════════════
 
 /** Penjelasan singkat tiap mode, ditulis untuk orang awam */
-const MODE_INFO: Record<string, string> = {
-  schedule:  'Anda menuliskan sendiri jam dan arahnya, lalu bot mengeksekusi tepat pada jam tersebut. Cocok bila Anda sudah punya daftar sinyal.',
-  fastrade:  'Bot membandingkan harga dua menit berturut-turut, lalu ikut arah yang sedang menang. Berjalan terus tanpa perlu Anda masukkan sinyal.',
-  ctc:       'Mirip Fastrade, tetapi arahnya dibalik dari hasil perbandingan. Dipakai saat pasar sering berbalik arah setelah bergerak.',
-  aisignal:  'Bot menentukan arah sendiri lalu langsung mengeksekusi. Anda cukup mengatur nominal dan batas berhenti.',
-  indicator: 'Bot membaca indikator seperti RSI atau moving average, lalu masuk saat syaratnya terpenuhi. Anda bisa memilih indikatornya.',
-  momentum:  'Bot mengamati pola candle tertentu, dan hanya masuk ketika pola itu muncul. Ordernya lebih jarang tetapi lebih terpilih.',
+const MODE_INFO_KEY: Record<string, string> = {
+  schedule:  'modeSchedule',
+  fastrade:  'modeFastrade',
+  ctc:       'modeCtc',
+  aisignal:  'modeAiSignal',
+  indicator: 'modeIndicator',
+  momentum:  'modeMomentum',
 };
 
 const ModePickerModal: React.FC<{
@@ -2283,7 +2286,7 @@ const ModePickerModal: React.FC<{
                   margin:'6px 0 2px',padding:'11px 13px',borderRadius:12,
                   background:`${accent}0A`,border:`1px solid ${accent}22`,
                 }}>
-                  <p style={{fontSize:12,lineHeight:1.65,color:C.sub,margin:0}}>{MODE_INFO[v]}</p>
+                  <p style={{fontSize:12,lineHeight:1.65,color:C.sub,margin:0}}>{ui(T_LANG, MODE_INFO_KEY[v] ?? 'modeSchedule')}</p>
                 </div>
               )}
               </div>
@@ -3568,6 +3571,7 @@ export default function DashboardPage() {
   // ✅ FIX: Update module-level C so all sub-components use the correct theme
   C = colors;
   T = t;
+  T_LANG = language;
 
   // ── Currency config dari Stockity API (amounts, unit, min, max per negara) ──
   const [currencyConfig, setCurrencyConfig] = useState<CurrencyConfig>(DEFAULT_CURRENCY_CONFIG);

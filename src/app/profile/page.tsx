@@ -6,6 +6,7 @@ import { api, type ProfileBalance } from '@/lib/api';
 import { resolveAvatarUrl } from '@/lib/userProfileApi';
 import { storage, isSessionValid, sessionLogout, getAuthToken, saveCurrencyWithIso } from '@/lib/storage';
 import { checkIsAdmin, checkIsSuperAdmin } from '@/lib/supabaseRepository';
+import { ui } from '@/lib/uiText';
 import { getAiSignalAllowlist, setAiSignalAllowlist } from '@/lib/aiSignalAccess';
 import { LanguageProvider, useLanguage, formatCurrency, formatDate, Language } from '@/lib';
 import { applyLanguageFromCountry } from '@/lib/LanguageContext';
@@ -1181,7 +1182,7 @@ function ProfilePageContent() {
                 iconBg="linear-gradient(135deg,#F87171,#E11D48)" label={t('profile.logout')} danger onClick={() => setShowLogout(true)} last
               />
             </Card>
-            <HelpButton />
+            <HelpButton lang={language} />
             <p style={{ textAlign: 'center', fontSize: 11, color: 'var(--text-3)', marginTop: 6 }}>STC AutoTrade · v{APP_VERSION_NAME}</p>
           </div>
         </div>
@@ -1361,7 +1362,7 @@ function ProfilePageContent() {
                 last
               />
             </Card>
-            <HelpButton />
+            <HelpButton lang={language} />
             <p style={{ textAlign: 'center', fontSize: 12, color: 'var(--text-3)', paddingBottom: 4 }}>STC AutoTrade · v{APP_VERSION_NAME}</p>
           </div>
 
@@ -1386,7 +1387,7 @@ function ProfilePageContent() {
  * (app_config → whatsappHelpUrl). Keterangan kecil di bawahnya memberi tahu
  * bahwa layanan tersedia sepanjang waktu, agar pengguna tidak ragu menghubungi.
  */
-const HelpButton: React.FC = () => {
+const HelpButton: React.FC<{ lang: string }> = ({ lang }) => {
   const [url, setUrl] = useState<string>('');
 
   useEffect(() => {
@@ -1417,14 +1418,14 @@ const HelpButton: React.FC = () => {
           color: 'var(--text)', fontSize: 14, fontWeight: 600, textDecoration: 'none',
         }}
       >
-        Ada permasalahan?
+        {ui(lang, 'helpButton')}
       </a>
       <p style={{ marginTop: 7, fontSize: 11, color: 'var(--text-3)' }}>
         <span style={{
           display: 'inline-block', width: 6, height: 6, borderRadius: 99,
           background: '#30D158', marginRight: 6, verticalAlign: 'middle',
         }} />
-        Layanan bantuan online 24 jam
+        {ui(lang, 'helpOnline')}
       </p>
     </div>
   );

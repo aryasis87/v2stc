@@ -1,0 +1,149 @@
+// lib/uiText.ts
+// ─────────────────────────────────────────────────────────────────────
+// Teks antarmuka untuk bagian yang ditambahkan setelah berkas terjemahan
+// utama disusun: menu navigasi, tombol bantuan, penjelasan mode, dan
+// pesan-pesan pendek lainnya.
+//
+// Dipisah dari translations.ts agar penambahan teks baru tidak menuntut
+// perubahan tipe yang menyentuh delapan blok bahasa sekaligus.
+// Bahasa yang belum tersedia jatuh ke Inggris.
+// ─────────────────────────────────────────────────────────────────────
+
+type Kamus = Record<string, string>;
+
+const TEKS: Record<string, Kamus> = {
+  en: {
+    navDashboard: 'Dashboard',
+    navHistory: 'History',
+    navGuide: 'Guide',
+    navProfile: 'Profile',
+    sessionRunning: 'A session is still running — please stay on this page. Stop it before switching menus.',
+    helpButton: 'Need help?',
+    helpOnline: 'Support available 24 hours',
+    fetchSignals: 'Get Signals — next 6 hours',
+    modeSchedule: 'You enter the times and directions yourself, and the bot executes exactly at those times. Best if you already have a signal list.',
+    modeFastrade: 'The bot compares prices across two consecutive minutes, then follows the winning direction. Runs continuously without you entering signals.',
+    modeCtc: 'Same as Fastrade, but the direction is reversed. Used when the market often turns after moving.',
+    modeAiSignal: 'The bot decides the direction itself and executes right away. You only set the amount and stop limits.',
+    modeIndicator: 'The bot reads indicators such as RSI or moving averages, and enters when the conditions are met. You choose which indicator.',
+    modeMomentum: 'The bot watches for specific candle patterns and only enters when one appears. Fewer orders, but more selective.',
+  },
+  id: {
+    navDashboard: 'Dashboard',
+    navHistory: 'Riwayat',
+    navGuide: 'Panduan',
+    navProfile: 'Profil',
+    sessionRunning: 'Mode masih aktif — jangan tinggalkan halaman ini. Hentikan sesinya dulu sebelum berpindah menu.',
+    helpButton: 'Ada permasalahan?',
+    helpOnline: 'Layanan bantuan online 24 jam',
+    fetchSignals: 'Ambil Sinyal — 6 jam ke depan',
+    modeSchedule: 'Anda menuliskan sendiri jam dan arahnya, lalu bot mengeksekusi tepat pada jam tersebut. Cocok bila Anda sudah punya daftar sinyal.',
+    modeFastrade: 'Bot membandingkan harga dua menit berturut-turut, lalu ikut arah yang sedang menang. Berjalan terus tanpa perlu Anda masukkan sinyal.',
+    modeCtc: 'Mirip Fastrade, tetapi arahnya dibalik dari hasil perbandingan. Dipakai saat pasar sering berbalik arah setelah bergerak.',
+    modeAiSignal: 'Bot menentukan arah sendiri lalu langsung mengeksekusi. Anda cukup mengatur nominal dan batas berhenti.',
+    modeIndicator: 'Bot membaca indikator seperti RSI atau moving average, lalu masuk saat syaratnya terpenuhi. Anda bisa memilih indikatornya.',
+    modeMomentum: 'Bot mengamati pola candle tertentu, dan hanya masuk ketika pola itu muncul. Ordernya lebih jarang tetapi lebih terpilih.',
+  },
+  ru: {
+    navDashboard: 'Панель',
+    navHistory: 'История',
+    navGuide: 'Руководство',
+    navProfile: 'Профиль',
+    sessionRunning: 'Сессия ещё идёт — не покидайте эту страницу. Сначала остановите её.',
+    helpButton: 'Нужна помощь?',
+    helpOnline: 'Поддержка работает круглосуточно',
+    fetchSignals: 'Получить сигналы — на 6 часов',
+    modeSchedule: 'Вы сами вводите время и направление, а бот исполняет точно в указанное время. Подходит, если список сигналов уже есть.',
+    modeFastrade: 'Бот сравнивает цены двух соседних минут и следует за победившим направлением. Работает без ввода сигналов.',
+    modeCtc: 'Как Fastrade, но направление обратное. Используется, когда рынок часто разворачивается после движения.',
+    modeAiSignal: 'Бот сам определяет направление и сразу исполняет. Вы задаёте только сумму и лимиты остановки.',
+    modeIndicator: 'Бот читает индикаторы, например RSI или скользящие средние, и входит при выполнении условий.',
+    modeMomentum: 'Бот ждёт появления определённых свечных моделей. Сделок меньше, но они более отобранные.',
+  },
+  es: {
+    navDashboard: 'Panel',
+    navHistory: 'Historial',
+    navGuide: 'Guía',
+    navProfile: 'Perfil',
+    sessionRunning: 'Hay una sesión en curso: no salgas de esta página. Deténla antes de cambiar de menú.',
+    helpButton: '¿Necesitas ayuda?',
+    helpOnline: 'Soporte disponible 24 horas',
+    fetchSignals: 'Obtener señales — próximas 6 horas',
+    modeSchedule: 'Tú escribes las horas y direcciones, y el bot ejecuta justo a esa hora. Ideal si ya tienes una lista de señales.',
+    modeFastrade: 'El bot compara precios de dos minutos seguidos y sigue la dirección ganadora. Funciona sin que introduzcas señales.',
+    modeCtc: 'Igual que Fastrade, pero con la dirección invertida. Útil cuando el mercado suele girar tras moverse.',
+    modeAiSignal: 'El bot decide la dirección por sí mismo y ejecuta de inmediato. Solo configuras el importe y los límites.',
+    modeIndicator: 'El bot lee indicadores como RSI o medias móviles y entra cuando se cumplen las condiciones.',
+    modeMomentum: 'El bot espera patrones de velas concretos y solo entra cuando aparecen. Menos órdenes, más selectivas.',
+  },
+  ms: {
+    navDashboard: 'Papan Pemuka',
+    navHistory: 'Sejarah',
+    navGuide: 'Panduan',
+    navProfile: 'Profil',
+    sessionRunning: 'Sesi masih berjalan — jangan tinggalkan halaman ini. Hentikan dahulu sebelum bertukar menu.',
+    helpButton: 'Ada masalah?',
+    helpOnline: 'Sokongan tersedia 24 jam',
+    fetchSignals: 'Ambil Isyarat — 6 jam akan datang',
+    modeSchedule: 'Anda menulis sendiri masa dan arahnya, dan bot melaksanakan tepat pada masa itu. Sesuai jika anda sudah ada senarai isyarat.',
+    modeFastrade: 'Bot membandingkan harga dua minit berturut-turut, lalu mengikut arah yang menang. Berjalan tanpa anda memasukkan isyarat.',
+    modeCtc: 'Sama seperti Fastrade, tetapi arahnya diterbalikkan. Digunakan apabila pasaran kerap berpatah balik.',
+    modeAiSignal: 'Bot menentukan arah sendiri lalu terus melaksanakan. Anda hanya menetapkan jumlah dan had berhenti.',
+    modeIndicator: 'Bot membaca penunjuk seperti RSI atau purata bergerak, dan masuk apabila syaratnya dipenuhi.',
+    modeMomentum: 'Bot menunggu corak lilin tertentu dan hanya masuk apabila ia muncul. Order lebih jarang tetapi lebih terpilih.',
+  },
+  hi: {
+    navDashboard: 'डैशबोर्ड',
+    navHistory: 'इतिहास',
+    navGuide: 'गाइड',
+    navProfile: 'प्रोफ़ाइल',
+    sessionRunning: 'सत्र अभी चल रहा है — कृपया इस पृष्ठ पर बने रहें। मेनू बदलने से पहले इसे रोकें।',
+    helpButton: 'मदद चाहिए?',
+    helpOnline: 'सहायता 24 घंटे उपलब्ध',
+    fetchSignals: 'सिग्नल लें — अगले 6 घंटे',
+    modeSchedule: 'आप स्वयं समय और दिशा दर्ज करते हैं, और बॉट ठीक उसी समय ऑर्डर करता है।',
+    modeFastrade: 'बॉट लगातार दो मिनट की कीमतों की तुलना करता है और जीतने वाली दिशा का अनुसरण करता है।',
+    modeCtc: 'Fastrade जैसा ही, पर दिशा उलटी होती है। तब उपयोगी जब बाज़ार अक्सर पलटता है।',
+    modeAiSignal: 'बॉट स्वयं दिशा तय करता है और तुरंत ऑर्डर करता है। आप केवल राशि और सीमाएँ तय करते हैं।',
+    modeIndicator: 'बॉट RSI या मूविंग एवरेज जैसे संकेतक पढ़ता है और शर्तें पूरी होने पर प्रवेश करता है।',
+    modeMomentum: 'बॉट कुछ विशेष कैंडल पैटर्न की प्रतीक्षा करता है। ऑर्डर कम होते हैं पर अधिक चुने हुए।',
+  },
+  th: {
+    navDashboard: 'แดชบอร์ด',
+    navHistory: 'ประวัติ',
+    navGuide: 'คู่มือ',
+    navProfile: 'โปรไฟล์',
+    sessionRunning: 'เซสชันยังทำงานอยู่ — โปรดอยู่ในหน้านี้ หยุดก่อนเปลี่ยนเมนู',
+    helpButton: 'ต้องการความช่วยเหลือ?',
+    helpOnline: 'ฝ่ายสนับสนุนพร้อมบริการ 24 ชั่วโมง',
+    fetchSignals: 'รับสัญญาณ — 6 ชั่วโมงข้างหน้า',
+    modeSchedule: 'คุณกรอกเวลาและทิศทางเอง แล้วบอทจะเข้าออร์เดอร์ตามเวลานั้น',
+    modeFastrade: 'บอทเปรียบเทียบราคาสองนาทีติดกัน แล้วตามทิศทางที่ชนะ',
+    modeCtc: 'เหมือน Fastrade แต่กลับทิศทาง ใช้เมื่อตลาดมักกลับตัวหลังเคลื่อนไหว',
+    modeAiSignal: 'บอทกำหนดทิศทางเองแล้วเข้าออร์เดอร์ทันที คุณตั้งเพียงจำนวนเงินและขีดจำกัด',
+    modeIndicator: 'บอทอ่านอินดิเคเตอร์ เช่น RSI หรือเส้นค่าเฉลี่ย และเข้าเมื่อเงื่อนไขครบ',
+    modeMomentum: 'บอทรอรูปแบบแท่งเทียนบางอย่าง ออร์เดอร์น้อยกว่าแต่คัดเลือกมากกว่า',
+  },
+  tr: {
+    navDashboard: 'Panel',
+    navHistory: 'Geçmiş',
+    navGuide: 'Rehber',
+    navProfile: 'Profil',
+    sessionRunning: 'Oturum hâlâ çalışıyor — lütfen bu sayfada kalın. Menü değiştirmeden önce durdurun.',
+    helpButton: 'Yardım gerekiyor mu?',
+    helpOnline: 'Destek 24 saat açık',
+    fetchSignals: 'Sinyal Al — sonraki 6 saat',
+    modeSchedule: 'Saatleri ve yönleri kendiniz girersiniz, bot tam o saatte işlem açar.',
+    modeFastrade: 'Bot ardışık iki dakikanın fiyatlarını karşılaştırır ve kazanan yönü izler.',
+    modeCtc: 'Fastrade ile aynı, ancak yön terstir. Piyasa hareketten sonra sık dönüyorsa kullanılır.',
+    modeAiSignal: 'Bot yönü kendi belirler ve hemen işlem açar. Siz yalnızca tutarı ve limitleri ayarlarsınız.',
+    modeIndicator: 'Bot RSI veya hareketli ortalama gibi göstergeleri okur ve koşullar sağlanınca girer.',
+    modeMomentum: 'Bot belirli mum formasyonlarını bekler. Daha az ama daha seçici işlem açar.',
+  },
+};
+
+/** Ambil teks sesuai bahasa; bahasa yang belum tersedia jatuh ke Inggris. */
+export function ui(lang: string | undefined, kunci: string): string {
+  const kamus = (lang && TEKS[lang]) || TEKS.en;
+  return kamus[kunci] ?? TEKS.en[kunci] ?? kunci;
+}
