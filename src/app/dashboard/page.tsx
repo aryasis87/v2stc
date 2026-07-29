@@ -4954,18 +4954,18 @@ export default function DashboardPage() {
                 <div style={{width:44,height:44,borderRadius:14,display:'flex',alignItems:'center',justifyContent:'center',background:`${C.cyan}14`,border:`1px solid ${C.cyan}30`,flexShrink:0}}>
                   <RefreshCw style={{width:20,height:20,color:C.cyan}}/>
                 </div>
-                <p style={{fontSize:16,fontWeight:700,color:C.text}}>Lanjutkan sesi sebelumnya?</p>
+                <p style={{fontSize:16,fontWeight:700,color:C.text}}>{ui(T_LANG, 'resumeTitle')}</p>
               </div>
               <p style={{fontSize:13,color:C.sub,lineHeight:1.55,marginBottom:14}}>
-                Ada sesi yang belum selesai: <strong style={{color:C.text}}>{resumePrompt.orders} order</strong> tersisa,
-                P&amp;L berjalan <strong style={{color:resumePrompt.pnl>=0?C.sky:C.coral}}>{resumePrompt.pnl>=0?'+':''}{FMT(resumePrompt.pnl/100)}</strong>.
-                Melanjutkan akan mempertahankan P&amp;L tersebut (batas Stop Loss/Profit tetap dihitung dari awal sesi).
+                <strong style={{color:C.text}}>{resumePrompt.orders}</strong> {ui(T_LANG, 'resumeOrdersLeft')},
+                {ui(T_LANG, 'resumeRunningPnl')} <strong style={{color:resumePrompt.pnl>=0?C.sky:C.coral}}>{resumePrompt.pnl>=0?'+':''}{FMT(resumePrompt.pnl/100)}</strong>.
+                {ui(T_LANG, 'resumeNote')}
               </p>
               <div style={{display:'flex',gap:8}}>
                 <button
                   onClick={()=>{ deviceSession.discardSaved(); resumeDataRef.current=null; setResumePrompt(null); }}
                   style={{flex:1,padding:'11px 0',borderRadius:12,background:C.card2,border:`1px solid ${C.bdr}`,cursor:'pointer',fontSize:13,fontWeight:600,color:C.sub}}>
-                  Mulai baru
+                  {ui(T_LANG, 'resumeStartNew')}
                 </button>
                 <button
                   onClick={async()=>{
@@ -4977,10 +4977,10 @@ export default function DashboardPage() {
                         saved.config,
                         { sessionPnL: saved.sessionPnL, startedAt: saved.startedAt },
                       );
-                    }catch(e:any){ setError(e?.message ?? 'Gagal melanjutkan sesi'); }
+                    }catch(e:any){ setError(e?.message ?? ui(T_LANG, 'resumeFailed')); }
                   }}
                   style={{flex:1.2,padding:'11px 0',borderRadius:12,background:C.cyan,border:'none',cursor:'pointer',fontSize:13,fontWeight:700,color:'#06251b'}}>
-                  Lanjutkan
+                  {ui(T_LANG, 'resumeContinue')}
                 </button>
               </div>
             </div>

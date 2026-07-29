@@ -14,7 +14,10 @@ const AUTH_CHECK_RETRIES    = 5;
 const AUTH_CHECK_DELAY      = 400;
 const INITIAL_DELAY         = 200;
 const CAPACITOR_EXTRA_DELAY = 300;
-const SPLASH_MIN_DURATION   = 4500;
+// Batas bawah tampilan layar pembuka. Pemeriksaan sesi sendiri sudah
+// ditunggu sampai selesai, jadi nilai ini hanya mencegah logo berkedip
+// sekejap. 4,5 detik membuat aplikasi terasa lambat padahal sudah siap.
+const SPLASH_MIN_DURATION   = 1800;
 
 // ── Durasi countdown (detik) sebelum auto-logout saat diblokir ───────────────
 const BLOCKED_COUNTDOWN_SEC = 10;
