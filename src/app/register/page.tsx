@@ -274,8 +274,13 @@ function RegisterContent() {
           deviceId:    devId,
         };
       } else {
-        // Web: masih lewat backend selama VPS hidup
-        res = await api.register(email.trim(), password, 'IDR');
+        // Pendaftaran WAJIB lewat aplikasi. Bila dijalankan dari browser,
+        // pembuatan akun akan berasal dari IP VPS — persis yang ingin
+        // dihindari agar akun afiliasi tidak terlihat memakai satu IP bersama.
+        throw new Error(
+          'Pendaftaran akun baru hanya dapat dilakukan lewat aplikasi Android. ' +
+          'Unduh aplikasinya lebih dulu, lalu daftar dari sana.',
+        );
       }
       setSuccess(true);
       await finishRegister(res);
