@@ -174,7 +174,10 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
               paddingTop: 'env(safe-area-inset-top, 0px)',
               paddingBottom: isPublic
                 ? 'env(safe-area-inset-bottom, 0px)'
-                : 'calc(56px + env(safe-area-inset-bottom, 0px))',
+                // Navigasi melayang 10px di atas dasar layar dengan tinggi 56px,
+                // jadi ruang yang dibutuhkan 66px — bukan 56px. Ditambah sedikit
+                // napas agar isi terakhir tidak menempel di bibir navigasi.
+                : 'calc(76px + env(safe-area-inset-bottom, 0px))',
               opacity: ready ? 1 : 0,
               transition: ready ? 'opacity 0.35s ease-out' : 'none',
             } as React.CSSProperties}
