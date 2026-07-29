@@ -177,6 +177,10 @@ function RegisterContent() {
   const [showPass, setShowPass] = useState(false);
   const [showConf, setShowConf] = useState(false);
   const [loading, setLoading]   = useState(false);
+  // Pendaftaran hanya mungkin lewat aplikasi. Diperiksa sekali saat halaman
+  // dipasang agar pengguna diberi tahu di depan, bukan setelah mengisi form.
+  const [webOnly, setWebOnly] = useState(false);
+  useEffect(() => { setWebOnly(!isNativeApp()); }, []);
   const [error, setError]       = useState('');
   const [errorKey, setErrorKey] = useState(0);
   const [focused, setFocused]   = useState<'email' | 'password' | 'confirm' | null>(null);
@@ -322,6 +326,36 @@ function RegisterContent() {
               <p className="rg-sub">{txt.sub}</p>
             </div>
 
+            {webOnly ? (
+              <div style={{
+                padding: '20px 18px', borderRadius: 16, textAlign: 'center',
+                background: 'rgba(255,255,255,0.05)',
+                border: '1px solid rgba(255,255,255,0.12)',
+              }}>
+                <p style={{ fontSize: 15, fontWeight: 600, color: '#fff', marginBottom: 8 }}>
+                  Pendaftaran hanya lewat aplikasi
+                </p>
+                <p style={{ fontSize: 13.5, lineHeight: 1.65, color: 'rgba(235,235,245,0.62)', marginBottom: 18 }}>
+                  Akun baru dibuat langsung dari aplikasi Android agar akun Anda aman sejak awal.
+                </p>
+                <a
+                  href="https://stcautotrade.id/StcAutoTrade.apk"
+                  style={{
+                    display: 'block', padding: '14px 20px', borderRadius: 14,
+                    background: '#4caf50', color: '#06210b', fontSize: 15, fontWeight: 700,
+                    textDecoration: 'none',
+                  }}
+                >
+                  Unduh Aplikasi Android
+                </a>
+                <a href="/login/" style={{
+                  display: 'inline-block', marginTop: 14, fontSize: 13.5,
+                  color: 'rgba(235,235,245,0.62)', textDecoration: 'none',
+                }}>
+                  Sudah punya akun? Masuk
+                </a>
+              </div>
+            ) : (
             <form onSubmit={handleSubmit} noValidate>
               <div className="rg-group">
                 {/* EMAIL */}
@@ -423,6 +457,7 @@ function RegisterContent() {
                 {loading ? txt.submitting : txt.submit}
               </button>
             </form>
+            )}
 
             <div className="rg-bottom">
               {txt.have} <Link href="/login">{txt.signinLink}</Link>
