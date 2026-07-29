@@ -8,6 +8,12 @@
 // disediakan di bagian bawah.
 
 import { useState } from 'react';
+import { BookOpen, Rocket, UserPlus, Layers, TrendingUp, ShieldCheck, Activity, LifeBuoy, ChevronDown, Info, ExternalLink } from 'lucide-react';
+
+/** Peta ikon per bagian — dipisah agar data panduan tetap berupa teks biasa */
+const IKON: Record<string, typeof BookOpen> = {
+  Rocket, UserPlus, Layers, TrendingUp, ShieldCheck, Activity, LifeBuoy,
+};
 
 const TRADE_URL = 'https://stockity.id';
 
@@ -15,14 +21,16 @@ type Bagian = {
   id: string;
   judul: string;
   ringkas: string;
+  ikon: string;
   isi: { h: string; p: string }[];
 };
 
 const BAGIAN: Bagian[] = [
   {
     id: 'siap',
-    judul: '1 · Sebelum menjalankan bot',
+    judul: 'Sebelum menjalankan bot',
     ringkas: 'Tiga hal yang harus beres lebih dulu',
+    ikon: 'Rocket',
     isi: [
       {
         h: 'Masuk dengan akun Stockity',
@@ -39,9 +47,38 @@ const BAGIAN: Bagian[] = [
     ],
   },
   {
+    id: 'daftar',
+    judul: 'Mendaftar akun baru',
+    ringkas: 'Wajib lewat aplikasi — tidak bisa dari peramban',
+    ikon: 'UserPlus',
+    isi: [
+      {
+        h: 'Buka halaman daftar',
+        p: 'Dari layar masuk, tekan tautan daftar di bagian bawah. Bila Anda sedang melihat pesan mode REAL terkunci, tekan tombol Daftar Akun pada pesan itu — Anda akan keluar dari akun lama lalu diarahkan ke halaman daftar.',
+      },
+      {
+        h: 'Isi email dan kata sandi',
+        p: 'Gunakan email yang bisa Anda buka saat itu juga. Kata sandi sebaiknya khusus untuk akun ini, jangan yang dipakai di layanan lain — akun ini berkaitan langsung dengan uang.',
+      },
+      {
+        h: 'Tulis nama sesuai dokumen identitas',
+        p: 'Nama akan dicocokkan saat verifikasi dan saat menarik dana ke rekening. Perbedaan satu huruf pun bisa membuat penarikan tertahan di kemudian hari.',
+      },
+      {
+        h: 'Akun langsung siap dipakai',
+        p: 'Setelah pendaftaran berhasil, Anda otomatis masuk dan mode REAL terbuka. Mulailah tetap dari akun demo untuk menguji pengaturan Anda lebih dulu.',
+      },
+      {
+        h: 'Kenapa harus lewat aplikasi',
+        p: 'Pendaftaran dari peramban tidak diizinkan agar akun Anda terhubung langsung dari perangkat sendiri sejak awal. Bila membuka halaman daftar di peramban, yang muncul hanya tautan unduh aplikasi.',
+      },
+    ],
+  },
+  {
     id: 'mode',
-    judul: '2 · Memilih mode',
+    judul: 'Memilih mode',
     ringkas: 'Enam mode, masing-masing punya cara kerja berbeda',
+    ikon: 'Layers',
     isi: [
       {
         h: 'Signal',
@@ -71,8 +108,9 @@ const BAGIAN: Bagian[] = [
   },
   {
     id: 'martingale',
-    judul: '3 · Mengatur martingale',
+    judul: 'Mengatur martingale',
     ringkas: 'Fitur paling berisiko — pahami sebelum menyalakannya',
+    ikon: 'TrendingUp',
     isi: [
       {
         h: 'Max Step',
@@ -94,8 +132,9 @@ const BAGIAN: Bagian[] = [
   },
   {
     id: 'batas',
-    judul: '4 · Memasang batas otomatis',
+    judul: 'Memasang batas otomatis',
     ringkas: 'Bagian yang membuat bot berhenti tanpa perlu diawasi',
+    ikon: 'ShieldCheck',
     isi: [
       {
         h: 'Stop Loss',
@@ -113,8 +152,9 @@ const BAGIAN: Bagian[] = [
   },
   {
     id: 'jalan',
-    judul: '5 · Menjalankan dan memantau',
+    judul: 'Menjalankan dan memantau',
     ringkas: 'Yang terjadi setelah tombol mulai ditekan',
+    ikon: 'Activity',
     isi: [
       {
         h: 'Jangan tinggalkan halaman',
@@ -136,8 +176,9 @@ const BAGIAN: Bagian[] = [
   },
   {
     id: 'masalah',
-    judul: '6 · Bila terjadi masalah',
+    judul: 'Bila terjadi masalah',
     ringkas: 'Pemeriksaan cepat sebelum menghubungi bantuan',
+    ikon: 'LifeBuoy',
     isi: [
       {
         h: 'Bot berjalan tapi tidak ada order',
@@ -164,47 +205,79 @@ export default function PanduanPage() {
 
   return (
     <div style={S.halaman}>
+      {/* Sorotan lembut di belakang kepala halaman — memberi kedalaman
+          tanpa mengganggu keterbacaan. */}
+      <div style={S.cahaya} aria-hidden="true" />
+
       <div style={S.wadah}>
         <header style={S.kepala}>
-          <h1 style={S.judul}>Panduan AutoTrade</h1>
+          <span style={S.lencana}>
+            <BookOpen size={13} strokeWidth={2.2} />
+            Panduan
+          </span>
+          <h1 style={S.judul}>Menjalankan AutoTrade</h1>
           <p style={S.sub}>
-            Cara memakai bot dari awal sampai berjalan — pengaturan, pilihan mode,
-            batas otomatis, dan apa yang harus diperiksa bila ada yang tidak beres.
+            Dari mendaftar sampai bot berjalan — beserta apa yang perlu diperiksa
+            bila ada yang tidak beres.
           </p>
         </header>
 
-        {BAGIAN.map((b) => {
-          const buka = terbuka === b.id;
-          return (
-            <section key={b.id} style={S.kartu}>
-              <button
-                type="button"
-                onClick={() => setTerbuka(buka ? null : b.id)}
-                style={S.tombolBagian}
-                aria-expanded={buka}
-              >
-                <span style={{ flex: 1, textAlign: 'left' }}>
-                  <span style={S.judulBagian}>{b.judul}</span>
-                  <span style={S.ringkasBagian}>{b.ringkas}</span>
-                </span>
-                <span style={{ ...S.panah, transform: buka ? 'rotate(180deg)' : 'none' }}>⌄</span>
-              </button>
+        <div style={S.daftar}>
+          {BAGIAN.map((b, idx) => {
+            const buka = terbuka === b.id;
+            const Ikon = IKON[b.ikon] ?? BookOpen;
+            return (
+              <section key={b.id} style={{ ...S.kartu, ...(buka ? S.kartuAktif : null) }}>
+                <button
+                  type="button"
+                  onClick={() => setTerbuka(buka ? null : b.id)}
+                  style={S.tombol}
+                  aria-expanded={buka}
+                >
+                  <span style={{ ...S.ikonKotak, ...(buka ? S.ikonKotakAktif : null) }}>
+                    <Ikon size={17} strokeWidth={2} />
+                  </span>
 
-              {buka && (
-                <div style={S.isi}>
-                  {b.isi.map((i) => (
-                    <div key={i.h} style={S.butir}>
-                      <p style={S.butirJudul}>{i.h}</p>
-                      <p style={S.butirTeks}>{i.p}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </section>
-          );
-        })}
+                  <span style={S.tengah}>
+                    <span style={S.barisJudul}>
+                      <span style={S.nomor}>{String(idx + 1).padStart(2, '0')}</span>
+                      <span style={S.judulBagian}>{b.judul}</span>
+                    </span>
+                    <span style={S.ringkasBagian}>{b.ringkas}</span>
+                  </span>
+
+                  <ChevronDown
+                    size={17}
+                    strokeWidth={2.2}
+                    style={{
+                      flexShrink: 0,
+                      opacity: 0.45,
+                      transform: buka ? 'rotate(180deg)' : 'none',
+                      transition: 'transform 0.25s ease',
+                    }}
+                  />
+                </button>
+
+                {buka && (
+                  <div style={S.isi}>
+                    {b.isi.map((it, n) => (
+                      <div key={it.h} style={{ ...S.butir, ...(n === b.isi.length - 1 ? S.butirAkhir : null) }}>
+                        <span style={S.titik} aria-hidden="true" />
+                        <div>
+                          <p style={S.butirJudul}>{it.h}</p>
+                          <p style={S.butirTeks}>{it.p}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </section>
+            );
+          })}
+        </div>
 
         <div style={S.catatan}>
+          <Info size={15} strokeWidth={2} style={{ flexShrink: 0, marginTop: 1, opacity: 0.7 }} />
           <p style={S.catatanTeks}>
             Bot menjalankan aturan Anda lebih cepat dan lebih konsisten — tetapi ia tidak
             memperbaiki aturan yang keliru. Aturan yang salah akan diulang dengan rapi.
@@ -213,6 +286,7 @@ export default function PanduanPage() {
 
         <a href={TRADE_URL} target="_blank" rel="noopener noreferrer" style={S.tautan}>
           Buka Stockity di peramban
+          <ExternalLink size={15} strokeWidth={2} />
         </a>
 
         <p style={S.risiko}>
@@ -226,62 +300,157 @@ export default function PanduanPage() {
 
 const S: Record<string, React.CSSProperties> = {
   halaman: {
+    position: 'relative',
     minHeight: '100%',
     background: 'var(--bg)',
     color: 'var(--text)',
     overflowY: 'auto',
     WebkitOverflowScrolling: 'touch' as never,
   },
-  wadah: { maxWidth: 620, margin: '0 auto', padding: '20px 18px 40px' },
-  kepala: { marginBottom: 22 },
-  judul: { fontSize: 26, fontWeight: 700, letterSpacing: '-0.02em', marginBottom: 8 },
-  sub: { fontSize: 14, lineHeight: 1.65, color: 'var(--text-2)' },
+  cahaya: {
+    position: 'absolute',
+    top: -140,
+    left: '50%',
+    transform: 'translateX(-50%)',
+    width: 420,
+    height: 300,
+    borderRadius: '50%',
+    background: 'var(--blue)',
+    opacity: 0.09,
+    filter: 'blur(90px)',
+    pointerEvents: 'none',
+  },
+  wadah: { position: 'relative', maxWidth: 640, margin: '0 auto', padding: '26px 16px 44px' },
+
+  kepala: { marginBottom: 26, textAlign: 'center' },
+  lencana: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 6,
+    padding: '5px 12px',
+    borderRadius: 99,
+    fontSize: 11.5,
+    fontWeight: 600,
+    letterSpacing: '0.02em',
+    color: 'var(--blue)',
+    background: 'var(--blue-dim)',
+    border: '1px solid var(--blue-bdr)',
+    marginBottom: 14,
+  },
+  judul: { fontSize: 27, fontWeight: 700, letterSpacing: '-0.025em', lineHeight: 1.15, marginBottom: 9 },
+  sub: { fontSize: 14, lineHeight: 1.65, color: 'var(--text-2)', maxWidth: 420, margin: '0 auto' },
+
+  daftar: { display: 'flex', flexDirection: 'column', gap: 10 },
   kartu: {
     background: 'var(--s1)',
     border: '1px solid var(--bdr)',
     borderRadius: 18,
-    marginBottom: 12,
     overflow: 'hidden',
+    transition: 'border-color 0.22s ease, box-shadow 0.22s ease',
   },
-  tombolBagian: {
+  kartuAktif: {
+    borderColor: 'var(--blue-bdr)',
+    boxShadow: '0 1px 2px rgba(0,0,0,0.04), 0 14px 34px -22px rgba(0,0,0,0.45)',
+  },
+
+  tombol: {
     display: 'flex',
     alignItems: 'center',
-    gap: 12,
+    gap: 13,
     width: '100%',
-    padding: '16px 18px',
+    padding: '15px 16px',
     background: 'transparent',
     border: 'none',
     cursor: 'pointer',
     color: 'var(--text)',
     textAlign: 'left',
   },
-  judulBagian: { display: 'block', fontSize: 15.5, fontWeight: 650, marginBottom: 3 },
-  ringkasBagian: { display: 'block', fontSize: 12.5, lineHeight: 1.5, color: 'var(--text-3)' },
-  panah: { fontSize: 18, color: 'var(--text-3)', transition: 'transform 0.2s', flexShrink: 0 },
-  isi: { padding: '0 18px 6px' },
-  butir: { paddingBottom: 16 },
-  butirJudul: { fontSize: 14, fontWeight: 600, marginBottom: 5 },
-  butirTeks: { fontSize: 13.5, lineHeight: 1.75, color: 'var(--text-2)' },
+  ikonKotak: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    flexShrink: 0,
+    background: 'var(--s2)',
+    color: 'var(--text-2)',
+    transition: 'background 0.22s ease, color 0.22s ease',
+  },
+  ikonKotakAktif: { background: 'var(--blue-dim)', color: 'var(--blue)' },
+
+  tengah: { flex: 1, minWidth: 0 },
+  barisJudul: { display: 'flex', alignItems: 'baseline', gap: 8 },
+  nomor: {
+    fontSize: 11,
+    fontWeight: 700,
+    letterSpacing: '0.06em',
+    color: 'var(--text-3)',
+    flexShrink: 0,
+  },
+  judulBagian: { fontSize: 15, fontWeight: 650, letterSpacing: '-0.01em' },
+  ringkasBagian: {
+    display: 'block',
+    fontSize: 12.5,
+    lineHeight: 1.5,
+    color: 'var(--text-3)',
+    marginTop: 3,
+    paddingLeft: 26,
+  },
+
+  isi: { padding: '2px 16px 4px 67px' },
+  butir: {
+    display: 'flex',
+    gap: 10,
+    paddingBottom: 15,
+    marginBottom: 15,
+    borderBottom: '1px solid var(--bdr)',
+  },
+  butirAkhir: { borderBottom: 'none', marginBottom: 4 },
+  titik: {
+    width: 5,
+    height: 5,
+    borderRadius: 99,
+    background: 'var(--blue)',
+    opacity: 0.55,
+    flexShrink: 0,
+    marginTop: 7,
+  },
+  butirJudul: { fontSize: 13.5, fontWeight: 650, marginBottom: 4, letterSpacing: '-0.005em' },
+  butirTeks: { fontSize: 13, lineHeight: 1.75, color: 'var(--text-2)' },
+
   catatan: {
-    marginTop: 6,
-    padding: '14px 16px',
-    borderRadius: 14,
+    display: 'flex',
+    gap: 10,
+    marginTop: 18,
+    padding: '14px 15px',
+    borderRadius: 15,
     background: 'var(--s2)',
     border: '1px solid var(--bdr)',
+    color: 'var(--text-2)',
   },
-  catatanTeks: { fontSize: 13, lineHeight: 1.7, color: 'var(--text-2)' },
+  catatanTeks: { fontSize: 12.5, lineHeight: 1.7, color: 'var(--text-2)' },
+
   tautan: {
-    display: 'block',
-    marginTop: 16,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginTop: 12,
     padding: '14px 18px',
-    borderRadius: 14,
-    textAlign: 'center',
+    borderRadius: 15,
     fontSize: 14.5,
     fontWeight: 600,
     color: 'var(--text)',
-    background: 'var(--s2)',
+    background: 'var(--s1)',
     border: '1px solid var(--bdr)',
     textDecoration: 'none',
   },
-  risiko: { marginTop: 16, fontSize: 11.5, lineHeight: 1.65, color: 'var(--text-3)', textAlign: 'center' },
+  risiko: {
+    marginTop: 16,
+    fontSize: 11.5,
+    lineHeight: 1.65,
+    color: 'var(--text-3)',
+    textAlign: 'center',
+  },
 };
