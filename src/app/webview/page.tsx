@@ -1,10 +1,10 @@
 'use client';
 
-// Halaman Panduan Trading.
+// Halaman Panduan AutoTrade.
 //
 // Sebelumnya halaman ini membuka Stockity di peramban bawaan. Isinya diganti
-// panduan singkat karena pengguna lebih membutuhkan pegangan sebelum
-// menjalankan bot daripada pintasan ke platform — tautan ke Stockity tetap
+// panduan pemakaian bot karena pengguna lebih membutuhkan penjelasan cara
+// menjalankannya daripada pintasan ke platform — tautan ke Stockity tetap
 // disediakan di bagian bawah.
 
 import { useState } from 'react';
@@ -20,117 +20,156 @@ type Bagian = {
 
 const BAGIAN: Bagian[] = [
   {
-    id: 'dasar',
-    judul: 'Yang perlu dipahami lebih dulu',
-    ringkas: 'Dua angka yang menentukan hasil jangka panjang Anda',
+    id: 'siap',
+    judul: '1 · Sebelum menjalankan bot',
+    ringkas: 'Tiga hal yang harus beres lebih dulu',
     isi: [
       {
-        h: 'Menang 50% tetap rugi',
-        p: 'Saat kalah, seluruh nominal order hilang. Saat menang, yang kembali hanya sebagian — umumnya sekitar 80%. Karena itu menang sama seringnya dengan kalah bukanlah keadaan seimbang, melainkan merugi.',
+        h: 'Masuk dengan akun Stockity',
+        p: 'Gunakan email dan kata sandi akun Stockity Anda. Bot bekerja pada akun itu langsung — tidak ada akun terpisah yang perlu dibuat.',
       },
       {
-        h: 'Ambang impasnya sekitar 56%',
-        p: 'Pada pembayaran 80%, Anda perlu menang sekitar 56% dari seluruh order sekadar untuk kembali modal. Setiap target keuntungan yang tidak memperhitungkan angka ini sedang melewatkan bagian terpenting.',
+        h: 'Pilih akun Demo atau Real',
+        p: 'Pemilihan akun ada di panel pengaturan dashboard. Saldo demo bersifat virtual dan tidak berhubungan dengan dana sungguhan. Selalu mulai dari demo.',
       },
       {
-        h: 'Deret kalah pasti datang',
-        p: 'Kalah lima kali berturut-turut muncul kira-kira sekali dalam 32 rangkaian. Dalam ratusan order, itu bukan kemungkinan — hanya soal kapan. Modal Anda harus sanggup melewatinya.',
-      },
-    ],
-  },
-  {
-    id: 'modal',
-    judul: 'Mengatur modal',
-    ringkas: 'Yang menentukan bukan besarnya, tapi daya tahannya',
-    isi: [
-      {
-        h: 'Tetapkan ukuran order sebagai persentase',
-        p: 'Umumnya 1–5% dari modal untuk satu order. Persentase menyesuaikan diri saat modal naik atau turun, sehingga daya tahan Anda tetap sama. Nominal tetap justru diam-diam membesar risikonya ketika modal menyusut.',
-      },
-      {
-        h: 'Hitung daya tahannya',
-        p: 'Order 2% dari modal berarti Anda sanggup salah 50 kali. Order 25% hanya sanggup 4 kali — dan deret kalah empat beruntun adalah kejadian yang wajar dalam sepekan.',
-      },
-      {
-        h: 'Jangan perbesar order setelah kalah',
-        p: 'Cara itu menukar banyak kemenangan kecil dengan satu kekalahan besar. Terasa berhasil di awal justru karena deret panjang memang jarang — dan rasa berhasil itu terbentuk tepat sebelum kejadian yang menghapusnya.',
+        h: 'Pilih aset dan nominal',
+        p: 'Tekan kartu aset untuk memilih pasangan yang ingin ditradingkan, lalu isi nominal per order. Perhatikan persentase pembayaran aset — semakin tinggi biasanya semakin sulit ditebak.',
       },
     ],
   },
   {
     id: 'mode',
-    judul: 'Memilih mode',
-    ringkas: 'Enam cara menjalankan aturan Anda',
+    judul: '2 · Memilih mode',
+    ringkas: 'Enam mode, masing-masing punya cara kerja berbeda',
     isi: [
       {
         h: 'Signal',
-        p: 'Anda menuliskan sendiri jam dan arahnya, bot mengeksekusi tepat pada jam tersebut. Cocok bila Anda sudah punya daftar sinyal.',
+        p: 'Anda memasukkan sendiri daftar jam dan arahnya, misal "10:03 b". Bot mengeksekusi tepat pada jam itu. Tombol Ambil Sinyal mengisi daftar otomatis untuk enam jam ke depan.',
       },
       {
-        h: 'Fastrade FTT & CTC',
-        p: 'Bot membandingkan harga dua menit berturut-turut lalu mengikuti arah yang menang. CTC memakai arah kebalikannya, untuk pasar yang sering berbalik.',
+        h: 'Fastrade FTT',
+        p: 'Bot mengambil harga pada dua pergantian menit berturut-turut, lalu masuk mengikuti arah yang menang. Order pertama baru muncul sekitar dua menit setelah start.',
+      },
+      {
+        h: 'Fastrade CTC',
+        p: 'Cara membacanya sama dengan FTT, tetapi arah ordernya dibalik. Dipakai saat pasar sering berbalik setelah bergerak.',
       },
       {
         h: 'AI Signal',
-        p: 'Bot menentukan arah sendiri lalu langsung mengeksekusi. Anda cukup mengatur nominal dan batas berhenti.',
+        p: 'Bot menentukan arah sendiri pada tiap pergantian menit lalu langsung mengeksekusi. Anda cukup mengatur nominal dan batas berhenti.',
       },
       {
-        h: 'Indicator & Momentum',
-        p: 'Indicator membaca indikator teknikal seperti RSI. Momentum menunggu pola candle tertentu — ordernya lebih jarang tetapi lebih terpilih.',
+        h: 'Indicator',
+        p: 'Bot membaca indikator teknikal seperti RSI atau moving average, dan hanya masuk ketika syaratnya terpenuhi. Jenis indikator serta periodenya bisa Anda pilih.',
+      },
+      {
+        h: 'Momentum',
+        p: 'Bot menunggu pola candle tertentu muncul, seperti doji atau candle sabit. Ordernya paling jarang di antara semua mode, tetapi paling terpilih.',
+      },
+    ],
+  },
+  {
+    id: 'martingale',
+    judul: '3 · Mengatur martingale',
+    ringkas: 'Fitur paling berisiko — pahami sebelum menyalakannya',
+    isi: [
+      {
+        h: 'Max Step',
+        p: 'Batas berapa kali order boleh diperbesar setelah kalah. Angka ini wajib diisi. Tanpa batas, satu rangkaian kekalahan dapat menghabiskan modal dalam hitungan menit.',
+      },
+      {
+        h: 'Multiplier',
+        p: 'Pengali nominal pada tiap langkah. Perlu diingat, kebutuhan modal tumbuh berlipat sementara peluang menang tidak berubah sama sekali.',
+      },
+      {
+        h: 'Always Signal',
+        p: 'Bila aktif, kerugian yang belum tertutup dibawa ke sinyal berikutnya alih-alih dilanjutkan langsung. Pastikan Anda paham cara kerjanya sebelum menyalakannya di akun real.',
+      },
+      {
+        h: 'Hitung mundur dari modal',
+        p: 'Tentukan berapa langkah yang sanggup ditanggung modal Anda, lalu pakai angka itu — bukan angka yang Anda inginkan.',
       },
     ],
   },
   {
     id: 'batas',
-    judul: 'Memasang batas',
-    ringkas: 'Bagian yang paling sering diabaikan, dan paling menentukan',
+    judul: '4 · Memasang batas otomatis',
+    ringkas: 'Bagian yang membuat bot berhenti tanpa perlu diawasi',
     isi: [
       {
-        h: 'Batas kerugian harian',
-        p: 'Angka pasti yang menghentikan sesi hari itu. Batas ini yang memastikan hari buruk tetap menjadi hari buruk, bukan bencana.',
+        h: 'Stop Loss',
+        p: 'Bot berhenti sendiri saat kerugian sesi mencapai angka ini. Isi kolomnya sebelum menekan mulai — inilah pengaman utama Anda.',
       },
       {
-        h: 'Batas keuntungan harian',
-        p: 'Sama pentingnya dan lebih sering dilupakan. Tanpa titik berhenti di atas, keuntungan cenderung dikembalikan ke pasar pada sesi yang sama.',
+        h: 'Stop Profit',
+        p: 'Bot berhenti saat keuntungan mencapai target. Sama pentingnya, karena keuntungan yang dibiarkan berjalan sering kembali ke pasar pada sesi yang sama.',
       },
       {
-        h: 'Tetapkan sebelum sesi dimulai',
-        p: 'Aturan yang dibuat saat tenang jauh lebih masuk akal daripada yang disusun saat sedang menanggung rugi. Biarkan bot yang menjalankannya, supaya tidak bisa ditawar saat Anda tertekan.',
+        h: 'Kenapa harus otomatis',
+        p: 'Keputusan berhenti di tengah kekalahan beruntun adalah keputusan tersulit yang ada. Batas yang dijalankan bot tidak bisa ditawar saat Anda sedang tertekan.',
       },
     ],
   },
   {
-    id: 'demo',
-    judul: 'Mulai dari mode demo',
-    ringkas: 'Ukurannya bukan saldo naik, melainkan aturan yang ditaati',
+    id: 'jalan',
+    judul: '5 · Menjalankan dan memantau',
+    ringkas: 'Yang terjadi setelah tombol mulai ditekan',
     isi: [
       {
-        h: 'Samakan dengan rencana nyata',
-        p: 'Setel saldo demo sebesar modal yang benar-benar akan dipakai, dan jalankan ukuran order yang sama. Kerugian yang tidak terasa tidak melatih apa pun.',
+        h: 'Jangan tinggalkan halaman',
+        p: 'Selama sesi berjalan, tetaplah di halaman dashboard. Aplikasi akan menahan perpindahan menu dan mengingatkan Anda bila mencoba pergi.',
       },
       {
-        h: 'Kumpulkan cukup banyak order',
-        p: 'Sepuluh order tidak membuktikan apa pun. Pindah ke dana nyata setelah Anda bisa menjalankan aturan yang sama sepanjang rangkaian panjang, termasuk saat deret kalah datang.',
+        h: 'Membaca status',
+        p: 'Tulisan status menunjukkan apa yang sedang dikerjakan bot — menunggu candle, menunggu batas menit, atau mengeksekusi. Bila diam terlalu lama, status itu yang pertama diperiksa.',
       },
       {
-        h: 'Catat alasan, bukan hanya hasil',
-        p: 'Satu kalimat cukup: kenapa Anda mengambil order itu. Catatan inilah yang mengubah pengalaman menjadi keterampilan.',
+        h: 'Riwayat order',
+        p: 'Setiap order yang selesai tercatat di halaman Riwayat, lengkap dengan hasil dan keuntungannya. Riwayat juga ditarik dari akun Stockity, jadi tetap ada meski aplikasi ditutup di tengah jalan.',
+      },
+      {
+        h: 'Menghentikan sesi',
+        p: 'Tekan tombol berhenti di panel kendali. Order yang sedang berjalan tetap diselesaikan sampai hasilnya keluar.',
+      },
+    ],
+  },
+  {
+    id: 'masalah',
+    judul: '6 · Bila terjadi masalah',
+    ringkas: 'Pemeriksaan cepat sebelum menghubungi bantuan',
+    isi: [
+      {
+        h: 'Bot berjalan tapi tidak ada order',
+        p: 'Periksa tulisan statusnya. Mode Fastrade, Indicator, dan Momentum menunggu syarat tertentu terpenuhi lebih dulu, sehingga jeda beberapa menit adalah hal wajar.',
+      },
+      {
+        h: 'Order gagal dikirim',
+        p: 'Umumnya karena nominal di bawah minimum atau di atas maksimum yang diizinkan Stockity. Sesuaikan nominalnya, lalu jalankan ulang.',
+      },
+      {
+        h: 'Mode REAL terkunci',
+        p: 'Mode real hanya terbuka untuk akun yang didaftarkan lewat halaman daftar di aplikasi. Tekan tombol daftar akun pada pesan yang muncul untuk membuatnya.',
+      },
+      {
+        h: 'Masih bermasalah',
+        p: 'Buka halaman Profil dan tekan tombol bantuan di bagian bawah. Layanan tersedia sepanjang waktu.',
       },
     ],
   },
 ];
 
 export default function PanduanPage() {
-  const [terbuka, setTerbuka] = useState<string | null>('dasar');
+  const [terbuka, setTerbuka] = useState<string | null>('siap');
 
   return (
     <div style={S.halaman}>
       <div style={S.wadah}>
         <header style={S.kepala}>
-          <h1 style={S.judul}>Panduan Trading</h1>
+          <h1 style={S.judul}>Panduan AutoTrade</h1>
           <p style={S.sub}>
-            Ringkasan singkat sebelum menjalankan bot. Membaca ini lebih dulu menghemat
-            lebih banyak daripada strategi mana pun.
+            Cara memakai bot dari awal sampai berjalan — pengaturan, pilihan mode,
+            batas otomatis, dan apa yang harus diperiksa bila ada yang tidak beres.
           </p>
         </header>
 
