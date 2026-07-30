@@ -554,11 +554,14 @@ function ThemeWrapper({ children }: { children: React.ReactNode }) {
       } else {
         document.body.setAttribute('data-theme', 'light');
       }
-      document.body.style.background = bgColor;
+      // 'important' dipakai agar tema selalu menang atas aturan stylesheet
+      // mana pun — termasuk latar pra-hidrasi di layout.tsx yang memakai
+      // !important. Gaya inline biasa kalah melawan !important dari stylesheet.
+      document.body.style.setProperty('background', bgColor, 'important');
       // <html> ikut diwarnai: area di bawah konten — termasuk yang terlihat di
       // belakang navigasi bawah dan di bagian safe-area — dicat oleh <html>,
       // bukan <body>. Tanpa ini latarnya tertinggal gelap saat mode terang.
-      document.documentElement.style.background = bgColor;
+      document.documentElement.style.setProperty('background', bgColor, 'important');
 
       const metaTags = document.querySelectorAll('meta[name="theme-color"]');
       if (metaTags.length > 0) {

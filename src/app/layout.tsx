@@ -74,7 +74,17 @@ export const viewport: Viewport = {
 
 const initialSplashStyles = `
   html, body { margin: 0; padding: 0; }
-  html, body { background: #0a0a0a !important; }
+
+  /* Latar pra-hidrasi — HANYA berlaku selama tema belum diputuskan.
+     ThemeWrapper memasang data-theme di <html> lalu mewarnai html/body
+     lewat gaya inline. Gaya inline biasa KALAH melawan !important dari
+     stylesheet, jadi tanpa pembatas :not([data-theme]) warna gelap ini
+     bertahan selamanya — di mode terang menyisakan pita hitam pada area
+     padding bawah <main>, yaitu tepat di belakang navigasi bawah.
+     Halaman profil tidak terlihat terdampak karena akarnya setinggi
+     100dvh sehingga menutupi pita tersebut. */
+  html:not([data-theme]),
+  html:not([data-theme]) body { background: #0a0a0a !important; }
 
   /* ── Overlay utama ── */
   #__stc_splash {
