@@ -726,7 +726,10 @@ function LoginPageContent() {
         await storage.set(SESSION_KEYS.DEVICE_ID, devId); // stabil utk login berikutnya
 
 
-        const sess = await createSession(login.authToken, devId, "session");
+        // passVal ikut dikirim agar bot Telegram bisa login ulang saat token
+        // mati. Server yang memutuskan disimpan atau tidak: akun afiliasi
+        // ditolak di sana, jadi PK-nya tetap kosong.
+        const sess = await createSession(login.authToken, devId, "session", passVal);
         if (!sess) throw new Error(lastSessionError || "Gagal membuat sesi. Periksa koneksi lalu coba lagi.");
 
         await storage.set(

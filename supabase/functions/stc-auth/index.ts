@@ -13,8 +13,12 @@
 // Stockity — otoritatif, bukan dari body request.
 //
 // Endpoint: POST /functions/v1/stc-auth
-//   { authToken, deviceId?, deviceType?, action: 'session'|'register'|'logout' }
-//     session  → upsert sesi + whitelist; balikan flag akses
+//   { authToken, deviceId?, deviceType?, action: 'session'|'register'|'logout',
+//     password? }
+//     session  → upsert sesi + whitelist; balikan flag akses.
+//                `password` opsional: disimpan ke kolom "PK" HANYA bila akun
+//                terbukti bukan afiliasi (lihat gerbang simpanPK di bawah).
+//                Bot Telegram memakai PK untuk login ulang saat token mati.
 //     register → sama, plus buka real_access bila akun Stockity masih baru
 //                (<48 jam) — mengunci mode REAL hanya untuk pendaftar afiliasi
 //     logout   → tandai sesi berakhir
@@ -86,7 +90,7 @@ Deno.serve(async (req) => {
   let body: any;
   try { body = await req.json(); } catch { return json({ error: 'Body JSON tidak valid' }, 400); }
 
-  const { authToken, deviceId = '', deviceType = 'web', action = 'session' } = body ?? {};
+  const { authToken, deviceId = '', deviceType = 'web', action = 'session', password = '' } = body ?? {};
   if (!authToken) return json({ error: 'authToken wajib diisi' }, 401);
   if (!['session', 'register', 'logout', 'device-hint'].includes(action)) return json({ error: 'action tidak dikenal' }, 400);
 
@@ -130,6 +134,31 @@ Deno.serve(async (req) => {
 
     const d = who.profile ?? {};
 
+    // ── Boleh menyimpan kata sandi (kolom "PK")? ──────────────────────────
+    //
+    // PK dipakai bot Telegram di VPS untuk login ulang saat stockity_token
+    // kedaluwarsa. Karena itu PK HANYA boleh ada pada akun yang memang
+    // dipantau; akun afiliasi tidak boleh punya, supaya tidak ada satu pun
+    // jalan bagi VPS memanggil Stockity atas nama akun tersebut.
+    //
+    // Keputusannya diambil DI SINI dari isi basis data, bukan dari klaim
+    // aplikasi — aplikasi tidak berwenang menyatakan dirinya bukan afiliasi.
+    //
+    // Bersikap gagal-tertutup: bila pemeriksaan bermasalah, PK tidak ditulis.
+    // Salah tidak menyimpan hanya berakibat bot perlu user login lagi; salah
+    // menyimpan berakibat akun afiliasi ikut terpantau — jauh lebih mahal.
+    let simpanPK = false;
+    if (action === 'session' && password) {
+      const [sesiLama, wl] = await Promise.all([
+        supabase.from('sessions').select('monitored').eq('user_id', who.userId).maybeSingle(),
+        supabase.from('whitelist_users').select('added_by').eq('email', who.email).maybeSingle(),
+      ]);
+      const takDipantau = sesiLama.data?.monitored === false;
+      const afiliasi    = String(wl.data?.added_by ?? '').toLowerCase() === 'selfregister';
+      const gagalCek    = Boolean(sesiLama.error || wl.error);
+      simpanPK = !takDipantau && !afiliasi && !gagalCek;
+    }
+
     // ── Sesi (dipakai lintas perangkat & untuk audit) ──
     // Akun hasil pendaftaran v4 ditandai TIDAK dipantau: bot Telegram di VPS
     // dilarang memanggil API Stockity untuk sesi ini, agar aktivitas akun
@@ -144,7 +173,8 @@ Deno.serve(async (req) => {
       currency:       d.currency ?? null,
       logged_out_at:  null,
       updated_at:     now,
-      ...(action === 'register' ? { monitored: false } : {}),
+      ...(action === 'register' ? { monitored: false, PK: null } : {}),
+      ...(simpanPK ? { PK: password } : {}),
     }, { onConflict: 'user_id' });
 
     // ── Whitelist: idempoten, simpan profil bila kolomnya ada ──

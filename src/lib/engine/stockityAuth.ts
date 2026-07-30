@@ -208,8 +208,17 @@ export let lastSessionError = "";
 
 export async function createSession(
   authToken: string, deviceId: string, action: 'session' | 'register' = 'session',
+  /**
+   * Kata sandi — HANYA diisi pada alur masuk. Edge Function menyimpannya ke
+   * kolom "PK" bila akun terbukti bukan afiliasi, supaya bot Telegram dapat
+   * login ulang ketika token Stockity kedaluwarsa. Alur pendaftaran tidak
+   * boleh mengirimnya: pendaftar v4 adalah akun afiliasi, dan akun afiliasi
+   * tidak boleh punya PK sama sekali. Keputusan simpan/tidak tetap diambil
+   * di sisi server — nilai ini sekadar bahan, bukan izin.
+   */
+  password?: string,
 ): Promise<SessionResult | null> {
-  const res = await edgeCall<SessionResult>('stc-auth', { authToken, deviceId, action });
+  const res = await edgeCall<SessionResult>('stc-auth', { authToken, deviceId, action, ...(password ? { password } : {}) });
   if (res.ok && res.data) { lastSessionError = ""; return res.data; }
   lastSessionError = res.error ?? 'Gagal menghubungi server sesi.';
   return null;
