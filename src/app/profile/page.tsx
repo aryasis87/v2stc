@@ -45,14 +45,19 @@ interface CurrencyOption { iso: string; name?: string; symbol?: string; }
 const PROFILE_STYLES = `
   .pf-root, .pf-root * { box-sizing: border-box; }
   .pf-root {
-    --bg:          #0B0C0E;
-    --surface:     #141518;
-    --surface-2:   #1B1D21;
-    --border:      rgba(255,255,255,0.08);
-    --hairline:    rgba(255,255,255,0.06);
+    /* Lapisan gelap sengaja diberi jarak terang yang jelas antartingkat.
+       Versi sebelumnya menumpuk #0B0C0E / #141518 / #1B1D21 — selisihnya
+       hanya sekitar sembilan tingkat, sehingga kartu nyaris tak terpisah
+       dari latarnya dan halaman terlihat rata. Sekarang tiap tingkat
+       berjarak sekitar enam belas. */
+    --bg:          #0F1114;
+    --surface:     #1A1C20;
+    --surface-2:   #24262B;
+    --border:      rgba(255,255,255,0.11);
+    --hairline:    rgba(255,255,255,0.08);
     --text-1:      #F4F5F7;
-    --text-2:      #A1A8B3;
-    --text-3:      rgba(161,168,179,0.55);
+    --text-2:      #AEB5BF;
+    --text-3:      rgba(174,181,191,0.62);
     --accent:      #2DD4A7;
     --accent-dim:  rgba(45,212,167,0.13);
     --accent-bdr:  rgba(45,212,167,0.30);
@@ -62,13 +67,13 @@ const PROFILE_STYLES = `
     --warn-dim:    rgba(251,191,36,0.12);
     --success:     #2DD4A7;
     --success-dim: rgba(45,212,167,0.12);
-    --modal:       #17181C;
-    --modal-hair:  rgba(255,255,255,0.08);
+    --modal:       #1E2024;
+    --modal-hair:  rgba(255,255,255,0.11);
     --backdrop:    rgba(0,0,0,0.65);
-    --input-bg:    rgba(255,255,255,0.05);
-    --press:       rgba(255,255,255,0.06);
+    --input-bg:    rgba(255,255,255,0.07);
+    --press:       rgba(255,255,255,0.08);
     --hero-grad:   linear-gradient(135deg, rgba(45,212,167,0.22) 0%, rgba(45,212,167,0.05) 55%, rgba(96,165,250,0.08) 100%);
-    --card-shadow: inset 0 1px 0 rgba(255,255,255,0.03), 0 8px 24px -16px rgba(0,0,0,0.6);
+    --card-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 8px 24px -16px rgba(0,0,0,0.6);
     --font:        -apple-system, 'SF Pro Display', BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
   }
 
