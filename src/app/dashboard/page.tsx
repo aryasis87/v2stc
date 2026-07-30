@@ -56,12 +56,19 @@ function getColors(isDark: boolean) {
   // Border hairline netral (bukan hijau tebal), surface berlapis halus,
   // aksen emerald yang lebih kalem, hierarki teks lebih jelas.
   return {
-    // Surfaces — near-black berlapis (dark) / abu sangat terang (light)
-    bg:    isDark ? '#0B0C0E' : '#F6F7F9',
-    card:  isDark ? '#141518' : '#FFFFFF',
-    card2: isDark ? '#1B1D21' : '#F1F3F5',
+    // Penanda tema. Sebelumnya mode gelap dideteksi dengan membandingkan
+    // C.bg terhadap hex tertentu — cara itu diam-diam rusak begitu warna
+    // latarnya disetel ulang, jadi statusnya dibawa langsung di sini.
+    dark:  isDark,
+    // Surfaces — gelap berlapis (dark) / abu sangat terang (light).
+    // Jarak antartingkat sengaja sekitar enam belas: versi lama menumpuk
+    // #0B0C0E/#141518/#1B1D21 yang selisihnya hanya sembilan, sehingga
+    // kartu nyaris menyatu dengan latar dan halaman terlihat rata.
+    bg:    isDark ? '#0F1114' : '#F6F7F9',
+    card:  isDark ? '#1A1C20' : '#FFFFFF',
+    card2: isDark ? '#24262B' : '#F1F3F5',
     // Borders — hairline netral tipis; aktif = emerald halus
-    bdr:   isDark ? 'rgba(255,255,255,0.08)' : '#E6E8EB',
+    bdr:   isDark ? 'rgba(255,255,255,0.11)' : '#E6E8EB',
     bdrAct:isDark ? 'rgba(45,212,167,0.55)'  : 'rgba(5,150,105,0.45)',
     // Primary accent — emerald bersih
     cyan:  isDark ? '#2DD4A7' : '#059669',
@@ -83,9 +90,9 @@ function getColors(isDark: boolean) {
     pinkd: isDark ? 'rgba(244,114,182,0.14)' : 'rgba(190,24,93,0.08)',
     // Text — hierarki lebih jelas, netral (bukan kebiruan)
     text:  isDark ? '#F4F5F7' : '#0F172A',
-    sub:   isDark ? '#A1A8B3' : '#475569',
-    muted: isDark ? 'rgba(161,168,179,0.62)' : '#94A3B8',
-    faint: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(2,6,23,0.035)',
+    sub:   isDark ? '#AEB5BF' : '#475569',
+    muted: isDark ? 'rgba(174,181,191,0.66)' : '#94A3B8',
+    faint: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(2,6,23,0.035)',
   };
 }
 
@@ -580,7 +587,7 @@ const PickerModal: React.FC<{open:boolean;onClose:()=>void;title:string;options:
    * baris opsi bersih dengan inset padding (tanpa garis kiri/kotak radio) —
    * terpilih = bg tint + ikon Check accent; hover = faint (kelas dsh-row).
    */
-  const modalBg = isDark ? '#1B1D21' : '#ffffff';
+  const modalBg = isDark ? '#24262B' : '#ffffff';
   const iconBg  = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(2,6,23,0.045)';
   const iconColor = isDark ? 'rgba(255,255,255,0.65)' : 'rgba(0,0,0,0.55)';
 
@@ -851,7 +858,7 @@ const OrderInputModal: React.FC<{open:boolean;onClose:()=>void;orders:ScheduleOr
         background:C.bg,
         borderRadius:24,
         border:`1px solid ${C.bdr}`,
-        boxShadow:`0 32px 80px rgba(0,0,0,${C.bg==='#0B0C0E'?'0.70':'0.18'}), 0 8px 24px rgba(0,0,0,${C.bg==='#0B0C0E'?'0.50':'0.10'})`,
+        boxShadow:`0 32px 80px rgba(0,0,0,${C.dark?'0.70':'0.18'}), 0 8px 24px rgba(0,0,0,${C.dark?'0.50':'0.10'})`,
         overflow:'hidden',
         animation:'slide-up 0.28s cubic-bezier(0.32,0.72,0,1)',
       }}>
@@ -2097,7 +2104,7 @@ const MobileSessionSheet: React.FC<{
         background:C.bg,
         borderRadius:24,
         border:`1px solid ${C.bdr}`,
-        boxShadow:`0 32px 80px rgba(0,0,0,${C.bg==='#0B0C0E'?'0.70':'0.18'}), 0 8px 24px rgba(0,0,0,${C.bg==='#0B0C0E'?'0.50':'0.10'})`,
+        boxShadow:`0 32px 80px rgba(0,0,0,${C.dark?'0.70':'0.18'}), 0 8px 24px rgba(0,0,0,${C.dark?'0.50':'0.10'})`,
         overflow:'hidden',
         animation:'slide-up 0.28s cubic-bezier(0.32,0.72,0,1)',
       }}>
@@ -2188,7 +2195,7 @@ const ModePickerModal: React.FC<{
         borderRadius:20,
         border:`1px solid ${C.bdr}`,
         animation:'slide-up 0.28s cubic-bezier(0.32,0.72,0,1)',
-        boxShadow:`0 20px 60px rgba(0,0,0,${C.bg==='#0B0C0E'?'0.60':'0.14'})`,
+        boxShadow:`0 20px 60px rgba(0,0,0,${C.dark?'0.60':'0.14'})`,
         maxHeight:'85dvh',
         overflowY:'auto',
       }}>
@@ -2628,7 +2635,7 @@ const MartingaleDialog: React.FC<{
       <div style={{
         position:'relative',width:'100%',maxWidth:420,maxHeight:'88dvh',
         background:C.card, borderRadius:20,border:`1px solid ${C.bdr}`,
-        boxShadow:`0 20px 60px rgba(0,0,0,${C.bg==='#0B0C0E'?'0.55':'0.12'})`,
+        boxShadow:`0 20px 60px rgba(0,0,0,${C.dark?'0.55':'0.12'})`,
         overflow:'hidden',display:'flex',flexDirection:'column',
         animation:'slide-up 0.22s cubic-bezier(0.32,0.72,0,1)',
       }}>
@@ -2946,7 +2953,7 @@ const SettingsCard: React.FC<{
                       <>
                         <div style={{ position:'fixed',inset:0,zIndex:55 }} onClick={()=>setAmtDrop(false)}/>
                         {/* Dropdown look baru: kartu melayang berpadding, baris rounded, check icon */}
-                        <div style={{ position:'absolute',right:0,marginTop:6,zIndex:60,minWidth:176,borderRadius:14,overflow:'hidden',padding:5,background:isDarkMode?'#1B1D21':'#fff',border:`1px solid ${C.bdr}`,boxShadow:isDarkMode?'0 16px 48px -12px rgba(0,0,0,0.65)':'0 16px 48px -16px rgba(15,23,42,0.30)',animation:'slide-up 0.15s ease' }}>
+                        <div style={{ position:'absolute',right:0,marginTop:6,zIndex:60,minWidth:176,borderRadius:14,overflow:'hidden',padding:5,background:isDarkMode?'#24262B':'#fff',border:`1px solid ${C.bdr}`,boxShadow:isDarkMode?'0 16px 48px -12px rgba(0,0,0,0.65)':'0 16px 48px -16px rgba(15,23,42,0.30)',animation:'slide-up 0.15s ease' }}>
                           {QUICK_AMOUNTS_DYN.map(a=>{
                             const isAct=amount===a;
                             return (

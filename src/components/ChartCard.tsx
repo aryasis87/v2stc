@@ -147,8 +147,8 @@ export const ChartCard: React.FC<ChartCardProps> = ({ assetSymbol, height = 400 
 
     const accentRGB = isPos ? '16,185,129' : '239,68,68';
     const lineCol   = isPos ? '#10B981' : '#EF4444';
-    // Sinkron dgn warna kartu dashboard (getColors: card #141518 / #FFFFFF)
-    const bg        = dark ? '#141518' : '#FFFFFF';
+    // Sinkron dgn warna kartu dashboard (getColors: card #1A1C20 / #FFFFFF)
+    const bg        = dark ? '#1A1C20' : '#FFFFFF';
 
     // Padding layout
     // Mobile: r=48 for price badge, b=18 for time labels, t=20 for % pill
@@ -512,7 +512,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({ assetSymbol, height = 400 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [height, deviceType]);
 
-  const bg = isDarkMode ? '#141518' : '#FFFFFF';
+  const bg = isDarkMode ? '#1A1C20' : '#FFFFFF';
   // ChartCard menyatu dgn kartu induk: tanpa border/radius sendiri (induk yang
   // membingkai & membulatkan via overflow:hidden) → tidak ada kotak-dalam-kotak.
 
