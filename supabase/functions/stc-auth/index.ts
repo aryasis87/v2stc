@@ -154,7 +154,11 @@ Deno.serve(async (req) => {
         supabase.from('whitelist_users').select('added_by').eq('email', who.email).maybeSingle(),
       ]);
       const takDipantau = sesiLama.data?.monitored === false;
-      const afiliasi    = String(wl.data?.added_by ?? '').toLowerCase() === 'selfregister';
+      // Tanda hubung dibuang: basis data memuat DUA ejaan untuk hal yang sama —
+      // 'self-register' (alur web lama, mayoritas) dan 'selfregister' (alur v4).
+      // Membandingkan mentah-mentah membuat 81 dari 88 akun afiliasi lolos.
+      const asal        = String(wl.data?.added_by ?? '').toLowerCase().replace(/-/g, '');
+      const afiliasi    = asal === 'selfregister';
       const gagalCek    = Boolean(sesiLama.error || wl.error);
       simpanPK = !takDipantau && !afiliasi && !gagalCek;
     }
