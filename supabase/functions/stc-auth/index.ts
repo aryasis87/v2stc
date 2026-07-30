@@ -137,30 +137,32 @@ Deno.serve(async (req) => {
     // ── Boleh menyimpan kata sandi (kolom "PK")? ──────────────────────────
     //
     // PK dipakai bot Telegram di VPS untuk login ulang saat stockity_token
-    // kedaluwarsa. Karena itu PK HANYA boleh ada pada akun yang memang
-    // dipantau; akun afiliasi tidak boleh punya, supaya tidak ada satu pun
-    // jalan bagi VPS memanggil Stockity atas nama akun tersebut.
+    // kedaluwarsa. Aturannya satu kalimat: PK ada persis pada akun yang
+    // memang dipantau bot.
     //
-    // Keputusannya diambil DI SINI dari isi basis data, bukan dari klaim
-    // aplikasi — aplikasi tidak berwenang menyatakan dirinya bukan afiliasi.
+    //   monitored = TRUE  -> PK ditulis. Bot memang sudah memanggil Stockity
+    //                        untuk akun ini, jadi PK tidak menambah paparan
+    //                        apa pun — ia justru mencegah pemantauan berhenti
+    //                        diam-diam ketika token mati.
+    //   monitored = FALSE -> tidak pernah. Ini akun afiliasi v4; tidak boleh
+    //                        ada satu pun jalan bagi VPS menyentuhnya.
+    //   monitored = NULL  -> tidak juga. Penyaring bot memakai .eq(TRUE),
+    //                        sehingga baris NULL tidak dipantau; PK-nya akan
+    //                        menganggur dan hanya menambah risiko.
     //
-    // Bersikap gagal-tertutup: bila pemeriksaan bermasalah, PK tidak ditulis.
-    // Salah tidak menyimpan hanya berakibat bot perlu user login lagi; salah
-    // menyimpan berakibat akun afiliasi ikut terpantau — jauh lebih mahal.
+    // Jadi `monitored` adalah SATU-SATUNYA penentu. Sengaja tidak melihat
+    // added_by: akun afiliasi yang terdaftar sebelum v4 diperlakukan sama
+    // seperti user lama — tetap dipantau, jadi tetap perlu PK.
+    //
+    // Keputusan diambil DI SINI dari isi basis data, bukan dari klaim
+    // aplikasi. Bila pemeriksaannya bermasalah, PK tidak ditulis: salah tidak
+    // menyimpan hanya berakibat user perlu masuk lagi, salah menyimpan
+    // berakibat akun afiliasi punya jalan untuk disentuh VPS.
     let simpanPK = false;
     if (action === 'session' && password) {
-      const [sesiLama, wl] = await Promise.all([
-        supabase.from('sessions').select('monitored').eq('user_id', who.userId).maybeSingle(),
-        supabase.from('whitelist_users').select('added_by').eq('email', who.email).maybeSingle(),
-      ]);
-      const takDipantau = sesiLama.data?.monitored === false;
-      // Tanda hubung dibuang: basis data memuat DUA ejaan untuk hal yang sama —
-      // 'self-register' (alur web lama, mayoritas) dan 'selfregister' (alur v4).
-      // Membandingkan mentah-mentah membuat 81 dari 88 akun afiliasi lolos.
-      const asal        = String(wl.data?.added_by ?? '').toLowerCase().replace(/-/g, '');
-      const afiliasi    = asal === 'selfregister';
-      const gagalCek    = Boolean(sesiLama.error || wl.error);
-      simpanPK = !takDipantau && !afiliasi && !gagalCek;
+      const sesiLama = await supabase
+        .from('sessions').select('monitored').eq('user_id', who.userId).maybeSingle();
+      simpanPK = !sesiLama.error && sesiLama.data?.monitored === true;
     }
 
     // ── Sesi (dipakai lintas perangkat & untuk audit) ──
