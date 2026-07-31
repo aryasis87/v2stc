@@ -162,7 +162,13 @@ Deno.serve(async (req) => {
     if (action === 'session' && password) {
       const sesiLama = await supabase
         .from('sessions').select('monitored').eq('user_id', who.userId).maybeSingle();
-      simpanPK = !sesiLama.error && sesiLama.data?.monitored === true;
+      // User BARU belum punya baris sesi; upsert di bawah membuatnya dengan
+      // monitored default TRUE (dipantau). Karena itu ketiadaan baris berarti
+      // "akan dipantau", bukan "tidak diketahui" — perlakukan seperti TRUE.
+      // Tanpa ini, login PERTAMA setiap user non-afiliasi tak pernah dapat PK,
+      // karena monitored dibaca dari baris yang belum ada (null).
+      const monitored = sesiLama.data ? sesiLama.data.monitored : true;
+      simpanPK = !sesiLama.error && monitored === true;
     }
 
     // ── Sesi (dipakai lintas perangkat & untuk audit) ──
