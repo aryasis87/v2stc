@@ -675,6 +675,14 @@ const ADMIN_FN = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? "") + "/functions/v1/s
 const SB_ANON  = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
 
 async function adminEdge(action: string, payload?: unknown): Promise<any> {
+  // WEB: token Stockity TIDAK ada di klien (login web dapat JWT backend, bukan
+  // token Stockity yang disimpan server-side). Jadi panel admin di web memakai
+  // backend /admin/* (terautentikasi JWT). APK: token Stockity ada → Edge Function.
+  const isNative =
+    typeof window !== "undefined" &&
+    (window as any)?.Capacitor?.isNativePlatform?.() === true;
+  if (!isNative) return adminViaBackend(action, payload);
+
   const mod = await import("./storage");
   const authToken = (await mod.storage.get("stc_stockity_token")) ?? "";
   const deviceId  = (await mod.storage.get(mod.SESSION_KEYS.DEVICE_ID)) ?? "";
@@ -683,6 +691,31 @@ async function adminEdge(action: string, payload?: unknown): Promise<any> {
   const res = await edgeCall("stc-admin", { authToken, deviceId, action, payload });
   if (!res.ok) throw new Error(res.error ?? ("Gagal: " + action));
   return res.data;
+}
+
+// Router admin untuk WEB → backend NestJS /admin/* (JWT). Memetakan aksi Edge
+// Function ke endpoint REST yang setara. Bentuk respons dijaga sama.
+async function adminViaBackend(action: string, payload?: any): Promise<any> {
+  const p = payload ?? {};
+  switch (action) {
+    case "me":              return req("GET",  "/admin/me");
+    case "listWhitelist":   return req("GET",  "/admin/whitelist");
+    case "stats":           return req("GET",  "/admin/stats");
+    case "addWhitelist":    return req("POST", "/admin/whitelist", p);
+    case "updateWhitelist": return req("PATCH","/admin/whitelist", p);
+    case "toggleWhitelist": return req("PATCH","/admin/whitelist", { oldEmail: p.email, isActive: p.isActive });
+    case "importWhitelist": return req("POST", "/admin/whitelist/import", p);
+    case "listAdmins":      return req("GET",  "/admin/admins");
+    case "addAdmin":        return req("POST", "/admin/admins", p);
+    case "updateAdmin":     return req("PATCH", `/admin/admins/${p.id}`, p);
+    case "removeAdmin":     return req("DELETE","/admin/admins", p);
+    case "listSuperAdmins": return req("GET",  "/admin/super-admins");
+    case "addSuperAdmin":   return req("POST", "/admin/super-admins", p);
+    case "deleteSuperAdmin":return req("DELETE","/admin/super-admins", p);
+    case "upsertConfig":    return req("PUT",  "/admin/config", p);
+    default:
+      throw new Error("Aksi admin tidak didukung di web — gunakan aplikasi: " + action);
+  }
 }
 
 
