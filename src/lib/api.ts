@@ -1020,8 +1020,11 @@ export const api = {
   aiSignalReceive:      (trend: string, executionTime: number, originalMessage?: string) =>
     req<{ message: string }>('POST', '/aisignal/signal', { trend, executionTime, originalMessage: originalMessage ?? '' }),
 
-  /** GET /aisignal/logs — riwayat eksekusi AI Signal */
-  aiSignalLogs: (limit = 100) => req<AISignalLog[]>('GET', `/aisignal/logs?limit=${limit}`),
+  /** GET /aisignal/logs — riwayat eksekusi AI Signal.
+   * v4: mode AI Signal dieksekusi di perangkat → lognya di `mode_logs` (mode 'AISIGNAL'),
+   * sama pola dgn indicator/momentum. Akun terpantau-VPS tetap baca dari backend. */
+  aiSignalLogs: async (limit = 100): Promise<AISignalLog[]> =>
+    (await deviceAuth()) ? deviceModeLogs('AISIGNAL', limit) : req<AISignalLog[]>('GET', `/aisignal/logs?limit=${limit}`),
 
   /** GET /aisignal/info — deskripsi fitur dan endpoint AI Signal */
   aiSignalInfo: () => req<{

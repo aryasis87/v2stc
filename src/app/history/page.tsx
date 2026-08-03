@@ -1,7 +1,7 @@
 'use client';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { api, type ExecutionLog, type FastradeLog, type IndicatorLog, type MomentumLog } from '@/lib/api';
+import { api, type ExecutionLog, type FastradeLog, type IndicatorLog, type MomentumLog, type AISignalLog } from '@/lib/api';
 import { storage } from '@/lib/storage';
 import { fetchDeviceLogs } from '@/lib/engine/deviceLogs';
 import { LanguageProvider, useLanguage, formatDate, formatTime, Language } from '@/lib';
@@ -15,13 +15,13 @@ import {
 // ─────────────────────────────────────────────
 // TYPES
 // ─────────────────────────────────────────────
-type LogType      = 'all' | 'schedule' | 'fastrade' | 'ctc' | 'indicator' | 'momentum';
+type LogType      = 'all' | 'schedule' | 'fastrade' | 'ctc' | 'aisignal' | 'indicator' | 'momentum';
 type ResultFilter = 'all' | 'win' | 'loss' | 'draw';
 type DateFilter   = 'all' | 'today' | 'week' | 'month';
 
 interface CombinedLog {
   id: string;
-  type: 'schedule' | 'fastrade' | 'ctc' | 'indicator' | 'momentum';
+  type: 'schedule' | 'fastrade' | 'ctc' | 'aisignal' | 'indicator' | 'momentum';
   time: string;
   trend: 'call' | 'put';
   amount: number;
@@ -55,7 +55,7 @@ function getP(dark: boolean) {
         // Accent — emerald, selaras dashboard & bottom nav
         accent: '#2DD4A7',
         green:  '#2DD4A7', red: '#FB7185', amber: '#FBBF24',
-        blue:   '#60A5FA', purple: '#C084FC', pink: '#F472B6', grey: '#98989F',
+        blue:   '#60A5FA', purple: '#C084FC', pink: '#F472B6', grey: '#98989F', orange: '#FB923C',
       }
     : {
         bg:     '#F6F7F9',
@@ -73,7 +73,7 @@ function getP(dark: boolean) {
         shadow: '0 1px 0 rgba(2,6,23,0.03), 0 2px 12px rgba(2,6,23,0.04)',
         accent: '#059669',
         green:  '#059669', red: '#E11D48', amber: '#B45309',
-        blue:   '#2563EB', purple: '#7C3AED', pink: '#BE185D', grey: '#8E8E93',
+        blue:   '#2563EB', purple: '#7C3AED', pink: '#BE185D', grey: '#8E8E93', orange: '#EA580C',
       };
 }
 type Palette = ReturnType<typeof getP>;
@@ -153,6 +153,7 @@ function HistoryPageContent() {
       schedule: t('history.signal'),
       fastrade: t('history.fastTrade'),
       ctc: t('history.ctc'),
+      aisignal: 'AI Signal',
       indicator: t('history.indicator'),
       momentum: t('history.momentum'),
     };
@@ -216,10 +217,11 @@ function HistoryPageContent() {
       // v4: mode schedule kini dieksekusi di perangkat → lognya ada di DB
       // (tabel mode_logs), bukan di memori VPS. Gabungkan kedua sumber lalu
       // buang duplikat berdasarkan id agar riwayat lama tetap tampil.
-      const [scheduleApi, scheduleDb, fastradeLogs, indicatorLogs, momentumLogs] = await Promise.all([
+      const [scheduleApi, scheduleDb, fastradeLogs, aiSignalLogs, indicatorLogs, momentumLogs] = await Promise.all([
         api.scheduleLogs(200).catch(() => [] as ExecutionLog[]),
         fetchDeviceLogs('schedule', 200).catch(() => [] as ExecutionLog[]),
         api.fastradeLogs(200).catch(() => [] as FastradeLog[]),
+        api.aiSignalLogs(200).catch(() => [] as AISignalLog[]),
         api.indicatorLogs(200).catch(() => [] as IndicatorLog[]),
         api.momentumLogs(200).catch(() => [] as MomentumLog[]),
       ]);
@@ -249,6 +251,17 @@ function HistoryPageContent() {
           martingaleStep: l.martingaleStep,
           executedAt: l.executedAt,
           note: l.note,
+        })),
+        ...aiSignalLogs.map((l): CombinedLog => ({
+          id: l.id, type: 'aisignal',
+          time: fmtTime(l.executedAt),
+          trend: (l.trend as 'call' | 'put') || 'call',
+          amount: l.amount || 0,
+          result: l.result as any,
+          profit: l.profit,
+          martingaleStep: l.martingaleStep,
+          executedAt: l.executedAt,
+          note: l.note ?? l.assetName,
         })),
         ...indicatorLogs.map((l): CombinedLog => ({
           id: l.id, type: 'indicator',
@@ -351,6 +364,7 @@ function HistoryPageContent() {
     schedule:  { label: t('history.signal'),    color: P.green,  bg: `${P.green}1A`  },
     fastrade:  { label: t('history.fastTrade'), color: P.blue,   bg: `${P.blue}1A`   },
     ctc:       { label: t('history.ctc'),       color: P.purple, bg: `${P.purple}1A` },
+    aisignal:  { label: 'AI Signal',            color: P.orange, bg: `${P.orange}1A` },
     indicator: { label: t('history.indicator'), color: P.amber,  bg: `${P.amber}1A`  },
     momentum:  { label: t('history.momentum'),  color: P.pink,   bg: `${P.pink}1A`   },
   };
@@ -625,11 +639,11 @@ function HistoryPageContent() {
           <div className="hist-sidebar" style={{ display: 'none', flexDirection: 'column', gap: 16 }}>
             <div style={{ background: P.card, borderRadius: 16, overflow: 'hidden', border: `1px solid ${P.hair}`, boxShadow: P.shadow }}>
               <p style={{ fontSize: 11, fontWeight: 700, color: P.muted, textTransform: 'uppercase', letterSpacing: '0.06em', padding: '13px 16px 8px' }}>{t('history.type')}</p>
-              {(['all', 'schedule', 'fastrade', 'ctc', 'indicator', 'momentum'] as LogType[]).map((val, i, arr) => {
+              {(['all', 'schedule', 'fastrade', 'ctc', 'aisignal', 'indicator', 'momentum'] as LogType[]).map((val, i, arr) => {
                 const active = typeFilter === val;
                 const colors: Record<LogType, string> = {
                   all: P.accent, schedule: P.green, fastrade: P.blue,
-                  ctc: P.purple, indicator: P.amber, momentum: P.pink
+                  ctc: P.purple, aisignal: P.orange, indicator: P.amber, momentum: P.pink
                 };
                 return (
                   <button key={val} onClick={() => setTypeFilter(val)} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 16px', background: active ? `${colors[val]}0D` : 'transparent', border: 'none', borderBottom: i < arr.length - 1 ? `1px solid ${P.hair}` : 'none', borderLeft: active ? `2px solid ${colors[val]}` : '2px solid transparent', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit', WebkitTapHighlightColor: 'transparent' }}>
@@ -692,7 +706,7 @@ function HistoryPageContent() {
                 </div>
                 <p style={{ fontSize: 11, fontWeight: 600, color: P.muted, marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{t('history.filterByType')}</p>
                 <div className="hist-chip-scroll" style={{ marginBottom: 14 }}>
-                  {(['all','schedule','fastrade','ctc','indicator','momentum'] as LogType[]).map((v) => (
+                  {(['all','schedule','fastrade','ctc','aisignal','indicator','momentum'] as LogType[]).map((v) => (
                     <Chip key={v} label={getTypeLabel(v)} active={typeFilter===v} color={TYPE_META[v]?.color || P.accent} onClick={() => setTypeFilter(v)} />
                   ))}
                 </div>
