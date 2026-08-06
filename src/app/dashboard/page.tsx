@@ -2444,6 +2444,44 @@ const CapitalAdviceModal: React.FC<{ open: boolean; onClose: () => void; lang: s
   );
 };
 
+// ─── Modal KODE PROMO pengguna baru (muncul setelah saran manajemen modal) ───
+const PROMO_CODE = 'AUTOTRADE100';
+const PROMO_STR: Record<string, { title: string; body: string; note: string; copy: string; copied: string; ok: string }> = {
+  id: { title: 'Kode Promo Pengguna Baru', body: 'Daftarkan akun baru dan gunakan kode promo di bawah ini:', note: 'Kode hanya berlaku untuk pengguna baru yang mendaftar.', copy: 'Salin Kode', copied: 'Tersalin!', ok: 'Tutup' },
+  en: { title: 'New User Promo Code', body: 'Register a new account and use the promo code below:', note: 'Valid only for newly registered users.', copy: 'Copy Code', copied: 'Copied!', ok: 'Close' },
+  ru: { title: 'Промокод для новых', body: 'Зарегистрируйте новый аккаунт и используйте промокод ниже:', note: 'Действует только для новых зарегистрированных пользователей.', copy: 'Скопировать', copied: 'Скопировано!', ok: 'Закрыть' },
+  es: { title: 'Código Promo Nuevos', body: 'Registra una cuenta nueva y usa el código promocional:', note: 'Válido solo para usuarios recién registrados.', copy: 'Copiar código', copied: '¡Copiado!', ok: 'Cerrar' },
+  ms: { title: 'Kod Promo Pengguna Baru', body: 'Daftarkan akaun baharu dan gunakan kod promo di bawah:', note: 'Sah hanya untuk pengguna baharu yang mendaftar.', copy: 'Salin Kod', copied: 'Disalin!', ok: 'Tutup' },
+};
+
+const PromoModal: React.FC<{ open: boolean; onClose: () => void; lang: string }> = ({ open, onClose, lang }) => {
+  const [copied, setCopied] = useState(false);
+  if (!open) return null;
+  const S = PROMO_STR[lang] ?? PROMO_STR.en;
+  const doCopy = () => {
+    try { navigator.clipboard?.writeText(PROMO_CODE); } catch { /* abaikan */ }
+    setCopied(true); setTimeout(() => setCopied(false), 1800);
+  };
+  return (
+    <div style={{position:'fixed',inset:0,zIndex:80,display:'flex',alignItems:'center',justifyContent:'center',padding:'16px',animation:'fade-in 0.15s ease'}}>
+      <div onClick={onClose} style={{position:'absolute',inset:0,background:'rgba(0,0,0,0.72)',backdropFilter:'blur(10px)',WebkitBackdropFilter:'blur(10px)'}}/>
+      <div style={{position:'relative',width:'100%',maxWidth:400,background:C.bg,borderRadius:20,border:`1px solid ${C.bdr}`,padding:'24px 22px',animation:'slide-up 0.28s cubic-bezier(0.32,0.72,0,1)'}}>
+        <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:14}}>
+          <div style={{width:44,height:44,borderRadius:14,display:'flex',alignItems:'center',justifyContent:'center',background:`${C.amber}14`,border:`1px solid ${C.amber}30`,flexShrink:0,fontSize:22}}>🎁</div>
+          <p style={{fontSize:16,fontWeight:700,color:C.text}}>{S.title}</p>
+        </div>
+        <p style={{fontSize:13,color:C.sub,lineHeight:1.6,marginBottom:14}}>{S.body}</p>
+        <div style={{display:'flex',alignItems:'center',gap:10,padding:'12px 14px',borderRadius:14,background:C.card2,border:`1.5px dashed ${C.amber}80`,marginBottom:12}}>
+          <span style={{flex:1,fontSize:20,fontWeight:800,letterSpacing:'0.08em',color:C.amber,fontFamily:"'SF Mono','Fira Mono',monospace"}}>{PROMO_CODE}</span>
+          <button onClick={doCopy} style={{flexShrink:0,padding:'8px 14px',borderRadius:10,background:C.amber,border:'none',cursor:'pointer',fontSize:12.5,fontWeight:700,color:'#2a1a00'}}>{copied ? S.copied : S.copy}</button>
+        </div>
+        <p style={{fontSize:11.5,color:C.muted,lineHeight:1.5,marginBottom:16}}>{S.note}</p>
+        <button onClick={onClose} style={{width:'100%',padding:'12px 0',borderRadius:12,background:C.card2,border:`1px solid ${C.bdr}`,cursor:'pointer',fontSize:14,fontWeight:700,color:C.text}}>{S.ok}</button>
+      </div>
+    </div>
+  );
+};
+
 // ═══════════════════════════════════════════
 // MODE SESSION PANEL — FIXED
 // ═══════════════════════════════════════════
@@ -3588,6 +3626,7 @@ export default function DashboardPage() {
   const [aiCheckDone, setAiCheckDone] = useState(false);
   const [aiLockOpen,  setAiLockOpen]  = useState(false);
   const [adviceOpen,  setAdviceOpen]  = useState(false);
+  const [promoOpen,   setPromoOpen]   = useState(false);
   // ── v4: akses mode REAL (user lama demo-only) ─────────────────────────────
   const [realAccess,    setRealAccess]    = useState(false);
   const [realCheckDone, setRealCheckDone] = useState(false);
@@ -5023,7 +5062,8 @@ export default function DashboardPage() {
           }}
           lang={language}
         />
-        <CapitalAdviceModal open={adviceOpen} onClose={()=>setAdviceOpen(false)} lang={language} minAmount={currencyConfig.minAmount} currUnit={currencyConfig.currencyUnit}/>
+        <CapitalAdviceModal open={adviceOpen} onClose={()=>{setAdviceOpen(false); setPromoOpen(true);}} lang={language} minAmount={currencyConfig.minAmount} currUnit={currencyConfig.currencyUnit}/>
+        <PromoModal open={promoOpen} onClose={()=>setPromoOpen(false)} lang={language}/>
         {error&&(
           <div style={{display:'flex',alignItems:'flex-start',gap:9,padding:'10px 14px',borderRadius:8,marginBottom:g,background:C.cord,border:`1px solid rgba(255,69,58,0.2)`,borderLeft:`2px solid ${C.coral}`}}>
             <AlertCircle style={{width:13,height:13,flexShrink:0,marginTop:2,color:C.coral}}/>
