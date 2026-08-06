@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { api } from '@/lib/api';
-import { storage, isSessionValid, saveUserSession } from '@/lib/storage';
+import { storage, isSessionValid, saveUserSession, sessionLogout } from '@/lib/storage';
 import { useLanguage, Language } from '@/lib';
 import { registerToStockity, createSession } from '@/lib/engine/stockityAuth';
 import { isNativeApp } from '@/lib/engine/wsTransport';
@@ -205,6 +205,17 @@ function RegisterContent() {
           await StatusBar.setStyle({ style: Style.Dark });
           await StatusBar.setBackgroundColor({ color: '#000000' });
         } catch { /* plugin tidak tersedia */ }
+      }
+      // Datang dari tombol "Daftar Akun Baru" (mode REAL terkunci) atau tombol
+      // "Daftar" pada modal promo? Akhiri sesi lama DI SINI lalu tetap di halaman
+      // daftar — jangan pantul ke dashboard walau sesi lama masih terbaca.
+      let forceRegister = false;
+      try { forceRegister = localStorage.getItem('stc_force_register') === '1'; } catch { /* abaikan */ }
+      if (forceRegister) {
+        try { localStorage.removeItem('stc_force_register'); } catch { /* abaikan */ }
+        try { await sessionLogout(); } catch { /* biarkan */ }
+        try { await storage.remove('stc_stockity_token'); } catch { /* opsional */ }
+        return; // tetap di halaman daftar
       }
       if (await isSessionValid()) router.push('/dashboard');
     })();

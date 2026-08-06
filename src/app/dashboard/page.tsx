@@ -2446,15 +2446,15 @@ const CapitalAdviceModal: React.FC<{ open: boolean; onClose: () => void; lang: s
 
 // ─── Modal KODE PROMO pengguna baru (muncul setelah saran manajemen modal) ───
 const PROMO_CODE = 'AUTOTRADE100';
-const PROMO_STR: Record<string, { title: string; body: string; note: string; copy: string; copied: string; ok: string }> = {
-  id: { title: 'Kode Promo Pengguna Baru', body: 'Daftarkan akun baru dan gunakan kode promo di bawah ini:', note: 'Kode hanya berlaku untuk pengguna baru yang mendaftar.', copy: 'Salin Kode', copied: 'Tersalin!', ok: 'Tutup' },
-  en: { title: 'New User Promo Code', body: 'Register a new account and use the promo code below:', note: 'Valid only for newly registered users.', copy: 'Copy Code', copied: 'Copied!', ok: 'Close' },
-  ru: { title: 'Промокод для новых', body: 'Зарегистрируйте новый аккаунт и используйте промокод ниже:', note: 'Действует только для новых зарегистрированных пользователей.', copy: 'Скопировать', copied: 'Скопировано!', ok: 'Закрыть' },
-  es: { title: 'Código Promo Nuevos', body: 'Registra una cuenta nueva y usa el código promocional:', note: 'Válido solo para usuarios recién registrados.', copy: 'Copiar código', copied: '¡Copiado!', ok: 'Cerrar' },
-  ms: { title: 'Kod Promo Pengguna Baru', body: 'Daftarkan akaun baharu dan gunakan kod promo di bawah:', note: 'Sah hanya untuk pengguna baharu yang mendaftar.', copy: 'Salin Kod', copied: 'Disalin!', ok: 'Tutup' },
+const PROMO_STR: Record<string, { title: string; body: string; bonus: string; note: string; copy: string; copied: string; daftar: string; ok: string }> = {
+  id: { title: 'Kode Promo Pengguna Baru', body: 'Daftarkan akun baru dan gunakan kode promo di bawah ini:', bonus: 'Bonus saldo 100% dari jumlah deposit Anda.', note: 'Kode hanya berlaku untuk pengguna baru yang mendaftar.', copy: 'Salin Kode', copied: 'Tersalin!', daftar: 'Daftar', ok: 'Tutup' },
+  en: { title: 'New User Promo Code', body: 'Register a new account and use the promo code below:', bonus: '100% balance bonus on your deposit.', note: 'Valid only for newly registered users.', copy: 'Copy Code', copied: 'Copied!', daftar: 'Register', ok: 'Close' },
+  ru: { title: 'Промокод для новых', body: 'Зарегистрируйте новый аккаунт и используйте промокод ниже:', bonus: 'Бонус 100% к сумме вашего депозита.', note: 'Действует только для новых зарегистрированных пользователей.', copy: 'Скопировать', copied: 'Скопировано!', daftar: 'Регистрация', ok: 'Закрыть' },
+  es: { title: 'Código Promo Nuevos', body: 'Registra una cuenta nueva y usa el código promocional:', bonus: 'Bono del 100% sobre tu depósito.', note: 'Válido solo para usuarios recién registrados.', copy: 'Copiar código', copied: '¡Copiado!', daftar: 'Registrarse', ok: 'Cerrar' },
+  ms: { title: 'Kod Promo Pengguna Baru', body: 'Daftarkan akaun baharu dan gunakan kod promo di bawah:', bonus: 'Bonus baki 100% daripada deposit anda.', note: 'Sah hanya untuk pengguna baharu yang mendaftar.', copy: 'Salin Kod', copied: 'Disalin!', daftar: 'Daftar', ok: 'Tutup' },
 };
 
-const PromoModal: React.FC<{ open: boolean; onClose: () => void; lang: string }> = ({ open, onClose, lang }) => {
+const PromoModal: React.FC<{ open: boolean; onClose: () => void; onRegister: () => void; lang: string }> = ({ open, onClose, onRegister, lang }) => {
   const [copied, setCopied] = useState(false);
   if (!open) return null;
   const S = PROMO_STR[lang] ?? PROMO_STR.en;
@@ -2470,13 +2470,20 @@ const PromoModal: React.FC<{ open: boolean; onClose: () => void; lang: string }>
           <div style={{width:44,height:44,borderRadius:14,display:'flex',alignItems:'center',justifyContent:'center',background:`${C.amber}14`,border:`1px solid ${C.amber}30`,flexShrink:0,fontSize:22}}>🎁</div>
           <p style={{fontSize:16,fontWeight:700,color:C.text}}>{S.title}</p>
         </div>
-        <p style={{fontSize:13,color:C.sub,lineHeight:1.6,marginBottom:14}}>{S.body}</p>
+        <p style={{fontSize:13,color:C.sub,lineHeight:1.6,marginBottom:12}}>{S.body}</p>
+        <div style={{display:'flex',alignItems:'center',gap:8,padding:'10px 12px',borderRadius:12,background:`${C.amber}12`,border:`1px solid ${C.amber}30`,marginBottom:12}}>
+          <span style={{fontSize:15,flexShrink:0}}>🎉</span>
+          <span style={{fontSize:12.5,fontWeight:700,color:C.amber,lineHeight:1.4}}>{S.bonus}</span>
+        </div>
         <div style={{display:'flex',alignItems:'center',gap:10,padding:'12px 14px',borderRadius:14,background:C.card2,border:`1.5px dashed ${C.amber}80`,marginBottom:12}}>
           <span style={{flex:1,fontSize:20,fontWeight:800,letterSpacing:'0.08em',color:C.amber,fontFamily:"'SF Mono','Fira Mono',monospace"}}>{PROMO_CODE}</span>
           <button onClick={doCopy} style={{flexShrink:0,padding:'8px 14px',borderRadius:10,background:C.amber,border:'none',cursor:'pointer',fontSize:12.5,fontWeight:700,color:'#2a1a00'}}>{copied ? S.copied : S.copy}</button>
         </div>
         <p style={{fontSize:11.5,color:C.muted,lineHeight:1.5,marginBottom:16}}>{S.note}</p>
-        <button onClick={onClose} style={{width:'100%',padding:'12px 0',borderRadius:12,background:C.card2,border:`1px solid ${C.bdr}`,cursor:'pointer',fontSize:14,fontWeight:700,color:C.text}}>{S.ok}</button>
+        <div style={{display:'flex',gap:10}}>
+          <button onClick={onClose} style={{flex:1,padding:'12px 0',borderRadius:12,background:C.card2,border:`1px solid ${C.bdr}`,cursor:'pointer',fontSize:14,fontWeight:700,color:C.text}}>{S.ok}</button>
+          <button onClick={onRegister} style={{flex:1.3,padding:'12px 0',borderRadius:12,background:C.cyan,border:'none',cursor:'pointer',fontSize:14,fontWeight:700,color:'#06251b'}}>{S.daftar}</button>
+        </div>
       </div>
     </div>
   );
@@ -3632,6 +3639,18 @@ export default function DashboardPage() {
   const [realCheckDone, setRealCheckDone] = useState(false);
   const [realLockOpen,  setRealLockOpen]  = useState(false);
   const [realLockReason, setRealLockReason] = useState<RealLockReason>('account');
+  // ── Alihkan ke halaman DAFTAR akun baru (dari mode REAL terkunci / promo) ──────
+  // Perbaikan: JANGAN logout di dashboard (balapan dengan penjaga sesi bisa memantul
+  // ke /login atau membuat tampilan diam). Cukup pasang penanda; halaman /register
+  // yang akan mengakhiri sesi lama dan MELEWATI pantulan ke dashboard.
+  const goRegister = useCallback(() => {
+    try { localStorage.setItem('stc_force_register', '1'); } catch { /* abaikan */ }
+    const target = `${window.location.origin}/register/`;
+    try { window.location.replace(target); } catch { /* fallback di bawah */ }
+    setTimeout(() => {
+      if (!window.location.pathname.startsWith('/register')) window.location.assign(target);
+    }, 600);
+  }, []);
   // v4: browser tidak bisa mengeksekusi order (server Stockity mewajibkan header
   // auth pada WS; hanya APK yang bisa). Web = DEMO + pemantauan.
   const [isApk, setIsApk] = useState(true); // asumsi APK sampai terbukti sebaliknya → hindari kedip modal
@@ -5037,33 +5056,21 @@ export default function DashboardPage() {
           open={realLockOpen}
           reason={realLockReason}
           onClose={()=>setRealLockOpen(false)}
-          onRegister={async ()=>{
+          onRegister={()=>{
             setRealLockOpen(false);
             if (realLockReason === 'platform') {
               window.open('https://stcautotrade.id/download', '_blank', 'noopener');
               return;
             }
-            // Mode REAL hanya terbuka untuk akun Stockity yang baru didaftarkan
-            // lewat halaman daftar. Sesi lama diakhiri dulu supaya pendaftaran
-            // berjalan bersih dan tidak dikembalikan ke dashboard oleh penjaga sesi.
-            try {
-              const { sessionLogout } = await import('@/lib/storage');
-              await sessionLogout();
-            } catch { /* biarkan — pengalihan tetap dilakukan */ }
-            try { await storage.remove('stc_stockity_token'); } catch { /* opsional */ }
-            // Pengalihan memakai alamat penuh: di dalam APK, jalur relatif tidak
-            // selalu terselesaikan sehingga tampilan tampak diam. Pengaman kedua
-            // dijalankan bila halaman belum juga berpindah.
-            const target = `${window.location.origin}/register/`;
-            window.location.replace(target);
-            setTimeout(() => {
-              if (!window.location.pathname.startsWith('/register')) window.location.assign(target);
-            }, 700);
+            // Mode REAL hanya terbuka untuk akun Stockity yang baru didaftarkan lewat
+            // halaman daftar. Logout + pengalihan ditangani halaman /register (lihat
+            // goRegister) supaya tidak balapan dengan penjaga sesi dashboard.
+            goRegister();
           }}
           lang={language}
         />
         <CapitalAdviceModal open={adviceOpen} onClose={()=>{setAdviceOpen(false); setPromoOpen(true);}} lang={language} minAmount={currencyConfig.minAmount} currUnit={currencyConfig.currencyUnit}/>
-        <PromoModal open={promoOpen} onClose={()=>setPromoOpen(false)} lang={language}/>
+        <PromoModal open={promoOpen} onClose={()=>setPromoOpen(false)} onRegister={()=>{setPromoOpen(false); goRegister();}} lang={language}/>
         {error&&(
           <div style={{display:'flex',alignItems:'flex-start',gap:9,padding:'10px 14px',borderRadius:8,marginBottom:g,background:C.cord,border:`1px solid rgba(255,69,58,0.2)`,borderLeft:`2px solid ${C.coral}`}}>
             <AlertCircle style={{width:13,height:13,flexShrink:0,marginTop:2,color:C.coral}}/>
