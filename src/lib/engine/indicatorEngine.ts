@@ -21,6 +21,7 @@
 
 import { StockityWsClient, type DealResultPayload, type TradeOrderData } from './stockityWs';
 import { fetchCandles5s, aggregateToMinutes, type StockityRestOptions, type Candle } from './stockityRest';
+import { sleepUntil } from './preciseTiming';
 import type { TrendType, MartingaleSettings, AssetConfig } from './scheduleEngine';
 
 export type IndicatorType = 'SMA' | 'EMA' | 'RSI';
@@ -323,9 +324,10 @@ export class IndicatorEngine {
         `(${analysis.strength}) → ${best.recommendedTrend.toUpperCase()}`,
       );
 
-      // Fase 4 — tunggu batas menit
+      // Fase 4 — tunggu batas menit (presisi, drift-corrected → entry tepat di
+      // pergantian candle)
       this.phase = 'WAITING_BOUNDARY';
-      await this.sleep(Math.max(0, this.getNextMinuteBoundary() - Date.now()));
+      await sleepUntil(this.getNextMinuteBoundary(), () => this.isRunning);
       if (!this.isRunning) return;
 
       // Fase 5 — eksekusi

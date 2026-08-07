@@ -18,6 +18,7 @@
 
 import { StockityWsClient, type DealResultPayload, type TradeOrderData } from './stockityWs';
 import { fetchCandles5s, lastCandleError, type StockityRestOptions } from './stockityRest';
+import { sleepUntil } from './preciseTiming';
 import type { TrendType, MartingaleSettings, AssetConfig } from './scheduleEngine';
 
 export type FastradeMode = 'FTT' | 'CTC';
@@ -175,7 +176,8 @@ export class FastradeEngine {
     // ── Candle 1 ──
     this.phase = 'WAITING_MINUTE_1';
     const firstBoundary = this.getNextMinuteBoundary();
-    await this.sleep(Math.max(0, firstBoundary - Date.now()) + FETCH_OFFSET_MS);
+    // Tunggu presisi (drift-corrected) sampai batas menit + offset.
+    await sleepUntil(firstBoundary + FETCH_OFFSET_MS, () => this.isRunning);
     if (!this.isRunning) return;
 
     this.phase = 'FETCHING_1';
@@ -186,7 +188,7 @@ export class FastradeEngine {
     // ── Candle 2 ──
     this.phase = 'WAITING_MINUTE_2';
     this.callbacks.onStatusChange(`${this.config.mode} CYCLE ${this.cycleNumber}: menunggu menit kedua...`);
-    await this.sleep(Math.max(0, firstBoundary + 60_000 - Date.now()) + FETCH_OFFSET_MS);
+    await sleepUntil(firstBoundary + 60_000 + FETCH_OFFSET_MS, () => this.isRunning);
     if (!this.isRunning) return;
 
     this.phase = 'FETCHING_2';
@@ -210,8 +212,7 @@ export class FastradeEngine {
     if (isCtc) {
       // CTC: sinkron ke boundary 5 detik terdekat sebelum eksekusi
       this.phase = 'WAITING_EXEC_SYNC';
-      const waitForExec = this.calculateOptimalExecutionTime() - Date.now();
-      if (waitForExec > 0) await this.sleep(waitForExec);
+      await sleepUntil(this.calculateOptimalExecutionTime(), () => this.isRunning);
       if (!this.isRunning) return;
     }
 
@@ -257,7 +258,8 @@ export class FastradeEngine {
         const last = candles.sort((a, b) => a.timestamp - b.timestamp)[candles.length - 1];
         if (Number.isFinite(last.close)) return last.close;
       }
-      if (attempt < maxAttempts) await this.sleep(1000);
+      // Retry lebih cepat (dulu 1000ms) supaya tak kehilangan jendela entry.
+      if (attempt < maxAttempts) await this.sleep(350);
     }
     // Tanpa candle, arah tidak bisa ditentukan dan entry tak pernah terjadi.
     // Sebabnya ditampilkan agar tidak terlihat seperti bot diam saja.
