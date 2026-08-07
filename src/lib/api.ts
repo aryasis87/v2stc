@@ -756,17 +756,60 @@ async function deviceModeLogs(mode: string, limit: number): Promise<any[]> {
   } catch { return []; }
 }
 
-/** Hitung P&L hari ini dari riwayat perangkat (pengganti endpoint VPS) */
-async function deviceTodayProfit(): Promise<any> {
+/**
+ * Keuntungan hari ini.
+ *
+ * UTAMA: dihitung dari SERVER STOCKITY (semua transaksi akun) dengan batas hari
+ * memakai zona waktu akun — supaya angkanya SAMA dengan halaman Riwayat.
+ * CADANGAN: bila riwayat Stockity tak bisa diambil (sesi/jaringan), baru pakai
+ * catatan mode di Supabase seperti sebelumnya.
+ *
+ * Dulu hanya memakai catatan mode + tengah malam waktu perangkat, sehingga
+ * transaksi non-bot tidak terhitung dan batas harinya bisa berbeda dari Stockity.
+ */
+async function deviceTodayProfit(accountType: 'demo' | 'real' | 'both' = 'real'): Promise<any> {
+  try {
+    const tp = await import("./todayProfit");
+    const server = await tp.fetchTodayProfitFromStockity(accountType);
+    if (server) {
+      return {
+        date: server.date,
+        totalPnL: server.totalPnL,
+        totalTrades: server.totalTrades,
+        totalWins: server.totalWins,
+        totalLosses: server.totalLosses,
+        totalDraws: server.totalDraws,
+        // nama lama dipertahankan agar tampilan yang membacanya tetap jalan
+        wins: server.totalWins,
+        losses: server.totalLosses,
+        winRate: server.winRate,
+        source: 'stockity',
+        timezone: server.timezone,
+      };
+    }
+  } catch { /* jatuh ke cadangan */ }
+
   const modes = ["schedule", "FTT", "CTC", "AISIGNAL", "INDICATOR", "MOMENTUM"];
   const all: any[] = [];
   for (const m of modes) all.push(...(await deviceModeLogs(m, 200)));
-  const startOfDay = new Date(); startOfDay.setHours(0, 0, 0, 0);
-  const today = all.filter(l => (l?.executedAt ?? 0) >= startOfDay.getTime() && l?.result);
+  // Batas hari tetap memakai zona akun agar konsisten dgn jalur utama
+  let startMs: number;
+  try {
+    const tp = await import("./todayProfit");
+    startMs = tp.startOfDayInTz(await tp.getAccountTimezone());
+  } catch {
+    const d = new Date(); d.setHours(0, 0, 0, 0); startMs = d.getTime();
+  }
+  const today = all.filter(l => (l?.executedAt ?? 0) >= startMs && l?.result);
   const wins   = today.filter(l => l.result === "WIN").length;
   const losses = today.filter(l => l.result === "LOSE").length;
   const totalPnL = today.reduce((sum, l) => sum + (Number(l.profit) || 0), 0);
-  return { totalPnL, totalTrades: today.length, wins, losses, winRate: today.length ? Math.round((wins / today.length) * 100) : 0 };
+  return {
+    totalPnL, totalTrades: today.length,
+    totalWins: wins, totalLosses: losses, wins, losses,
+    winRate: today.length ? Math.round((wins / today.length) * 100) : 0,
+    source: 'modelogs',
+  };
 }
 
 
@@ -1151,7 +1194,7 @@ export const api = {
 
   /** GET /today-profit/realtime?accountType=real|demo|both — includes active session data */
   realtimeProfit: async (accountType: 'real' | 'demo' | 'both' = 'real'): Promise<TodayProfitSummary> => {
-    if (await deviceAuth()) return deviceTodayProfit();
+    if (await deviceAuth()) return deviceTodayProfit(accountType);
     const r = await req<{ success: boolean; data: TodayProfitSummary }>(
       'GET', `/today-profit/realtime?accountType=${accountType}`);
     return r.data;

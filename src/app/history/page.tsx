@@ -4,6 +4,8 @@ import { useRouter } from 'next/navigation';
 import { api, type ExecutionLog, type FastradeLog, type IndicatorLog, type MomentumLog, type AISignalLog } from '@/lib/api';
 import { storage } from '@/lib/storage';
 import { fetchDeviceLogs } from '@/lib/engine/deviceLogs';
+import { syncStockityHistory } from '@/lib/engine/stockityHistory';
+import { getAccountTimezone, startOfDayInTz, STOCKITY_TZ_FALLBACK } from '@/lib/todayProfit';
 import { LanguageProvider, useLanguage, formatDate, formatTime, Language } from '@/lib';
 import { useDarkMode } from '@/lib/DarkModeContext';
 import {
@@ -217,6 +219,11 @@ function HistoryPageContent() {
       // v4: mode schedule kini dieksekusi di perangkat → lognya ada di DB
       // (tabel mode_logs), bukan di memori VPS. Gabungkan kedua sumber lalu
       // buang duplikat berdasarkan id agar riwayat lama tetap tampil.
+      // Tarik dulu riwayat dari SERVER STOCKITY (sumber kebenaran) supaya
+      // transaksi yang tidak lewat bot ikut tercatat — tanpa ini angka di
+      // halaman ini tidak akan pernah sama dengan Keuntungan Hari Ini.
+      await syncStockityHistory(!silent).catch(() => []);
+
       const [scheduleApi, scheduleDb, fastradeLogs, aiSignalLogs, indicatorLogs, momentumLogs] = await Promise.all([
         api.scheduleLogs(200).catch(() => [] as ExecutionLog[]),
         fetchDeviceLogs('schedule', 200).catch(() => [] as ExecutionLog[]),
@@ -296,21 +303,20 @@ function HistoryPageContent() {
 
       setLogs(deduped);
 
-      const done   = deduped.filter(l => l.result);
-      const wins   = done.filter(l => l.result === 'WIN').length;
-      const losses = done.filter(l => l.result === 'LOSE' || l.result === 'LOSS').length;
-      const draws  = done.filter(l => l.result === 'DRAW').length;
-      const pnl    = deduped.reduce((s, l) => s + (l.profit || 0), 0);
-      setStats({
-        totalTrades: done.length, wins, losses, draws, totalPnL: pnl,
-        winRate: done.length > 0 ? Math.round((wins / done.length) * 100) : 0,
-      });
+      // Ringkasan dihitung ulang mengikuti filter di useEffect di bawah
+      // (dulu totalnya dijumlah dari SELURUH log sehingga tidak mengikuti
+      // filter tanggal yang sedang dipilih).
     } catch (e) {
       console.error(e);
     } finally {
       setIsLoading(false); setRefreshing(false);
     }
   }, []); // eslint-disable-line
+
+  // Zona waktu akun — batas "hari" harus sama dengan yang dipakai Stockity &
+  // kartu Keuntungan Hari Ini, bukan tengah malam waktu perangkat.
+  const [tz, setTz] = useState<string>(STOCKITY_TZ_FALLBACK);
+  useEffect(() => { getAccountTimezone().then(setTz).catch(() => {}); }, []);
 
   useEffect(() => {
     let f = [...logs];
@@ -319,12 +325,25 @@ function HistoryPageContent() {
     if (resultFilter === 'loss') f = f.filter(l => l.result === 'LOSE' || l.result === 'LOSS');
     if (resultFilter === 'draw') f = f.filter(l => l.result === 'DRAW');
     const ms = 24 * 60 * 60 * 1000;
-    const now = Date.now();
-    if (dateFilter === 'today') f = f.filter(l => now - l.executedAt < ms);
-    if (dateFilter === 'week')  f = f.filter(l => now - l.executedAt < 7 * ms);
-    if (dateFilter === 'month') f = f.filter(l => now - l.executedAt < 30 * ms);
+    // "Hari ini" = SEJAK TENGAH MALAM zona akun (dulu keliru: 24 jam terakhir
+    // yang bergulir, sehingga totalnya beda dengan kartu di Dashboard).
+    const startToday = startOfDayInTz(tz);
+    if (dateFilter === 'today') f = f.filter(l => l.executedAt >= startToday);
+    if (dateFilter === 'week')  f = f.filter(l => l.executedAt >= startToday - 6 * ms);
+    if (dateFilter === 'month') f = f.filter(l => l.executedAt >= startToday - 29 * ms);
     setFilteredLogs(f);
-  }, [logs, typeFilter, resultFilter, dateFilter]);
+
+    // Ringkasan MENGIKUTI filter yang sedang dipilih
+    const done   = f.filter(l => l.result);
+    const wins   = done.filter(l => l.result === 'WIN').length;
+    const losses = done.filter(l => l.result === 'LOSE' || l.result === 'LOSS').length;
+    const draws  = done.filter(l => l.result === 'DRAW').length;
+    const pnl    = done.reduce((s, l) => s + (l.profit || 0), 0);
+    setStats({
+      totalTrades: done.length, wins, losses, draws, totalPnL: pnl,
+      winRate: done.length > 0 ? Math.round((wins / done.length) * 100) : 0,
+    });
+  }, [logs, typeFilter, resultFilter, dateFilter, tz]);
 
   const hasActiveFilter = typeFilter !== 'all' || resultFilter !== 'all' || dateFilter !== 'all';
   const pnlPos = stats.totalPnL >= 0;
