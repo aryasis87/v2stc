@@ -877,12 +877,34 @@ export const api = {
   }> => {
     const a = await deviceAuth();
     if (a) {
-      // Dari perangkat: mata uang otoritatif diambil dari saldo (bank/v1/read),
-      // nominal memakai default platform yang sudah dipakai aplikasi.
       const [m, u] = await Promise.all([
         import("./engine/stockityAccount"),
         import("./userProfileApi"),
       ]);
+
+      // Utama: ambil konfigurasi LENGKAP dari endpoint mata uang platform
+      // (ISO + simbol + batas min/maks + nominal cepat) sesuai mata uang akun.
+      // Sebelumnya jalur perangkat hanya membaca ISO dari saldo lalu memakai
+      // angka bawaan IDR, sehingga akun USD/EUR/dll tetap tampil "Rp" dengan
+      // minimum 14.000 — salah untuk akun luar negeri.
+      try {
+        const cfg = await m.getCurrencyConfig(a);
+        if (cfg?.currencyIso) {
+          const iso = cfg.currencyIso;
+          const isIdr = iso === u.DEFAULT_CURRENCY_CONFIG.currencyIso;
+          return {
+            currencyIso:  iso,
+            currencyUnit: cfg.currencyUnit || (u.ISO_TO_UNIT as any)?.[iso] || iso,
+            // Bila Stockity tidak mengirim batas/nominal, pakai bawaan HANYA
+            // untuk IDR; mata uang lain jangan diberi angka rupiah.
+            minAmount:    cfg.minAmount > 0 ? cfg.minAmount : (isIdr ? u.DEFAULT_CURRENCY_CONFIG.minAmount : 1),
+            maxAmount:    cfg.maxAmount > 0 ? cfg.maxAmount : (isIdr ? u.DEFAULT_CURRENCY_CONFIG.maxAmount : 0),
+            quickAmounts: cfg.quickAmounts.length ? cfg.quickAmounts : (isIdr ? u.DEFAULT_CURRENCY_CONFIG.quickAmounts : []),
+          };
+        }
+      } catch { /* jatuh ke cadangan di bawah */ }
+
+      // Cadangan: mata uang dari saldo, nominal memakai bawaan platform.
       const bal = await m.getBalance(a);
       const iso = bal?.currency ?? u.DEFAULT_CURRENCY_CONFIG.currencyIso;
       return {

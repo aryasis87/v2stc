@@ -453,6 +453,9 @@ textarea.ds-input { resize: vertical; min-height: 80px; }
 .animate-fade-in  { animation: fade-in 0.15s ease; }
 .win-flash        { animation: win-flash  2s ease forwards; }
 .lose-flash       { animation: lose-flash 2s ease forwards; }
+/* Animasi angka keuntungan saat nilainya berubah (naik/turun) */
+.profit-slide-up   { animation: profit-slide-up   0.45s cubic-bezier(0.22,1,0.36,1); }
+.profit-slide-down { animation: profit-slide-down 0.45s cubic-bezier(0.22,1,0.36,1); }
 
 /* ============================================================
    SKELETON LOADER — shimmer sweep (lebih hidup dari pulse)

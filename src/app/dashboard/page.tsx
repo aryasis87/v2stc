@@ -4587,8 +4587,40 @@ export default function DashboardPage() {
     setDeviceEngineOn(true);
   }, [buildEngineCallbacks]);
 
+  /**
+   * Jumlah order yang SUDAH dieksekusi tapi hasilnya belum keluar.
+   * Log penempatan order tidak punya `result`; ketika hasilnya tiba, engine
+   * mengirim log kedua dengan `result` untuk orderId+step yang sama. Order yang
+   * lebih tua dari MAX_OPEN_MS dianggap sudah tidak relevan (hasil telat/hilang)
+   * supaya start tidak terkunci selamanya.
+   */
+  const countUnresolvedOrders = useCallback((): number => {
+    const MAX_OPEN_MS = 180_000; // batas wajar sebuah order turbo terselesaikan
+    const key = (l: any) => `${l?.orderId ?? l?.id}_${l?.martingaleStep ?? 0}`;
+    const resolved = new Set<string>();
+    for (const l of scheduleLogs as any[]) if (l?.result) resolved.add(key(l));
+    let n = 0;
+    const now = Date.now();
+    for (const l of scheduleLogs as any[]) {
+      if (l?.result) continue;
+      if (resolved.has(key(l))) continue;
+      if (now - (l?.executedAt ?? 0) > MAX_OPEN_MS) continue;
+      n++;
+    }
+    return n;
+  }, [scheduleLogs]);
+
   const handleStart = async()=>{
+    if (actionLoading) return; // cegah klik ganda / start berulang
     if(!selectedRic)return;
+    // Order dari sesi sebelumnya masih menggantung (sudah dieksekusi, hasilnya
+    // belum keluar). Memulai mode baru saat itu bisa bentrok/menimpa hasil, jadi
+    // start ditahan sampai order lama benar-benar selesai.
+    const stillOpen = countUnresolvedOrders();
+    if (stillOpen > 0) {
+      showBlock(`Masih ada ${stillOpen} order berjalan dari sesi sebelumnya. Tunggu sampai hasilnya keluar sebelum memulai mode lagi.`);
+      return;
+    }
     // Pertahanan lapis dua: mode aisignal tersimpan dari sesi lama tetap tak bisa start
     if(tradingMode==='aisignal' && !aiUnlocked){ setAiLockOpen(true); return; }
     // v4: start di akun REAL butuh APK + real_access — selain itu demo-only
@@ -4705,6 +4737,7 @@ export default function DashboardPage() {
   };
 
   const handleStopConfirmed = async()=>{
+    if (actionLoading) return; // cegah klik ganda saat proses berjalan
     setStopConfirmOpen(false);
     setActionLoading(true);setError(null);
     try{
