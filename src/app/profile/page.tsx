@@ -8,6 +8,7 @@ import { storage, isSessionValid, sessionLogout, getAuthToken, saveCurrencyWithI
 import { checkIsAdmin, checkIsSuperAdmin } from '@/lib/supabaseRepository';
 import { ui } from '@/lib/uiText';
 import { getAiSignalAllowlist, setAiSignalAllowlist } from '@/lib/aiSignalAccess';
+import { getMaintenance, setMaintenance } from '@/lib/maintenanceConfig';
 import { LanguageProvider, useLanguage, formatCurrency, formatDate, Language } from '@/lib';
 import { applyLanguageFromCountry } from '@/lib/LanguageContext';
 import { SESSION_KEYS } from '@/lib/storage';
@@ -836,6 +837,155 @@ const AiSignalManager: React.FC<{ open: boolean; onClose: () => void }> = ({ ope
 };
 
 // ─────────────────────────────────────────────
+// MODE PEMELIHARAAN (super admin) — saat aktif, pengguna biasa melihat layar
+// "sedang diperbaiki" dan tidak bisa memakai aplikasi. Super admin dikecualikan.
+// Penyimpanan: app_config 'maintenance' (lihat lib/maintenanceConfig.ts).
+// ─────────────────────────────────────────────
+/** Date -> nilai untuk <input type="datetime-local"> pada zona waktu perangkat */
+function toLocalInput(ms?: number | null): string {
+  if (!ms) return '';
+  const d = new Date(ms - new Date(ms).getTimezoneOffset() * 60_000);
+  return d.toISOString().slice(0, 16);
+}
+function fromLocalInput(v: string): number | null {
+  if (!v) return null;
+  const ms = new Date(v).getTime();
+  return Number.isFinite(ms) ? ms : null;
+}
+
+const MaintenanceManager: React.FC<{ open: boolean; onClose: () => void }> = ({ open, onClose }) => {
+  const [enabled, setEnabled] = useState(false);
+  const [message, setMessage] = useState('');
+  const [startAt, setStartAt] = useState('');
+  const [endAt, setEndAt]     = useState('');
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving]   = useState(false);
+  const [dirty, setDirty]     = useState(false);
+  const [result, setResult]   = useState<{ ok: boolean; text: string } | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    setResult(null); setDirty(false);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    setLoading(true);
+    getMaintenance()
+      .then((m) => {
+        setEnabled(m.enabled);
+        setMessage(m.message ?? '');
+        setStartAt(toLocalInput(m.startAt));
+        setEndAt(toLocalInput(m.endAt));
+      })
+      .catch(() => setResult({ ok: false, text: 'Gagal memuat status pemeliharaan.' }))
+      .finally(() => setLoading(false));
+    return () => { document.body.style.overflow = prev; };
+  }, [open]);
+
+  if (!open) return null;
+
+  const handleSave = async () => {
+    if (saving) return;
+    setSaving(true); setResult(null);
+    try {
+      await setMaintenance({
+        enabled,
+        message: message.trim() || undefined,
+        startAt: fromLocalInput(startAt),
+        endAt:   fromLocalInput(endAt),
+      });
+      setDirty(false);
+      setResult({ ok: true, text: enabled ? 'Mode pemeliharaan AKTIF — pengguna melihat layar pemberitahuan.' : 'Mode pemeliharaan dimatikan.' });
+    } catch (e: any) {
+      setResult({ ok: false, text: e?.message || 'Gagal menyimpan.' });
+    } finally { setSaving(false); }
+  };
+
+  const field: React.CSSProperties = {
+    width: '100%', boxSizing: 'border-box', background: 'var(--input-bg)',
+    border: '1px solid var(--border)', borderRadius: 12, padding: '11px 14px',
+    fontSize: 14, color: 'var(--text-1)', fontFamily: 'inherit', outline: 'none',
+  };
+
+  return (
+    <div className="pf-root" style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 16px' }}>
+      <div onClick={saving ? undefined : onClose} style={{ position: 'absolute', inset: 0, background: 'var(--backdrop)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', animation: 'pf-bd-in 0.2s ease' }} />
+      <div style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: 430, animation: 'pf-pop 0.28s cubic-bezier(0.32,0.72,0,1)' }}>
+        <div style={{ background: 'var(--modal)', border: '1px solid var(--modal-hair)', borderRadius: 22, overflow: 'hidden', boxShadow: '0 24px 60px rgba(0,0,0,0.35)' }}>
+          <div style={{ padding: '20px 22px', borderBottom: '1px solid var(--hairline)', display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ width: 38, height: 38, borderRadius: 11, background: 'linear-gradient(135deg,#FBBF24,#B45309)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+            </div>
+            <div style={{ flex: 1 }}>
+              <p style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-1)', letterSpacing: -0.3 }}>Mode Pemeliharaan</p>
+              <p style={{ fontSize: 12, color: 'var(--text-3)' }}>{enabled ? 'Aktif — pengguna diblokir' : 'Nonaktif'}</p>
+            </div>
+            <button onClick={saving ? undefined : onClose} style={{ width: 30, height: 30, borderRadius: '50%', background: 'var(--press)', border: 'none', cursor: saving ? 'default' : 'pointer', color: 'var(--text-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+
+          <div style={{ padding: '16px 22px 18px', display: 'flex', flexDirection: 'column', gap: 13 }}>
+            {loading ? (
+              <p style={{ fontSize: 13, color: 'var(--text-3)', textAlign: 'center', padding: '18px 0' }}>Memuat…</p>
+            ) : (
+              <>
+                {/* Sakelar utama */}
+                <button onClick={() => { setEnabled(v => !v); setDirty(true); setResult(null); }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 14, cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit',
+                    background: enabled ? 'rgba(180,83,9,0.12)' : 'var(--input-bg)', border: `1px solid ${enabled ? 'rgba(180,83,9,0.45)' : 'var(--border)'}` }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--text-1)' }}>Aktifkan pemeliharaan</p>
+                    <p style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 2 }}>Pengguna tidak bisa memakai aplikasi &amp; web trading</p>
+                  </div>
+                  <div style={{ width: 44, height: 25, borderRadius: 99, flexShrink: 0, position: 'relative', transition: 'background 0.15s', background: enabled ? '#B45309' : 'var(--press)', border: '1px solid var(--border)' }}>
+                    <div style={{ position: 'absolute', top: 2, left: enabled ? 21 : 2, width: 19, height: 19, borderRadius: '50%', background: '#fff', transition: 'left 0.15s', boxShadow: '0 1px 3px rgba(0,0,0,0.3)' }} />
+                  </div>
+                </button>
+
+                <div>
+                  <p style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--text-3)', margin: '0 0 6px 2px' }}>Pesan untuk pengguna (opsional)</p>
+                  <textarea value={message} rows={3}
+                    onChange={(e) => { setMessage(e.target.value); setDirty(true); setResult(null); }}
+                    placeholder="Contoh: Server sedang ditingkatkan. Mohon tunggu."
+                    style={{ ...field, resize: 'vertical' }} />
+                </div>
+
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--text-3)', margin: '0 0 6px 2px' }}>Mulai</p>
+                    <input type="datetime-local" value={startAt} onChange={(e) => { setStartAt(e.target.value); setDirty(true); }} style={field} />
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--text-3)', margin: '0 0 6px 2px' }}>Perkiraan selesai</p>
+                    <input type="datetime-local" value={endAt} onChange={(e) => { setEndAt(e.target.value); setDirty(true); }} style={field} />
+                  </div>
+                </div>
+
+                {result && (
+                  <p style={{ fontSize: 12, fontWeight: 600, color: result.ok ? '#B45309' : '#F87171' }}>{result.text}</p>
+                )}
+
+                <button onClick={handleSave} disabled={!dirty || saving} style={{
+                  width: '100%', padding: '13px 0', borderRadius: 13, border: 'none', cursor: (!dirty || saving) ? 'default' : 'pointer',
+                  fontSize: 14, fontWeight: 700, fontFamily: 'inherit',
+                  background: (!dirty || saving) ? 'var(--press)' : 'linear-gradient(135deg,#FBBF24,#B45309)',
+                  color: (!dirty || saving) ? 'var(--text-3)' : '#fff',
+                }}>
+                  {saving ? 'Menyimpan…' : 'Simpan Perubahan'}
+                </button>
+                <p style={{ fontSize: 11, color: 'var(--text-3)', lineHeight: 1.5 }}>
+                  Super admin tetap bisa membuka aplikasi selama pemeliharaan aktif.
+                </p>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ─────────────────────────────────────────────
 // MAIN PAGE CONTENT
 // ─────────────────────────────────────────────
 function ProfilePageContent() {
@@ -851,6 +1001,7 @@ function ProfilePageContent() {
   const [showLogout, setShowLogout]           = useState(false);
   const [emailOpen, setEmailOpen]             = useState(false);
   const [aiMgrOpen, setAiMgrOpen]             = useState(false);
+  const [maintMgrOpen, setMaintMgrOpen]       = useState(false);
   const [logoutSplash, setLogoutSplash]       = useState(false);
   const [copied, setCopied]                   = useState(false);
   const [isAdminUser, setIsAdminUser]         = useState(false);
@@ -1198,6 +1349,16 @@ function ProfilePageContent() {
                   onClick={() => setAiMgrOpen(true)}
                   last={!isSuperAdminUser}
                 />
+                {/* Mode pemeliharaan — KHUSUS super admin */}
+                {isSuperAdminUser && (
+                  <TappableRow
+                    icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>}
+                    iconBg="linear-gradient(135deg,#FBBF24,#D97706)"
+                    label="Mode Pemeliharaan"
+                    onClick={() => setMaintMgrOpen(true)}
+                    last
+                  />
+                )}
                 {/* v4: broadcast email dihapus (layanan email ada di VPS yang dimatikan) */}
               </Card>
             )}
@@ -1350,6 +1511,16 @@ function ProfilePageContent() {
                   onClick={() => setAiMgrOpen(true)}
                   last={!isSuperAdminUser}
                 />
+                {/* Mode pemeliharaan — KHUSUS super admin */}
+                {isSuperAdminUser && (
+                  <TappableRow
+                    icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>}
+                    iconBg="linear-gradient(135deg,#FBBF24,#D97706)"
+                    label="Mode Pemeliharaan"
+                    onClick={() => setMaintMgrOpen(true)}
+                    last
+                  />
+                )}
                 {/* v4: broadcast email dihapus (layanan email ada di VPS yang dimatikan) */}
               </Card>
             </div>
@@ -1413,6 +1584,7 @@ function ProfilePageContent() {
       <LogoutAlert open={showLogout} onCancel={() => setShowLogout(false)} onConfirm={handleLogout} />
       <EmailComposer open={emailOpen} onClose={() => setEmailOpen(false)} />
       <AiSignalManager open={aiMgrOpen} onClose={() => setAiMgrOpen(false)} />
+      <MaintenanceManager open={maintMgrOpen} onClose={() => setMaintMgrOpen(false)} />
     </div>
   );
 }

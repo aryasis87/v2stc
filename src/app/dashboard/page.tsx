@@ -19,6 +19,9 @@ import { ui } from '@/lib/uiText';
 import { useTradingSettings } from '@/lib/useTradingSettings';
 import { isAiSignalUnlocked, AI_SIGNAL_CONTACT_EMAIL } from '@/lib/aiSignalAccess';
 import { hasRealAccess } from '@/lib/realAccess';
+import { getMaintenance, MAINTENANCE_OFF, type MaintenanceInfo } from '@/lib/maintenanceConfig';
+import { checkIsSuperAdmin } from '@/lib/supabaseRepository';
+import MaintenanceScreen from '@/components/MaintenanceScreen';
 import { isNativeApp } from '@/lib/engine/wsTransport';
 import { deviceSession } from '@/lib/engine/deviceSession';
 import type { ScheduledOrder as EngineOrder, ScheduleConfig as EngineConfig } from '@/lib/engine/scheduleEngine';
@@ -3647,6 +3650,18 @@ export default function DashboardPage() {
   // Identitas akun — dipakai mengisi otomatis email permintaan aktivasi
   const [meId,    setMeId]    = useState('');
   const [meEmail, setMeEmail] = useState('');
+  // ── Mode pemeliharaan (dikendalikan super admin) ──────────────────────────
+  const [maint, setMaint] = useState<MaintenanceInfo>(MAINTENANCE_OFF);
+  const [maintChecked, setMaintChecked] = useState(false);
+  const [isSuperAdminUser, setIsSuperAdminUser] = useState(false);
+  const checkMaintenance = useCallback(async () => {
+    try {
+      const [m, sa] = await Promise.all([getMaintenance(), checkIsSuperAdmin()]);
+      setMaint(m); setIsSuperAdminUser(sa);
+    } catch { setMaint(MAINTENANCE_OFF); }
+    finally { setMaintChecked(true); }
+  }, []);
+  useEffect(() => { void checkMaintenance(); }, [checkMaintenance]);
   const [aiUnlocked,  setAiUnlocked]  = useState(false);
   const [aiCheckDone, setAiCheckDone] = useState(false);
   const [aiLockOpen,  setAiLockOpen]  = useState(false);
@@ -4969,6 +4984,13 @@ export default function DashboardPage() {
   // Jangan render apa pun sebelum sesi terverifikasi (cegah dashboard "keselip"
   // sekejap saat aplikasi/web pertama dibuka oleh pengguna yang belum masuk).
   if (authOk !== true) return null;
+
+  // Mode pemeliharaan: pengguna biasa dihentikan di sini. Super admin tetap
+  // boleh masuk supaya bisa mematikan mode ini dari halaman profil.
+  if (maintChecked && maint.enabled && !isSuperAdminUser) {
+    return <MaintenanceScreen info={maint} C={C} appName="STC AutoTrade" onRetry={() => { setMaintChecked(false); void checkMaintenance(); }} />;
+  }
+
   if (!settingsLoaded) return null;
 
   return (
