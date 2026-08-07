@@ -22,6 +22,7 @@ import { hasRealAccess } from '@/lib/realAccess';
 import { getMaintenance, MAINTENANCE_OFF, type MaintenanceInfo } from '@/lib/maintenanceConfig';
 import { checkIsSuperAdmin } from '@/lib/supabaseRepository';
 import MaintenanceScreen from '@/components/MaintenanceScreen';
+import { playForResultOnce, primeSounds } from '@/lib/soundFx';
 import { isNativeApp } from '@/lib/engine/wsTransport';
 import { deviceSession } from '@/lib/engine/deviceSession';
 import type { ScheduledOrder as EngineOrder, ScheduleConfig as EngineConfig } from '@/lib/engine/scheduleEngine';
@@ -2423,20 +2424,20 @@ const RealLockedModal: React.FC<{ open: boolean; onClose: () => void; onRegister
 // SARAN MODAL TRADING — muncul sekali tiap login segar
 // ═══════════════════════════════════════════
 const ADVICE_STR: Record<string, { title: string; body1: string; body2: string; tip: string; ok: string }> = {
-  id: { title: 'Manajemen Modal', body1: 'Modal awal yang kami sarankan minimal', body2: 'Rangkaian kekalahan beruntun adalah hal yang wajar dalam trading. Modal di bawah angka ini berisiko habis sebelum strategi Anda sempat bekerja.', tip: 'Belum mencapai angka tersebut? Uji strategi Anda di mode Demo terlebih dahulu — tanpa risiko.', ok: 'Saya mengerti' },
-  en: { title: 'Capital Management', body1: 'We recommend a starting capital of at least', body2: 'Losing streaks are a normal part of trading. Below this level, your balance risks being depleted before your strategy has a chance to play out.', tip: 'Not there yet? Validate your strategy in Demo mode first — at no risk.', ok: 'Understood' },
-  ru: { title: 'Управление капиталом', body1: 'Рекомендуемый стартовый капитал — не менее', body2: 'Серии убыточных сделок — нормальная часть трейдинга. При меньшем депозите он рискует обнулиться раньше, чем стратегия успеет себя проявить.', tip: 'Пока меньше? Сначала проверьте стратегию в демо-режиме — без риска.', ok: 'Понятно' },
-  es: { title: 'Gestión de capital', body1: 'Recomendamos un capital inicial de al menos', body2: 'Las rachas de pérdidas son parte normal del trading. Por debajo de este nivel, el saldo corre el riesgo de agotarse antes de que la estrategia dé resultados.', tip: '¿Aún no llegas? Valida tu estrategia en modo Demo primero, sin riesgo.', ok: 'Entendido' },
-  ms: { title: 'Pengurusan Modal', body1: 'Modal permulaan yang kami sarankan sekurang-kurangnya', body2: 'Siri kekalahan berturut-turut adalah perkara biasa dalam trading. Di bawah paras ini, modal berisiko habis sebelum strategi anda sempat berhasil.', tip: 'Belum mencapainya? Uji strategi anda dalam mod Demo dahulu — tanpa risiko.', ok: 'Saya faham' },
+  id: { title: 'Manajemen Modal', body1: 'Modal awal yang kami sarankan minimal', body2: ', Modal di bawah angka ini berisiko habis sebelum strategi martingale Anda sempat bekerja.', tip: '', ok: 'Saya mengerti' },
+  en: { title: 'Capital Management', body1: 'We recommend a starting capital of at least', body2: '. Below this amount, your balance risks being depleted before your martingale strategy has a chance to work.', tip: '', ok: 'Understood' },
+  ru: { title: 'Управление капиталом', body1: 'Рекомендуемый стартовый капитал — не менее', body2: '. При меньшей сумме депозит рискует обнулиться раньше, чем стратегия мартингейла успеет сработать.', tip: '', ok: 'Понятно' },
+  es: { title: 'Gestión de capital', body1: 'Recomendamos un capital inicial de al menos', body2: '. Por debajo de esta cifra, el saldo corre el riesgo de agotarse antes de que tu estrategia de martingala funcione.', tip: '', ok: 'Entendido' },
+  ms: { title: 'Pengurusan Modal', body1: 'Modal permulaan yang kami sarankan sekurang-kurangnya', body2: '. Di bawah angka ini, modal berisiko habis sebelum strategi martingale anda sempat berhasil.', tip: '', ok: 'Saya faham' },
 };
 
 const CapitalAdviceModal: React.FC<{ open: boolean; onClose: () => void; lang: string; minAmount: number; currUnit: string }> = ({ open, onClose, lang, minAmount, currUnit }) => {
   if (!open) return null;
   const S = ADVICE_STR[lang] ?? ADVICE_STR.en;
-  // Rekomendasi = 35× order minimum (IDR: 35 × 14.000 ≈ Rp 500.000) — buffer
-  // yang lolos siklus martingale konservatif berkali-kali; ikut menyesuaikan
-  // otomatis untuk akun mata uang lain.
-  const rec = Math.max(minAmount, 1) * 35;
+  // Rekomendasi ≈ 34,3× order minimum sehingga untuk IDR (minimum 14.000)
+  // hasilnya tepat Rp 480.000 — buffer yang lolos beberapa siklus martingale.
+  // Mata uang lain ikut menyesuaikan proporsional terhadap order minimumnya.
+  const rec = Math.round(Math.max(minAmount, 1) * 34.2857);
   const recLabel = `${currUnit} ${Math.round(rec).toLocaleString('id-ID')}`;
   return (
     <div style={{position:'fixed',inset:0,zIndex:80,display:'flex',alignItems:'center',justifyContent:'center',padding:'16px',animation:'fade-in 0.15s ease'}}>
@@ -2450,13 +2451,14 @@ const CapitalAdviceModal: React.FC<{ open: boolean; onClose: () => void; lang: s
         </div>
         <p style={{fontSize:13,color:C.sub,lineHeight:1.6}}>
           {S.body1}{' '}
-          <span style={{fontWeight:800,color:C.sky}}>{recLabel}</span>{' '}
-          {S.body2}
+          <span style={{fontWeight:800,color:C.sky}}>{recLabel}</span>{S.body2}
         </p>
-        <div style={{display:'flex',alignItems:'flex-start',gap:8,padding:'10px 12px',borderRadius:12,background:C.card2,border:`1px solid ${C.bdr}`,margin:'14px 0 16px'}}>
-          <Info style={{width:13,height:13,color:C.sky,flexShrink:0,marginTop:2}}/>
-          <p style={{fontSize:12,color:C.muted,lineHeight:1.5}}>{S.tip}</p>
-        </div>
+        {S.tip ? (
+          <div style={{display:'flex',alignItems:'flex-start',gap:8,padding:'10px 12px',borderRadius:12,background:C.card2,border:`1px solid ${C.bdr}`,margin:'14px 0 16px'}}>
+            <Info style={{width:13,height:13,color:C.sky,flexShrink:0,marginTop:2}}/>
+            <p style={{fontSize:12,color:C.muted,lineHeight:1.5}}>{S.tip}</p>
+          </div>
+        ) : <div style={{height:18}}/>}
         <button onClick={onClose} style={{width:'100%',padding:'12px 0',borderRadius:12,background:C.sky,border:'none',cursor:'pointer',fontSize:14,fontWeight:700,color:'#06251b'}}>{S.ok}</button>
       </div>
     </div>
@@ -4554,10 +4556,13 @@ export default function DashboardPage() {
   // sehingga seluruh tampilan (panel sesi, riwayat, PnL) bekerja tanpa diubah.
   const buildEngineCallbacks = useCallback(() => ({
     onOrdersUpdate: (orders: EngineOrder[]) => setScheduleOrders(orders as unknown as ScheduleOrder[]),
-    onLog: (log: any) => setScheduleLogs(prev => {
-      const next = prev.filter(l => l.id !== log.id);
-      return [log as ExecutionLog, ...next].slice(0, 500);
-    }),
+    onLog: (log: any) => {
+      playForResultOnce(log?.id, log?.result); // efek suara profit/loss
+      setScheduleLogs(prev => {
+        const next = prev.filter(l => l.id !== log.id);
+        return [log as ExecutionLog, ...next].slice(0, 500);
+      });
+    },
     onStatusChange: (status: string) => setScheduleStatus(prev => ({ ...(prev ?? {} as any), statusMessage: status })),
     onSessionPnL: (pnl: number) => setScheduleStatus(prev => ({ ...(prev ?? {} as any), sessionPnL: pnl })),
     onAllCompleted: () => {
@@ -4627,6 +4632,9 @@ export default function DashboardPage() {
 
   const handleStart = async()=>{
     if (actionLoading) return; // cegah klik ganda / start berulang
+    // Siapkan audio selagi masih di dalam gestur pengguna — pemutaran pertama
+    // akan diblokir kebijakan autoplay bila disiapkan di luar interaksi.
+    primeSounds();
     if(!selectedRic)return;
     // Order dari sesi sebelumnya masih menggantung (sudah dieksekusi, hasilnya
     // belum keluar). Memulai mode baru saat itu bisa bentrok/menimpa hasil, jadi
@@ -4694,7 +4702,10 @@ export default function DashboardPage() {
           mode: tradingMode as 'fastrade'|'ctc'|'aisignal'|'indicator'|'momentum',
           config: cfg,
           callbacks: {
-            onLog: (log:any)=>setScheduleLogs(prev=>[log, ...prev.filter(l=>l.id!==log.id)].slice(0,500)),
+            onLog: (log:any)=>{
+              playForResultOnce(log?.id, log?.result); // efek suara profit/loss
+              setScheduleLogs(prev=>[log, ...prev.filter(l=>l.id!==log.id)].slice(0,500));
+            },
             onStatusChange: (st:string)=>setScheduleStatus(prev=>({ ...(prev ?? {} as any), statusMessage: st })),
             onSessionPnL: (pnl:number)=>setScheduleStatus(prev=>({ ...(prev ?? {} as any), sessionPnL: pnl })),
             onStopped: ()=>{ setDeviceEngineOn(false); },

@@ -153,6 +153,31 @@ export async function getKnownDeviceId(email: string): Promise<string | null> {
   return found && /^[0-9a-f]{32}$/i.test(found) ? found : null;
 }
 
+/** Pesan yang ditampilkan bila akun memakai autentikasi dua langkah */
+export const MSG_2FA = 'Akun anda mengaktifkan autentikasi 2FA, mohon dinonaktifkan.';
+
+/**
+ * Apakah respons galat Stockity menandakan akun memakai 2FA?
+ *
+ * Stockity mengembalikan galat 2FA pada rentang status yang sama dengan kata
+ * sandi salah, sehingga sebelumnya SELALU terbaca "Email atau password salah"
+ * dan pengguna tidak tahu harus menonaktifkan 2FA lebih dulu. Penanda dicari
+ * pada kode/field/pesan galat — bukan hanya satu nama field, karena Stockity
+ * memakai beberapa bentuk (otp / token / two_factor / authenticator).
+ */
+export function isTwoFactorError(body: any): boolean {
+  try {
+    const raw = (typeof body === 'string' ? body : JSON.stringify(body ?? {})).toLowerCase();
+    if (!raw) return false;
+    return (
+      raw.includes('two_factor') || raw.includes('two-factor') || raw.includes('twofactor') ||
+      raw.includes('2fa') || raw.includes('otp') ||
+      raw.includes('authenticator') || raw.includes('totp') ||
+      raw.includes('verification code') || raw.includes('kode verifikasi')
+    );
+  } catch { return false; }
+}
+
 /** Login email+password langsung ke Stockity dari perangkat */
 export async function loginToStockity(
   email: string, password: string, deviceId: string,
@@ -170,6 +195,11 @@ export async function loginToStockity(
     const data: any = res?.data ?? {};
 
     if (status >= 400) {
+      // 2FA diperiksa LEBIH DULU: galatnya datang di status yang sama dengan
+      // kata sandi salah, jadi tanpa ini pesannya menyesatkan.
+      if (isTwoFactorError(data)) {
+        return { ok: false, error: MSG_2FA, status };
+      }
       const msg =
         data?.errors?.[0]?.context?.message ||
         data?.errors?.[0]?.message ||

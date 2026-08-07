@@ -73,6 +73,8 @@ export const ChartCard: React.FC<ChartCardProps> = ({ assetSymbol, height = 400 
   const priceChangeRef   = useRef<number>(0);
   const lastUpdateRef    = useRef<number>(performance.now());
   const initializedRef   = useRef<boolean>(false);
+  /** true bila grafik sedang memakai harga ASLI dari Stockity (bukan simulasi) */
+  const liveRef          = useRef<boolean>(false);
   const isDarkRef        = useRef<boolean>(true);
   const deviceRef        = useRef<'mobile' | 'tablet' | 'desktop'>('desktop');
 
@@ -111,9 +113,64 @@ export const ChartCard: React.FC<ChartCardProps> = ({ assetSymbol, height = 400 
     lastUpdateRef.current  = performance.now();
   }, []);
 
+  // ── Data ASLI aset terpilih ───────────────────────────────────────────────
+  // Sebelumnya grafik memakai angka simulasi (generateRealisticPrice), jadi
+  // gerakannya tidak ada hubungannya dengan aset yang dipilih. Sekarang harga
+  // ditarik dari candle 5 detik Stockity untuk RIC yang sedang dipakai.
+  // Bila penarikan gagal (mis. dibuka di peramban biasa yang terhalang CORS),
+  // grafik otomatis kembali memakai simulasi agar tetap ada yang tampil.
+  useEffect(() => {
+    if (!assetSymbol) { liveRef.current = false; return; }
+    let stopped = false;
+    let timer: ReturnType<typeof setInterval> | null = null;
+
+    const applyCandles = (candles: { timestamp: number; close: number }[]) => {
+      if (stopped || !candles.length) return false;
+      const pts = candles
+        .filter((c) => Number.isFinite(c.close) && c.close > 0)
+        .sort((a, b) => a.timestamp - b.timestamp)
+        .slice(-120)
+        .map((c) => ({ time: c.timestamp * 1000, price: c.close }));
+      if (pts.length < 2) return false;
+
+      const last = pts[pts.length - 1];
+      dataRef.current          = pts;
+      baselinePriceRef.current = pts[0].price;
+      prevPriceRef.current     = pts[Math.max(0, pts.length - 2)].price;
+      targetPriceRef.current   = last.price;
+      priceChangeRef.current   = ((last.price - pts[0].price) / pts[0].price) * 100;
+      lastUpdateRef.current    = performance.now();
+      liveRef.current          = true;
+      return true;
+    };
+
+    const pull = async () => {
+      try {
+        const [{ fetchCandles5s }, { storage, SESSION_KEYS }] = await Promise.all([
+          import('@/lib/engine/stockityRest'),
+          import('@/lib/storage'),
+        ]);
+        const authToken =
+          (await storage.get('stc_stockity_token')) ?? (await storage.get(SESSION_KEYS.AUTHTOKEN));
+        const deviceId = (await storage.get(SESSION_KEYS.DEVICE_ID)) ?? '';
+        if (!authToken) return;
+        const candles = await fetchCandles5s(assetSymbol, { authToken, deviceId, deviceType: 'web' });
+        applyCandles(candles as any);
+      } catch { /* biarkan simulasi yang jalan */ }
+    };
+
+    // Ganti aset → mulai dari nol supaya tidak mencampur harga aset lama
+    liveRef.current = false;
+    void pull();
+    timer = setInterval(() => { void pull(); }, 5000);
+    return () => { stopped = true; if (timer) clearInterval(timer); };
+  }, [assetSymbol]);
+
   // Data tick — updates refs only, never triggers React re-render
   useEffect(() => {
     const id = setInterval(() => {
+      // Saat data asli tersedia, simulasi tidak boleh ikut menambah titik.
+      if (liveRef.current) return;
       const pts = dataRef.current;
       if (!pts.length) return;
       const last     = pts[pts.length - 1];
