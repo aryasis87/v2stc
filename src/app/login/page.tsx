@@ -812,7 +812,24 @@ function LoginPageContent() {
       // User menutup WebView tanpa menyelesaikan consent.
       if (!r.success || !r.authToken) { setGLoading(false); return; }
 
-      const res = await api.sessionFromToken(r.authToken, r.deviceId);
+      // Sesi dibuat lewat Edge Function, BUKAN backend VPS.
+      // `/auth/session-from-token` memvalidasi token dengan menghubungi
+      // Stockity DARI SERVER, sehingga IP VPS — yang juga dipakai bot memantau
+      // ratusan akun trader — ikut menyentuh akun ini. Untuk akun afiliasi itu
+      // memicu persinggungan IP yang dilarang Affiliate TOP.
+      const devId = r.deviceId || (await storage.get(SESSION_KEYS.DEVICE_ID)) || '';
+      const sess = await createSession(r.authToken, devId, 'session');
+      if (!sess) throw new Error(lastSessionError || 'Gagal membuat sesi. Periksa koneksi lalu coba lagi.');
+
+      await storage.set('stc_stockity_token', r.authToken);
+      await storage.set(SESSION_KEYS.IS_PRIVILEGED, sess.isAdmin ? 'true' : 'false');
+
+      const res = {
+        accessToken: r.authToken,
+        userId:      sess.userId || '',
+        email:       sess.email  || '',
+        deviceId:    devId,
+      };
       setGLoading(false);
       await runSplash(res);
     } catch (err: unknown) {
