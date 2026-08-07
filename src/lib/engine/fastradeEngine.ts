@@ -60,6 +60,9 @@ export interface FastradeCallbacks {
 
 // ── Konstanta — sama dengan engine server ─────────────────────────────
 const FETCH_OFFSET_MS = 500;
+// Jeda antar-order (mis. lanjut martingale). Dulu 200ms — diperkecil agar
+// eksekusi setelah hasil keluar lebih cepat/responsif.
+const NEXT_ORDER_DELAY_MS = 120;
 const CYCLE_RESTART_DELAY_MS = 2_000;
 const DIRECT_LOSS_DELAY_MS = 5_000;
 const RESULT_TIMEOUT_MS = 150_000;
@@ -410,14 +413,26 @@ export class FastradeEngine {
     const trend = this.currentTrend ?? order.trend;
     this.alwaysLoss = undefined;
     this.resetMartingale();
+
+    // FTT: satu siklus SELESAI saat hasil akhirnya keluar → bandingkan candle
+    // LAGI untuk siklus berikutnya. Dulu langsung order ulang dengan arah yang
+    // sama tanpa membaca candle, sehingga arahnya "nyangkut" satu arah terus.
+    // CTC: sengaja TETAP mengikuti arah berjalan (hanya membandingkan candle
+    // sekali di awal), jadi perilakunya tidak diubah.
+    if (this.config.mode === 'FTT') {
+      this.callbacks.onStatusChange('FTT WIN — siklus selesai, baca candle lagi');
+      this.scheduleNewCycle(NEXT_ORDER_DELAY_MS);
+      return;
+    }
+
     this.callbacks.onStatusChange(`${this.config.mode} WIN — lanjut ${trend.toUpperCase()}`);
-    this.afterDelay(200, () => this.executeWithTrend(trend, 0));
+    this.afterDelay(NEXT_ORDER_DELAY_MS, () => this.executeWithTrend(trend, 0));
   }
 
   private onDraw(order: ActiveOrder) {
     const trend = this.currentTrend ?? order.trend;
     this.callbacks.onStatusChange(`${this.config.mode} DRAW — ulangi ${trend.toUpperCase()}`);
-    this.afterDelay(200, () => this.executeWithTrend(trend, this.martingaleStep));
+    this.afterDelay(NEXT_ORDER_DELAY_MS, () => this.executeWithTrend(trend, this.martingaleStep));
   }
 
   private onLose(order: ActiveOrder) {
@@ -448,15 +463,23 @@ export class FastradeEngine {
         this.martingaleStep = nextStep;
         this.martingaleActive = true;
         this.callbacks.onStatusChange(`${this.config.mode} LOSE — martingale ${nextStep}/${m.maxSteps}`);
-        this.afterDelay(200, () => this.executeWithTrend(trend, nextStep));
+        this.afterDelay(NEXT_ORDER_DELAY_MS, () => this.executeWithTrend(trend, nextStep));
         return;
       }
-      // Step habis → balik arah, mulai dari step 0
+      // Step habis = siklus martingale DITUTUP.
+      // FTT: siklus selesai → baca candle lagi untuk menentukan arah baru
+      // (dulu langsung balik arah & order lagi tanpa membaca candle).
+      this.resetMartingale();
+      if (this.config.mode === 'FTT') {
+        this.callbacks.onStatusChange('FTT: martingale maksimum — siklus selesai, baca candle lagi');
+        this.scheduleNewCycle(NEXT_ORDER_DELAY_MS);
+        return;
+      }
+      // CTC: tetap seperti semula — balik arah lalu lanjut tanpa siklus baru.
       const reversed = this.reverseTrend(trend);
       this.currentTrend = reversed;
-      this.resetMartingale();
       this.callbacks.onStatusChange(`${this.config.mode}: martingale maksimum — REVERSE → ${reversed.toUpperCase()}`);
-      this.afterDelay(200, () => this.executeWithTrend(reversed, 0));
+      this.afterDelay(NEXT_ORDER_DELAY_MS, () => this.executeWithTrend(reversed, 0));
       return;
     }
 

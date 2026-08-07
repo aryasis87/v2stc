@@ -17,6 +17,26 @@ import { LanguageSheet } from '@/components/LanguageSelector';
 // ─────────────────────────────────────────────
 // TYPES
 // ─────────────────────────────────────────────
+/** Landing resmi — tempat mengunduh/memperbarui aplikasi */
+const APP_LANDING_URL = 'https://stcautotrade.id';
+/** Email dukungan pengguna */
+const SUPPORT_EMAIL = 'supportstockity@gmail.com';
+
+/**
+ * mailto bantuan dengan identitas SUDAH terisi (User ID + email), supaya admin
+ * bisa langsung menangani tanpa menanyakan data pengguna lebih dulu.
+ */
+function buildSupportMailto(userId?: number | string, email?: string): string {
+  const body =
+    `Halo Admin,\n\n` +
+    `Saya mengalami kendala pada aplikasi STC AutoTrade.\n\n` +
+    `User ID Stockity : ${userId ?? '(tidak terbaca)'}\n` +
+    `Email akun       : ${email || '(tidak terbaca)'}\n\n` +
+    `Deskripsi masalah:\n(tuliskan kendala Anda di sini)\n\n` +
+    `Terima kasih.`;
+  return `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('Bantuan — STC AutoTrade')}&body=${encodeURIComponent(body)}`;
+}
+
 interface UserProfileData {
   id: number;
   email: string;
@@ -1350,6 +1370,20 @@ function ProfilePageContent() {
                 iconBg="linear-gradient(135deg,#10B981,#34D399)"
                 label={t('profile.privacyPolicy')}
                 onClick={() => window.open('https://stockity.id/information/privacy', '_blank')}
+              />
+              {/* Perbarui aplikasi — arahkan ke landing resmi (unduh versi terbaru) */}
+              <TappableRow
+                icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><polyline points="21 3 21 9 15 9"/></svg>}
+                iconBg="linear-gradient(135deg,#5ac8fa,#007AFF)"
+                label="Perbarui Aplikasi"
+                onClick={() => window.open(APP_LANDING_URL, '_blank')}
+              />
+              {/* Bantuan — email sudah terisi identitas agar admin cepat menangani */}
+              <TappableRow
+                icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>}
+                iconBg="linear-gradient(135deg,#FBBF24,#D97706)"
+                label="Ada permasalahan? Hubungi"
+                onClick={() => { window.location.href = buildSupportMailto(profile?.id, profile?.email); }}
                 last
               />
             </Card>

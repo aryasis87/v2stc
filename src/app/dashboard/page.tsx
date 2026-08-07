@@ -2314,6 +2314,22 @@ const ModePickerModal: React.FC<{
 // ═══════════════════════════════════════════
 // AI SIGNAL LOCKED MODAL — fitur terkunci per akun
 // ═══════════════════════════════════════════
+/**
+ * Tautan mailto untuk permintaan aktivasi fitur — isi pesannya SUDAH terisi
+ * (User ID Stockity + email akun). Sebelumnya hanya subjek yang terisi sehingga
+ * admin harus menanyakan identitas dulu sebelum bisa memproses aktivasi.
+ */
+function buildActivationMailto(to: string, feature: string, userId?: string, email?: string): string {
+  const body =
+    `Halo Admin,\n\n` +
+    `Saya ingin mengaktifkan fitur: ${feature}\n\n` +
+    `User ID Stockity : ${userId || '(tidak terbaca)'}\n` +
+    `Email akun       : ${email || '(tidak terbaca)'}\n` +
+    `Aplikasi         : STC AutoTrade\n\n` +
+    `Mohon dibantu proses aktivasinya. Terima kasih.`;
+  return `mailto:${to}?subject=${encodeURIComponent(`Aktivasi ${feature}`)}&body=${encodeURIComponent(body)}`;
+}
+
 const AI_LOCK_STR: Record<string, { title: string; body: string; hint: string; mail: string; close: string }> = {
   id: { title: 'Mode AI Signal Terkunci',  body: 'Fitur AI Signal belum aktif di akun Anda.', hint: 'Untuk mengaktifkannya, hubungi tim kami melalui email di bawah dan sertakan User ID Stockity Anda.', mail: 'Hubungi Support', close: 'Tutup' },
   en: { title: 'AI Signal Mode Locked',    body: 'The AI Signal feature is not active on your account yet.', hint: 'To activate it, contact our team via the email below and include your Stockity User ID.', mail: 'Contact Support', close: 'Close' },
@@ -2322,7 +2338,7 @@ const AI_LOCK_STR: Record<string, { title: string; body: string; hint: string; m
   ms: { title: 'Mod AI Signal Dikunci',    body: 'Ciri AI Signal belum aktif pada akaun anda.', hint: 'Untuk mengaktifkannya, hubungi pasukan kami melalui e-mel di bawah dan sertakan User ID Stockity anda.', mail: 'Hubungi Sokongan', close: 'Tutup' },
 };
 
-const AiLockedModal: React.FC<{ open: boolean; onClose: () => void; lang: string }> = ({ open, onClose, lang }) => {
+const AiLockedModal: React.FC<{ open: boolean; onClose: () => void; lang: string; userId?: string; email?: string }> = ({ open, onClose, lang, userId, email }) => {
   if (!open) return null;
   const S = AI_LOCK_STR[lang] ?? AI_LOCK_STR.en;
   return (
@@ -2340,7 +2356,7 @@ const AiLockedModal: React.FC<{ open: boolean; onClose: () => void; lang: string
         </div>
         <div style={{display:'flex',gap:8}}>
           <button onClick={onClose} style={{flex:1,padding:'11px 0',borderRadius:12,background:C.card2,border:`1px solid ${C.bdr}`,cursor:'pointer',fontSize:13,fontWeight:600,color:C.sub}}>{S.close}</button>
-          <a href={`mailto:${AI_SIGNAL_CONTACT_EMAIL}?subject=${encodeURIComponent('Aktivasi Mode AI Signal')}`}
+          <a href={buildActivationMailto(AI_SIGNAL_CONTACT_EMAIL, 'Mode AI Signal', userId, email)}
              style={{flex:1,padding:'11px 0',borderRadius:12,background:C.amber,border:'none',cursor:'pointer',fontSize:13,fontWeight:700,color:'#1a1612',textDecoration:'none',display:'flex',alignItems:'center',justifyContent:'center'}}>
             {S.mail}
           </a>
@@ -2446,22 +2462,17 @@ const CapitalAdviceModal: React.FC<{ open: boolean; onClose: () => void; lang: s
 
 // ─── Modal KODE PROMO pengguna baru (muncul setelah saran manajemen modal) ───
 const PROMO_CODE = 'AUTOTRADE100';
-const PROMO_STR: Record<string, { title: string; body: string; bonus: string; note: string; copy: string; copied: string; daftar: string; ok: string }> = {
-  id: { title: 'Kode Promo Pengguna Baru', body: 'Daftarkan akun baru dan gunakan kode promo di bawah ini:', bonus: 'Bonus saldo 100% dari jumlah deposit Anda.', note: 'Kode hanya berlaku untuk pengguna baru yang mendaftar.', copy: 'Salin Kode', copied: 'Tersalin!', daftar: 'Daftar', ok: 'Tutup' },
-  en: { title: 'New User Promo Code', body: 'Register a new account and use the promo code below:', bonus: '100% balance bonus on your deposit.', note: 'Valid only for newly registered users.', copy: 'Copy Code', copied: 'Copied!', daftar: 'Register', ok: 'Close' },
-  ru: { title: 'Промокод для новых', body: 'Зарегистрируйте новый аккаунт и используйте промокод ниже:', bonus: 'Бонус 100% к сумме вашего депозита.', note: 'Действует только для новых зарегистрированных пользователей.', copy: 'Скопировать', copied: 'Скопировано!', daftar: 'Регистрация', ok: 'Закрыть' },
-  es: { title: 'Código Promo Nuevos', body: 'Registra una cuenta nueva y usa el código promocional:', bonus: 'Bono del 100% sobre tu depósito.', note: 'Válido solo para usuarios recién registrados.', copy: 'Copiar código', copied: '¡Copiado!', daftar: 'Registrarse', ok: 'Cerrar' },
-  ms: { title: 'Kod Promo Pengguna Baru', body: 'Daftarkan akaun baharu dan gunakan kod promo di bawah:', bonus: 'Bonus baki 100% daripada deposit anda.', note: 'Sah hanya untuk pengguna baharu yang mendaftar.', copy: 'Salin Kod', copied: 'Disalin!', daftar: 'Daftar', ok: 'Tutup' },
+const PROMO_STR: Record<string, { title: string; body: string; bonus: string; soon: string; note: string; daftar: string; ok: string }> = {
+  id: { title: 'Kode Promo Pengguna Baru', body: 'Promo bonus untuk pengguna baru segera hadir — nantikan!', bonus: 'Bonus saldo 100% dari jumlah deposit Anda.', soon: 'Segera hadir · 17 Agustus', note: 'Daftar sekarang agar siap saat promo dibuka.', daftar: 'Daftar', ok: 'Tutup' },
+  en: { title: 'New User Promo Code', body: 'A new-user bonus promo is coming soon — stay tuned!', bonus: '100% balance bonus on your deposit.', soon: 'Coming soon · Aug 17', note: 'Register now so you are ready when it opens.', daftar: 'Register', ok: 'Close' },
+  ru: { title: 'Промокод для новых', body: 'Бонус-промо для новых пользователей скоро — следите!', bonus: 'Бонус 100% к сумме вашего депозита.', soon: 'Скоро · 17 августа', note: 'Зарегистрируйтесь сейчас, чтобы быть готовым.', daftar: 'Регистрация', ok: 'Закрыть' },
+  es: { title: 'Código Promo Nuevos', body: 'Una promo de bono para nuevos llega pronto — ¡atento!', bonus: 'Bono del 100% sobre tu depósito.', soon: 'Muy pronto · 17 ago', note: 'Regístrate ya para estar listo.', daftar: 'Registrarse', ok: 'Cerrar' },
+  ms: { title: 'Kod Promo Pengguna Baru', body: 'Promo bonus pengguna baharu akan hadir — nantikan!', bonus: 'Bonus baki 100% daripada deposit anda.', soon: 'Akan hadir · 17 Ogos', note: 'Daftar sekarang supaya bersedia.', daftar: 'Daftar', ok: 'Tutup' },
 };
 
 const PromoModal: React.FC<{ open: boolean; onClose: () => void; onRegister: () => void; lang: string }> = ({ open, onClose, onRegister, lang }) => {
-  const [copied, setCopied] = useState(false);
   if (!open) return null;
   const S = PROMO_STR[lang] ?? PROMO_STR.en;
-  const doCopy = () => {
-    try { navigator.clipboard?.writeText(PROMO_CODE); } catch { /* abaikan */ }
-    setCopied(true); setTimeout(() => setCopied(false), 1800);
-  };
   return (
     <div style={{position:'fixed',inset:0,zIndex:80,display:'flex',alignItems:'center',justifyContent:'center',padding:'16px',animation:'fade-in 0.15s ease'}}>
       <div onClick={onClose} style={{position:'absolute',inset:0,background:'rgba(0,0,0,0.72)',backdropFilter:'blur(10px)',WebkitBackdropFilter:'blur(10px)'}}/>
@@ -2475,9 +2486,13 @@ const PromoModal: React.FC<{ open: boolean; onClose: () => void; onRegister: () 
           <span style={{fontSize:15,flexShrink:0}}>🎉</span>
           <span style={{fontSize:12.5,fontWeight:700,color:C.amber,lineHeight:1.4}}>{S.bonus}</span>
         </div>
-        <div style={{display:'flex',alignItems:'center',gap:10,padding:'12px 14px',borderRadius:14,background:C.card2,border:`1.5px dashed ${C.amber}80`,marginBottom:12}}>
-          <span style={{flex:1,fontSize:20,fontWeight:800,letterSpacing:'0.08em',color:C.amber,fontFamily:"'SF Mono','Fira Mono',monospace"}}>{PROMO_CODE}</span>
-          <button onClick={doCopy} style={{flexShrink:0,padding:'8px 14px',borderRadius:10,background:C.amber,border:'none',cursor:'pointer',fontSize:12.5,fontWeight:700,color:'#2a1a00'}}>{copied ? S.copied : S.copy}</button>
+        {/* Kode masih dirahasiakan — diburamkan sampai promo dibuka */}
+        <div style={{position:'relative',display:'flex',alignItems:'center',justifyContent:'center',padding:'14px 14px',borderRadius:14,background:C.card2,border:`1.5px dashed ${C.amber}80`,marginBottom:12,overflow:'hidden'}}>
+          <span aria-hidden style={{fontSize:20,fontWeight:800,letterSpacing:'0.18em',color:C.amber,fontFamily:"'SF Mono','Fira Mono',monospace",filter:'blur(7px)',opacity:0.75,userSelect:'none'}}>{PROMO_CODE}</span>
+          <span style={{position:'absolute',display:'flex',alignItems:'center',gap:6,padding:'5px 12px',borderRadius:999,background:C.bg,border:`1px solid ${C.amber}55`}}>
+            <Lock style={{width:12,height:12,color:C.amber,flexShrink:0}}/>
+            <span style={{fontSize:12,fontWeight:700,color:C.amber,whiteSpace:'nowrap'}}>{S.soon}</span>
+          </span>
         </div>
         <p style={{fontSize:11.5,color:C.muted,lineHeight:1.5,marginBottom:16}}>{S.note}</p>
         <div style={{display:'flex',gap:10}}>
@@ -3629,6 +3644,9 @@ export default function DashboardPage() {
   const [currencyConfig, setCurrencyConfig] = useState<CurrencyConfig>(DEFAULT_CURRENCY_CONFIG);
 
   // ── Kunci mode AI Signal per akun + saran modal sekali-per-login ──────────
+  // Identitas akun — dipakai mengisi otomatis email permintaan aktivasi
+  const [meId,    setMeId]    = useState('');
+  const [meEmail, setMeEmail] = useState('');
   const [aiUnlocked,  setAiUnlocked]  = useState(false);
   const [aiCheckDone, setAiCheckDone] = useState(false);
   const [aiLockOpen,  setAiLockOpen]  = useState(false);
@@ -3682,6 +3700,11 @@ export default function DashboardPage() {
     (async () => {
       try {
         const uid = await storage.get(SESSION_KEYS.USER_ID);
+        // Identitas dipakai untuk mengisi otomatis isi email permintaan aktivasi
+        try {
+          const mail = await storage.get(SESSION_KEYS.EMAIL);
+          if (!cancelled) { setMeId(uid ?? ''); setMeEmail(mail ?? ''); }
+        } catch { /* identitas opsional */ }
         const [ok, real] = await Promise.all([isAiSignalUnlocked(uid), hasRealAccess(uid)]);
         if (!cancelled) {
           setAiUnlocked(ok); setAiCheckDone(true);
@@ -4293,10 +4316,16 @@ export default function DashboardPage() {
   }, [isDemo, settingsLoaded]); // eslint-disable-line
 
   // ── Auth check menggunakan isSessionValid (Capacitor-safe) ──────────────────
+  // authOk: null = masih diperiksa, false = tidak sah (sedang dialihkan ke /login),
+  // true = sah. Dashboard TIDAK dirender sebelum ini true — tanpa gerbang ini
+  // tampilan dashboard sempat terlihat sekejap sebelum dilempar ke /login
+  // (kelihatan seperti kedip/keselip saat aplikasi baru dibuka).
+  const [authOk, setAuthOk] = useState<boolean | null>(null);
   useEffect(()=>{
     const init = async () => {
       const sessionValid = await isSessionValid();
-      if(!sessionValid){ router.push('/login'); return; }
+      if(!sessionValid){ setAuthOk(false); router.replace('/login'); return; }
+      setAuthOk(true);
       loadAll();
     };
     init();
@@ -4904,6 +4933,9 @@ export default function DashboardPage() {
 
 
   // Tunggu settings dari storage sebelum render (cegah flicker default → saved value)
+  // Jangan render apa pun sebelum sesi terverifikasi (cegah dashboard "keselip"
+  // sekejap saat aplikasi/web pertama dibuka oleh pengguna yang belum masuk).
+  if (authOk !== true) return null;
   if (!settingsLoaded) return null;
 
   return (
@@ -5051,7 +5083,7 @@ export default function DashboardPage() {
             </div>
           </div>
         )}
-        <AiLockedModal open={aiLockOpen} onClose={()=>setAiLockOpen(false)} lang={language}/>
+        <AiLockedModal open={aiLockOpen} onClose={()=>setAiLockOpen(false)} lang={language} userId={meId} email={meEmail}/>
         <RealLockedModal
           open={realLockOpen}
           reason={realLockReason}
