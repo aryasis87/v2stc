@@ -1,7 +1,8 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 import { storage } from './storage';
+import ThemeSwitchSplash from '@/components/ThemeSwitchSplash';
 
 const DARK_MODE_KEY = 'stc_dark_mode';
 
@@ -51,10 +52,23 @@ export function DarkModeProvider({ children }: { children: ReactNode }) {
     //    Mengikuti sistem HP menyebabkan konflik saat HP user di light mode.
   }, []);
 
+  // ── Splash transisi ganti tema ────────────────────────────────────────────
+  // Hanya muncul saat pengguna MENGGANTI tema (bukan saat preferensi dimuat
+  // pertama kali), lalu hilang sendiri setelah animasinya selesai.
+  const [splashTo, setSplashTo] = useState<boolean | null>(null);
+  const splashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const showSplash = (toDark: boolean) => {
+    setSplashTo(toDark);
+    if (splashTimer.current) clearTimeout(splashTimer.current);
+    splashTimer.current = setTimeout(() => setSplashTo(null), 950);
+  };
+  useEffect(() => () => { if (splashTimer.current) clearTimeout(splashTimer.current); }, []);
+
   const toggleDarkMode = () => {
     setIsDarkMode(prev => {
       const newValue = !prev;
       storage.set(DARK_MODE_KEY, String(newValue));
+      showSplash(newValue);
       // ✅ FIX: Tidak panggil syncStatusBar di sini.
       //    State update akan trigger useEffect di ThemeWrapper → sync bars sekali.
       return newValue;
@@ -62,7 +76,7 @@ export function DarkModeProvider({ children }: { children: ReactNode }) {
   };
 
   const setDarkMode = (value: boolean) => {
-    setIsDarkMode(value);
+    setIsDarkMode(prev => { if (prev !== value) showSplash(value); return value; });
     storage.set(DARK_MODE_KEY, String(value));
     // ✅ FIX: Tidak panggil syncStatusBar di sini.
   };
@@ -70,6 +84,7 @@ export function DarkModeProvider({ children }: { children: ReactNode }) {
   return (
     <DarkModeContext.Provider value={{ isDarkMode, toggleDarkMode, setDarkMode }}>
       {children}
+      {splashTo !== null && <ThemeSwitchSplash toDark={splashTo} />}
     </DarkModeContext.Provider>
   );
 }

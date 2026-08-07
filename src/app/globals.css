@@ -574,3 +574,39 @@ body:not([data-theme="light"]) .admin-root .text-teal-500,
 body:not([data-theme="light"]) .admin-root .text-teal-600,
 body:not([data-theme="light"]) .admin-root .text-teal-700,
 body:not([data-theme="light"]) .admin-root .text-teal-800 { color: #2dd4bf !important; }
+
+/* ── Splash transisi ganti mode gelap/terang ─────────────────────────────── */
+@keyframes ts-in    { from { opacity: 0; } to { opacity: 1; } }
+@keyframes ts-out   { to   { opacity: 0; } }
+@keyframes ts-pop   { 0% { transform: scale(0.72) rotate(-25deg); opacity: 0; }
+                      60%{ transform: scale(1.06) rotate(4deg);  opacity: 1; }
+                      100%{transform: scale(1) rotate(0deg);     opacity: 1; } }
+@keyframes ts-ring  { 0% { transform: scale(0.8); opacity: 0.85; }
+                      100%{ transform: scale(1.5); opacity: 0; } }
+@keyframes ts-bar   { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+@keyframes ts-rise  { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+.ts-splash {
+  position: fixed; inset: 0; z-index: 10000;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  -webkit-font-smoothing: antialiased; overflow: hidden;
+  animation: ts-in 0.18s ease forwards, ts-out 0.26s ease 0.66s forwards;
+}
+.ts-glow { position: absolute; width: 420px; height: 420px; border-radius: 50%; filter: blur(70px); pointer-events: none; }
+.ts-icon-wrap { position: relative; width: 104px; height: 104px; display: flex; align-items: center; justify-content: center; margin-bottom: 22px; }
+.ts-ring   { position: absolute; inset: 0; border-radius: 50%; border: 2px solid; animation: ts-ring 1.5s ease-out infinite; }
+.ts-ring-2 { inset: -14px; animation-delay: 0.35s; }
+.ts-icon   { width: 84px; height: 84px; border-radius: 26px; border: 1px solid;
+             display: flex; align-items: center; justify-content: center; position: relative; z-index: 1;
+             animation: ts-pop 0.5s cubic-bezier(0.34,1.56,0.64,1) both; }
+.ts-title  { font-size: clamp(20px,6vw,25px); font-weight: 800; letter-spacing: -0.5px; margin-bottom: 5px;
+             animation: ts-rise 0.4s cubic-bezier(0.22,1,0.36,1) 0.1s both; }
+.ts-sub    { font-size: 13px; animation: ts-rise 0.4s cubic-bezier(0.22,1,0.36,1) 0.18s both; }
+.ts-bar-wrap { margin-top: 26px; width: 108px; height: 3px; border-radius: 99px; overflow: hidden;
+               animation: ts-rise 0.4s cubic-bezier(0.22,1,0.36,1) 0.24s both; }
+.ts-bar    { height: 100%; border-radius: 99px; animation: ts-bar 0.72s cubic-bezier(0.4,0,0.2,1) 0.1s both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ts-ring { animation: none; opacity: 0; }
+  .ts-icon, .ts-title, .ts-sub, .ts-bar-wrap, .ts-bar { animation-duration: 0.01s !important; }
+}

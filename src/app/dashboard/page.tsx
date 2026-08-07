@@ -2892,7 +2892,9 @@ const SettingsCard: React.FC<{
   const ac = modeAccent(mode);
   const isBelowMin = amount > 0 && amount < MIN_AMOUNT;
   const isNewMode = mode==='aisignal'||mode==='indicator'||mode==='momentum';
-  const modeLabel = mode==='aisignal'?'AI Signal Mode':mode==='indicator'?'Analysis Strategy Mode':mode==='momentum'?'Momentum Mode':mode==='ctc'?'Fastrade CTC':mode==='fastrade'?'Fastrade FTT Mode':'Signal Mode';
+  // Nama mode dibuat RINGKAS agar muat satu baris pada label pengaturan
+  // (dulu mis. "Fastrade FTT Mode" terlalu panjang & terpotong tak rapi).
+  const modeLabel = mode==='aisignal'?'AI Signal':mode==='indicator'?'Indicator':mode==='momentum'?'Momentum':mode==='ctc'?'Fastrade CTC':mode==='fastrade'?'Fastrade FTT':'Signal';
   const acctCol = isDemo ? C.amber : C.cyan;
 
   return (
@@ -2916,7 +2918,7 @@ const SettingsCard: React.FC<{
             </div>
           </div>
           <div style={{ display:'flex',alignItems:'center',gap:8 }}>
-            <span style={{ fontSize:10,padding:'2px 8px',borderRadius:99,background:isDarkMode?'rgba(255,255,255,0.06)':'rgba(0,0,0,0.05)',color:C.muted,border:`1px solid ${C.bdr}`,fontWeight:500 }}>{modeLabel}</span>
+            <span style={{ fontSize:10,padding:'2px 8px',borderRadius:99,background:isDarkMode?'rgba(255,255,255,0.06)':'rgba(0,0,0,0.05)',color:C.muted,border:`1px solid ${C.bdr}`,fontWeight:500,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',maxWidth:150,display:'inline-block',verticalAlign:'middle' }}>{modeLabel}</span>
             {open?<ChevronUp style={{ width:14,height:14,color:C.muted }}/>:<ChevronDown style={{ width:14,height:14,color:C.muted }}/>}
           </div>
         </button>
