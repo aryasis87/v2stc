@@ -10,11 +10,11 @@
 import { useState } from 'react';
 import { useLanguage } from '@/lib';
 import { panduan } from '@/lib/guideText';
-import { BookOpen, Rocket, UserPlus, Layers, TrendingUp, ShieldCheck, Activity, LifeBuoy, ChevronDown, Info, ExternalLink } from 'lucide-react';
+import { BookOpen, Rocket, UserPlus, Layers, TrendingUp, ShieldCheck, Activity, LifeBuoy, ChevronDown, Info, ExternalLink, Smartphone } from 'lucide-react';
 
 /** Peta ikon per bagian — dipisah agar data panduan tetap berupa teks biasa */
 const IKON: Record<string, typeof BookOpen> = {
-  Rocket, UserPlus, Layers, TrendingUp, ShieldCheck, Activity, LifeBuoy,
+  Rocket, UserPlus, Layers, TrendingUp, ShieldCheck, Activity, LifeBuoy, Smartphone,
 };
 
 const TRADE_URL = 'https://stockity.id';

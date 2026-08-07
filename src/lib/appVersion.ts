@@ -11,7 +11,7 @@
 //        value = { "versionCode": <baru>, "versionName": "...", "downloadUrl": "...", ... }
 
 export const APP_VERSION_CODE = 10;  // integer — naikan setiap rilis
-export const APP_VERSION_NAME = '4.0'; // string display
+export const APP_VERSION_NAME = '4.1'; // string display
 
 // 1. Build APK baru
 // 2. Naikkan APP_VERSION_CODE di appVersion.ts → 2, APP_VERSION_NAME → "2.0"  

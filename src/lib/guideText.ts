@@ -178,6 +178,30 @@ const EN: IsiPanduan = {
       ],
     },
     {
+      id: 'appweb',
+      ikon: 'Smartphone',
+      judul: 'App version vs web version',
+      ringkas: 'Same account — only the app can place orders',
+      isi: [
+        {
+          h: 'What is identical',
+          p: 'Both use the same account and show the same balance, history and profit. Settings you change in one place apply to the other — there is no separate account for the web.',
+        },
+        {
+          h: 'App: the only way to actually trade',
+          p: 'Plus: it is the only version that can run the bot and trade a REAL account, because Stockity requires signed headers that a browser cannot send. Execution timing is also more precise since orders leave straight from your device, and it keeps running while you switch screens. Minus: you install and update it manually, and it is Android only.',
+        },
+        {
+          h: 'Web: best for watching',
+          p: 'Plus: opens in any browser with nothing to install, is always on the newest version, and is comfortable for reviewing history on a big screen. Minus: it cannot place orders, so bot modes and REAL trading are unavailable — DEMO and monitoring only.',
+        },
+        {
+          h: 'Which should you use',
+          p: 'Install the app if you want the bot to trade for you. Use the web when you only want to check results, or when you are on a device where the app is not installed.',
+        },
+      ],
+    },
+    {
       id: 'masalah',
       ikon: 'LifeBuoy',
       judul: 'If something goes wrong',
@@ -352,6 +376,30 @@ const ID: IsiPanduan = {
         {
           h: 'Menghentikan sesi',
           p: 'Tekan tombol berhenti di panel kendali. Order yang sedang berjalan tetap diselesaikan sampai hasilnya keluar.',
+        },
+      ],
+    },
+    {
+      id: 'appweb',
+      ikon: 'Smartphone',
+      judul: 'Versi aplikasi vs versi web',
+      ringkas: 'Akun sama — hanya aplikasi yang bisa mengirim order',
+      isi: [
+        {
+          h: 'Yang sama persis',
+          p: 'Keduanya memakai akun yang sama dan menampilkan saldo, riwayat, serta profit yang sama. Pengaturan yang Anda ubah di satu sisi berlaku juga di sisi lain — tidak ada akun terpisah untuk web.',
+        },
+        {
+          h: 'Aplikasi: satu-satunya yang bisa benar-benar trading',
+          p: 'Plus: hanya versi ini yang dapat menjalankan bot dan trading akun REAL, karena Stockity mewajibkan header khusus yang tidak bisa dikirim peramban. Waktu eksekusinya juga lebih presisi karena order berangkat langsung dari perangkat Anda, dan tetap berjalan saat Anda berpindah layar. Minus: perlu dipasang dan diperbarui manual, serta khusus Android.',
+        },
+        {
+          h: 'Web: paling enak untuk memantau',
+          p: 'Plus: langsung dibuka di peramban mana pun tanpa pemasangan, selalu versi terbaru, dan nyaman untuk meninjau riwayat di layar besar. Minus: tidak bisa mengirim order, sehingga mode bot dan akun REAL tidak tersedia — hanya DEMO dan pemantauan.',
+        },
+        {
+          h: 'Sebaiknya pakai yang mana',
+          p: 'Pasang aplikasi bila Anda ingin bot yang bekerja. Pakai web bila hanya ingin melihat hasil, atau saat memakai perangkat yang belum terpasang aplikasi.',
         },
       ],
     },
