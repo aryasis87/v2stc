@@ -1548,15 +1548,11 @@ function ProfilePageContent() {
                 iconBg="linear-gradient(135deg,#5ac8fa,#007AFF)"
                 label="Perbarui Aplikasi"
                 onClick={() => window.open(APP_LANDING_URL, '_blank')}
-              />
-              {/* Bantuan — email sudah terisi identitas agar admin cepat menangani */}
-              <TappableRow
-                icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>}
-                iconBg="linear-gradient(135deg,#FBBF24,#D97706)"
-                label="Ada permasalahan? Hubungi"
-                onClick={() => { window.location.href = buildSupportMailto(profile?.id, profile?.email); }}
                 last
               />
+              {/* Tombol bantuan TIDAK ditaruh di sini — halaman ini sudah punya
+                  <HelpButton> "Ada permasalahan?" di bagian bawah. Menambah baris
+                  serupa membuat tombolnya tampil dua kali. */}
             </Card>
           </div>
 
