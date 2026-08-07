@@ -169,9 +169,9 @@ export const stcWebView = {
 
     // 3. Defence-in-depth: hapus cookie per-domain stockity.id
     const STOCKITY_DOMAINS = [
-      'https://stockity.id',
-      'https://api.stockity.id',
-      'https://www.stockity.id',
+      'https://stockity1.id',
+      'https://api.stockity1.id',
+      'https://www.stockity1.id',
     ];
     for (const url of STOCKITY_DOMAINS) {
       try {

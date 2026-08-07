@@ -17,7 +17,7 @@ const IKON: Record<string, typeof BookOpen> = {
   Rocket, UserPlus, Layers, TrendingUp, ShieldCheck, Activity, LifeBuoy, Smartphone,
 };
 
-const TRADE_URL = 'https://stockity.id';
+const TRADE_URL = 'https://stockity1.id';
 
 export default function PanduanPage() {
   const { language } = useLanguage();

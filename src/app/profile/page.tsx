@@ -1534,13 +1534,13 @@ function ProfilePageContent() {
                 icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3m.08 4h.01"/></svg>}
                 iconBg="linear-gradient(135deg,#5ac8fa,#007AFF)"
                 label={t('profile.termsOfService')}
-                onClick={() => window.open('https://stockity.id/information/agreement', '_blank')}
+                onClick={() => window.open('https://stockity1.id/information/agreement', '_blank')}
               />
               <TappableRow
                 icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>}
                 iconBg="linear-gradient(135deg,#10B981,#34D399)"
                 label={t('profile.privacyPolicy')}
-                onClick={() => window.open('https://stockity.id/information/privacy', '_blank')}
+                onClick={() => window.open('https://stockity1.id/information/privacy', '_blank')}
               />
               {/* Perbarui aplikasi — arahkan ke landing resmi (unduh versi terbaru) */}
               <TappableRow

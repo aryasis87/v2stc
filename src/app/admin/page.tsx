@@ -452,7 +452,7 @@ const UrlDialog: React.FC<{
     ? '8620c08b51a6'
     : isWa
     ? 'https://wa.me/628...'
-    : 'https://stockity.id/id?a=...#auth';
+    : 'https://stockity1.id/id?a=...#auth';
 
   return (
     <Modal onClose={onClose}>

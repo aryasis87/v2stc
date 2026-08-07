@@ -11,7 +11,7 @@ import { countryToStockityLocale } from './localeUtils';
 export { countryToStockityLocale };
 
 const STOCKITY_BASE_URL =
-  process.env.NEXT_PUBLIC_STOCKITY_API_URL ?? 'https://api.stockity.id/';
+  process.env.NEXT_PUBLIC_STOCKITY_API_URL ?? 'https://api.stockity1.id/';
 
 const USER_AGENT =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 ' +
@@ -124,13 +124,13 @@ export function getFullName(p: UserProfile): string {
 
 // ── resolveAvatarUrl ──────────────────────────────────────────────────────────
 // Endpoint passport/v1/user_profile  → avatar = "uploads/user/xxx.png"  (relative)
-// Endpoint platform/private/v2/profile → avatar = "https://stockity.id/uploads/..." (full)
+// Endpoint platform/private/v2/profile → avatar = "https://stockity1.id/uploads/..." (full)
 // Fungsi ini menormalisasi keduanya menjadi full URL yang siap dipakai di <img src>.
 export function resolveAvatarUrl(avatar: string | null | undefined): string | null {
   if (!avatar || avatar.trim() === '') return null;
   if (avatar.startsWith('https://') || avatar.startsWith('http://')) return avatar;
   // Relative path — prepend CDN base stockity.id
-  return `https://stockity.id/${avatar.replace(/^\//, '')}`;
+  return `https://stockity1.id/${avatar.replace(/^\//, '')}`;
 }
 
 // ── buildStockityHeaders ──────────────────────────────────────────────────────
@@ -149,8 +149,8 @@ function buildStockityHeaders(
     'authorization-token': authToken,
     'User-Agent':          USER_AGENT,
     'Accept':              'application/json, text/plain, */*',
-    'Origin':              'https://stockity.id',
-    'Referer':             'https://stockity.id/',
+    'Origin':              'https://stockity1.id',
+    'Referer':             'https://stockity1.id/',
     ...extra,
   };
 }
@@ -415,8 +415,8 @@ export async function loginToStockity(
       'user-timezone': browserTz,
       'User-Agent':    USER_AGENT,
       'Accept':        'application/json',
-      'Origin':        'https://stockity.id',
-      'Referer':       'https://stockity.id/',
+      'Origin':        'https://stockity1.id',
+      'Referer':       'https://stockity1.id/',
     },
     { email, password },
   ) as LoginResponse;

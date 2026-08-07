@@ -15,7 +15,7 @@ type SplashPhase = 'hidden' | 'welcome' | 'verified' | 'out';
 
 // URL mulai OAuth Google Stockity (langsung ke authorization → 302 ke Google).
 // Dibuka di in-app WebView (mode 'oauth') → token ditangkap dari DOM callback.
-const GOOGLE_OAUTH_URL = 'https://api.stockity.id/passport/oauth2/authorization/google-stockity';
+const GOOGLE_OAUTH_URL = 'https://api.stockity1.id/passport/oauth2/authorization/google-stockity';
 
 function isNativeApp(): boolean {
   return typeof window !== 'undefined' &&
@@ -1142,7 +1142,7 @@ function LoginPageContent() {
 
           <div className="page-footer">
             © 2026 STC AutoTrade ·{' '}
-            <a href="https://stockity.id/information/privacy" target="_blank" rel="noopener noreferrer">{t('login.terms')}</a>
+            <a href="https://stockity1.id/information/privacy" target="_blank" rel="noopener noreferrer">{t('login.terms')}</a>
           </div>
 
         </div>

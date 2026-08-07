@@ -481,7 +481,7 @@ function RegisterContent() {
                 </div>
                 <span className="rg-agree-txt">
                   {txt.agree}{' '}
-                  <a href="https://stockity.id/information/privacy" target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}>
+                  <a href="https://stockity1.id/information/privacy" target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}>
                     {t('login.terms')}
                   </a>
                 </span>
@@ -509,7 +509,7 @@ function RegisterContent() {
 
           <div className="rg-footer">
             © 2026 STC AutoTrade ·{' '}
-            <a href="https://stockity.id/information/privacy" target="_blank" rel="noopener noreferrer">{t('login.terms')}</a>
+            <a href="https://stockity1.id/information/privacy" target="_blank" rel="noopener noreferrer">{t('login.terms')}</a>
           </div>
         </div>
       )}
