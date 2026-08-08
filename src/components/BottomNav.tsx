@@ -116,7 +116,7 @@ export function BottomNav() {
           style={{
             position: 'fixed',
             bottom: 'calc(78px + env(safe-area-inset-bottom, 0px))',
-            left: 16, right: 16, zIndex: 60,
+            left: 16, right: 16, zIndex: 41,
             padding: '12px 16px', borderRadius: 14,
             background: isDarkMode ? 'rgba(28,29,33,0.97)' : 'rgba(255,255,255,0.98)',
             border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.12)' : 'rgba(2,6,23,0.10)'}`,
@@ -136,7 +136,7 @@ export function BottomNav() {
           bottom: 'calc(10px + env(safe-area-inset-bottom, 0px))',
           left: 12,
           right: 12,
-          zIndex: 50,
+          zIndex: 40,
           display: 'flex',
           justifyContent: 'center',
           pointerEvents: 'none',
