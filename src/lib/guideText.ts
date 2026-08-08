@@ -188,16 +188,16 @@ const EN: IsiPanduan = {
           p: 'Both use the same account and show the same balance, history and profit. Settings you change in one place apply to the other — there is no separate account for the web.',
         },
         {
-          h: 'App: the only one that can place orders',
-          p: 'Plus: it is the only version that can run the bot and trade a REAL account, because Stockity requires signed headers a browser cannot send. Orders leave straight from your device. Minus: Android limits apps that are not in the foreground — when the screen turns off or you switch apps, the system can slow it down or stop it. You also install and update it manually, and it is Android only.',
+          h: 'App: runs the bot on your device — and can trade REAL',
+          p: 'The app executes orders straight from your device, and it is the only version that can trade a REAL account. Plus: precise, on-device execution. Minus: Android limits apps that are not in the foreground — when the screen turns off or you switch apps, the system can slow it down or stop it; you also install and update it manually, and it is Android only.',
         },
         {
-          h: 'Web: better at staying up for hours',
-          p: 'Plus: as long as the tab is open the page is not subject to the battery limits Android applies to apps, so it holds up well over long sessions (especially on a PC or laptop). Nothing to install, always the newest version, and comfortable on a big screen. Minus: it cannot place orders, so bot modes and REAL trading are unavailable — DEMO and monitoring only.',
+          h: 'Web: also runs the bot — on our server',
+          p: 'The web version runs the bot too: sessions execute on our server, so they keep going even if you close the browser or turn off your device. Plus: no install, always the newest version, comfortable on a big screen, and great for long unattended sessions. Minus: REAL trading is app-only, so the web runs on the DEMO account (plus full monitoring of everything).',
         },
         {
           h: 'Which should you use',
-          p: 'They complement each other, so there is no single winner. Use the app when you want the bot to actually place orders. Use the web when you want to monitor, or to leave it running for a long time without the system throttling it.',
+          p: 'They complement each other. Use the app to trade a REAL account or for on-device execution. Use the web to run DEMO sessions that keep going on our server even with the browser closed, or to monitor on a big screen.',
         },
       ],
     },
@@ -390,16 +390,16 @@ const ID: IsiPanduan = {
           p: 'Keduanya memakai akun yang sama dan menampilkan saldo, riwayat, serta profit yang sama. Pengaturan yang Anda ubah di satu sisi berlaku juga di sisi lain — tidak ada akun terpisah untuk web.',
         },
         {
-          h: 'Aplikasi: satu-satunya yang bisa mengirim order',
-          p: 'Plus: hanya versi ini yang dapat menjalankan bot dan trading akun REAL, karena Stockity mewajibkan header khusus yang tidak bisa dikirim peramban. Order berangkat langsung dari perangkat Anda. Minus: Android membatasi aplikasi yang tidak sedang dibuka — saat layar mati atau Anda berpindah aplikasi, prosesnya bisa diperlambat atau dihentikan sistem. Selain itu perlu dipasang dan diperbarui manual, serta khusus Android.',
+          h: 'Aplikasi: menjalankan bot di perangkat — dan bisa akun REAL',
+          p: 'Aplikasi mengeksekusi order langsung dari perangkat Anda, dan hanya versi ini yang bisa trading akun REAL. Plus: eksekusi presisi di perangkat. Minus: Android membatasi aplikasi yang tidak sedang dibuka — saat layar mati atau berpindah aplikasi, prosesnya bisa diperlambat atau dihentikan sistem; selain itu perlu dipasang & diperbarui manual, serta khusus Android.',
         },
         {
-          h: 'Web: lebih tahan berjalan lama',
-          p: 'Plus: selama tab peramban terbuka, halaman tidak terkena pembatasan penghemat baterai seperti aplikasi Android, sehingga lebih tahan dipakai berjam-jam (terutama di PC/laptop). Tanpa pemasangan, selalu versi terbaru, dan nyaman di layar besar. Minus: tidak bisa mengirim order, sehingga mode bot dan akun REAL tidak tersedia — hanya DEMO dan pemantauan.',
+          h: 'Web: juga menjalankan bot — di server kami',
+          p: 'Versi web tetap menjalankan bot: sesi dieksekusi di server kami, sehingga terus berjalan walau peramban ditutup atau perangkat dimatikan. Plus: tanpa pemasangan, selalu versi terbaru, nyaman di layar besar, dan cocok untuk sesi panjang tanpa ditunggui. Minus: trading REAL khusus aplikasi, jadi web berjalan di akun DEMO (plus pemantauan penuh semuanya).',
         },
         {
           h: 'Sebaiknya pakai yang mana',
-          p: 'Keduanya saling melengkapi, jadi tidak ada yang lebih unggul secara mutlak. Pakai aplikasi saat ingin bot benar-benar mengeksekusi order. Pakai web saat ingin memantau, atau membiarkannya terbuka lama tanpa diganggu pembatasan sistem.',
+          p: 'Keduanya saling melengkapi. Pakai aplikasi untuk trading akun REAL atau eksekusi di perangkat. Pakai web untuk menjalankan sesi DEMO yang tetap lanjut di server kami meski peramban ditutup, atau untuk memantau di layar besar.',
         },
       ],
     },

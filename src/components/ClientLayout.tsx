@@ -2,6 +2,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { BottomNav } from '@/components/BottomNav';
+import SupportButton from '@/components/SupportButton';
 import { TabLoadingBar } from '@/components/TabLoadingBar';
 import { isSessionValid, sessionLogout } from '@/lib/storage';
 import { LanguageProvider } from '@/lib';
@@ -190,6 +191,9 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
 
           {/* BottomNav disembunyikan saat logout splash aktif */}
           {!isPublic && !navHidden && <BottomNav />}
+
+          {/* Tombol support melayang — hanya di area aplikasi (bukan halaman publik) */}
+          {!isPublic && !navHidden && <SupportButton />}
 
           {/* ── Whitelist Blocked Overlay ───────────────────────────────── */}
           {isBlocked && (
