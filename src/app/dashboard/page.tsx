@@ -2375,11 +2375,11 @@ const AiLockedModal: React.FC<{ open: boolean; onClose: () => void; lang: string
 // REAL LOCKED MODAL — v4: mode REAL hanya utk akun baru via selfregister
 // ═══════════════════════════════════════════
 const REAL_LOCK_STR: Record<string, { title: string; body: string; hint: string; cta: string; close: string }> = {
-  id: { title: 'Mode REAL Terkunci',   body: 'Akun Anda saat ini hanya dapat menggunakan mode DEMO.', hint: 'Untuk membuka mode REAL, daftarkan akun Stockity baru melalui halaman pendaftaran STC AutoTrade — gratis dan hanya butuh beberapa menit.', cta: 'Daftar Akun Baru', close: 'Tutup' },
-  en: { title: 'REAL Mode Locked',     body: 'Your account can currently use DEMO mode only.', hint: 'To unlock REAL mode, register a new Stockity account through the STC AutoTrade registration page — free and takes just minutes.', cta: 'Register New Account', close: 'Close' },
-  ru: { title: 'Режим REAL заблокирован', body: 'Ваш аккаунт сейчас может использовать только режим ДЕМО.', hint: 'Чтобы открыть режим REAL, зарегистрируйте новый аккаунт Stockity через страницу регистрации STC AutoTrade — бесплатно и занимает пару минут.', cta: 'Создать новый аккаунт', close: 'Закрыть' },
-  es: { title: 'Modo REAL bloqueado',  body: 'Tu cuenta actualmente solo puede usar el modo DEMO.', hint: 'Para desbloquear el modo REAL, registra una nueva cuenta de Stockity desde la página de registro de STC AutoTrade — gratis y en minutos.', cta: 'Registrar cuenta nueva', close: 'Cerrar' },
-  ms: { title: 'Mod REAL Dikunci',     body: 'Akaun anda buat masa ini hanya boleh menggunakan mod DEMO.', hint: 'Untuk membuka mod REAL, daftarkan akaun Stockity baharu melalui halaman pendaftaran STC AutoTrade — percuma dan hanya beberapa minit.', cta: 'Daftar Akaun Baharu', close: 'Tutup' },
+  id: { title: 'Mode REAL Terkunci',   body: 'Akun Anda saat ini hanya dapat menggunakan mode DEMO.', hint: 'Buka mode REAL dengan aktivasi sekali bayar Rp 180.000. Isi data & bukti pembayaran di portal, admin akan mengaktifkannya.', cta: 'Aktivasi Mode REAL', close: 'Tutup' },
+  en: { title: 'REAL Mode Locked',     body: 'Your account can currently use DEMO mode only.', hint: 'Unlock REAL mode with a one-time Rp 180,000 activation. Fill in your details & payment proof on the portal and an admin will activate it.', cta: 'Activate REAL Mode', close: 'Close' },
+  ru: { title: 'Режим REAL заблокирован', body: 'Ваш аккаунт сейчас может использовать только режим ДЕМО.', hint: 'Откройте режим REAL разовой активацией за Rp 180 000. Заполните данные и чек оплаты на портале — админ активирует.', cta: 'Активировать REAL', close: 'Закрыть' },
+  es: { title: 'Modo REAL bloqueado',  body: 'Tu cuenta actualmente solo puede usar el modo DEMO.', hint: 'Desbloquea el modo REAL con una activación única de Rp 180.000. Completa tus datos y comprobante en el portal y un admin lo activará.', cta: 'Activar Modo REAL', close: 'Cerrar' },
+  ms: { title: 'Mod REAL Dikunci',     body: 'Akaun anda buat masa ini hanya boleh menggunakan mod DEMO.', hint: 'Buka mod REAL dengan pengaktifan sekali bayar Rp 180,000. Isi maklumat & bukti pembayaran di portal, admin akan mengaktifkannya.', cta: 'Aktifkan Mod REAL', close: 'Tutup' },
 };
 
 // v4: alasan REAL terkunci — 'account' (belum daftar afiliasi) atau 'platform'
@@ -5324,10 +5324,8 @@ export default function DashboardPage() {
               window.open('https://stcautotrade.id/download', '_blank', 'noopener');
               return;
             }
-            // Mode REAL hanya terbuka untuk akun Stockity yang baru didaftarkan lewat
-            // halaman daftar. Logout + pengalihan ditangani halaman /register (lihat
-            // goRegister) supaya tidak balapan dengan penjaga sesi dashboard.
-            goRegister();
+            // Mode REAL dibuka lewat aktivasi berbayar (Rp 180.000) di portal.
+            router.push('/aktivasi-real');
           }}
           lang={language}
         />
