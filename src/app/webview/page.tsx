@@ -80,6 +80,21 @@ export default function PanduanPage() {
           </div>
         </div>
 
+        {/* PERINGATAN PENTING (stabilo) — pemakaian APK saat mode berjalan */}
+        <div style={S.peringatan}>
+          <div style={S.peringatanKepala}>
+            <span style={{ fontSize: 16 }}>⚠️</span>
+            <span style={{ fontSize: 12.5, fontWeight: 800, letterSpacing: '0.02em' }}>{lang === 'id' ? 'PENTING — Saat Bot Berjalan di Aplikasi (APK)' : 'IMPORTANT — While the Bot Runs in the App (APK)'}</span>
+          </div>
+          <p style={S.peringatanTeks}>
+            {lang === 'id' ? (
+              <>Ketika mode aktif/berjalan di aplikasi, <mark style={S.stabilo}>jangan berpindah ke menu lain atau keluar dari aplikasi.</mark> Android dapat menghentikan proses yang tidak sedang dibuka, sehingga <mark style={S.stabilo}>bot/AutoTrade bisa tidak berjalan atau malfungsi.</mark> Biarkan aplikasi tetap terbuka selama sesi. Ingin jalan tanpa ditunggui? Pakai versi web (sesi jalan di server).</>
+            ) : (
+              <>While a mode is active in the app, <mark style={S.stabilo}>do not switch to other menus or leave the app.</mark> Android can suspend apps that are not in the foreground, so <mark style={S.stabilo}>the bot/AutoTrade may stop or malfunction.</mark> Keep the app open on screen during the session. Want it unattended? Use the web version (runs on our server).</>
+            )}
+          </p>
+        </div>
+
         {/* SEKSI accordion berwarna */}
         <div style={S.daftar}>
           {BAGIAN.map((b, idx) => {
@@ -163,6 +178,11 @@ const S: Record<string, React.CSSProperties> = {
   kompGrid: { display: 'grid', gridTemplateColumns: '1.5fr 0.9fr 0.9fr' },
   kompHeadCell: { padding: '10px 8px', textAlign: 'center', fontSize: 11.5, fontWeight: 700, color: 'var(--text-3)', background: 'var(--s2)', borderBottom: '1px solid var(--bdr)' },
   kompCell: { padding: '13px 8px', textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+
+  peringatan: { borderRadius: 16, overflow: 'hidden', border: '1px solid rgba(245,158,11,0.4)', background: 'rgba(245,158,11,0.08)', marginBottom: 20 },
+  peringatanKepala: { display: 'flex', alignItems: 'center', gap: 8, padding: '11px 14px', background: 'rgba(245,158,11,0.16)', borderBottom: '1px solid rgba(245,158,11,0.35)', color: 'var(--text)' },
+  peringatanTeks: { padding: '13px 14px', fontSize: 13, lineHeight: 1.65, color: 'var(--text)' },
+  stabilo: { background: '#f5b60a', color: '#1a1200', padding: '1px 5px', borderRadius: 5, fontWeight: 700 },
 
   daftar: { display: 'flex', flexDirection: 'column', gap: 10 },
   kartu: { background: 'var(--s1)', border: '1px solid var(--bdr)', borderRadius: 18, overflow: 'hidden', transition: 'border-color 0.22s ease, box-shadow 0.22s ease' },

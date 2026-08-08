@@ -69,9 +69,17 @@ export default function SupportButton() {
                 <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.18em', color: ACCENT, fontFamily: 'var(--font-mono, monospace)' }}>LAPORAN · BUG</span>
                 <button onClick={() => setOpen(false)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 2 }}><X style={{ width: 17, height: 17, color: 'var(--muted, #8a8f98)' }} /></button>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 18 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
                 <LifeBuoy style={{ width: 20, height: 20, color: ACCENT }} />
                 <p style={{ fontSize: 18, fontWeight: 800, letterSpacing: '-0.3px' }}>Laporkan Masalah</p>
+              </div>
+
+              {/* Reward untuk laporan bug valid */}
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 9, padding: '10px 12px', borderRadius: 10, background: 'rgba(16,185,129,0.10)', border: `1px solid rgba(16,185,129,0.28)`, marginBottom: 18 }}>
+                <span style={{ fontSize: 16, lineHeight: 1 }}>🎁</span>
+                <p style={{ fontSize: 11.5, lineHeight: 1.55, color: 'var(--sub, #b4b8bf)' }}>
+                  Laporan bug yang <b style={{ color: 'var(--text, #e8eaed)' }}>valid</b> berhak mendapat <b style={{ color: ACCENT }}>reward saldo/cash</b> sebagai apresiasi.
+                </p>
               </div>
 
               {/* kategori — list radio bergaris */}
