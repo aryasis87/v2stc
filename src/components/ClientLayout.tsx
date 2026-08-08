@@ -192,8 +192,8 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
           {/* BottomNav disembunyikan saat logout splash aktif */}
           {!isPublic && !navHidden && <BottomNav />}
 
-          {/* Tombol support melayang — hanya di area aplikasi (bukan halaman publik) */}
-          {!isPublic && !navHidden && <SupportButton />}
+          {/* Tombol support melayang — HANYA di halaman profil */}
+          {pathname === '/profile' && !navHidden && <SupportButton />}
 
           {/* ── Whitelist Blocked Overlay ───────────────────────────────── */}
           {isBlocked && (
