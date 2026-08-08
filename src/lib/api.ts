@@ -1,11 +1,53 @@
 // lib/api.ts  — maps to actual NestJS backend routes
-import { getAuthToken, sessionLogout, storage } from './storage';
+import { getAuthToken, sessionLogout, storage, SESSION_KEYS } from './storage';
 
 const getBase = () => process.env.NEXT_PUBLIC_API_URL ?? '';
 
 // ✅ FIXED: Gunakan getAuthToken yang sudah validasi session
 async function getToken(): Promise<string | null> {
   return getAuthToken();
+}
+
+// ── Self-heal app-JWT ────────────────────────────────────────────────────────
+// App-JWT backend berumur 7 hari TANPA mekanisme refresh. Setelah kedaluwarsa,
+// SEMUA panggilan backend balik 401 — termasuk polling saat sesi trading jalan,
+// sehingga user melihat "401 saat eksekusi" lalu terlempar keluar.
+//
+// Perbaikannya: perangkat SELALU memegang token Stockity (stc_stockity_token,
+// dipakai engine WS). Token itu bisa dipakai mint app-JWT baru via
+// /auth/session-from-token. Jadi saat 401, kita coba tukar diam-diam lalu ulangi
+// request SEKALI — bukan langsung logout. Bila token Stockity juga sudah mati,
+// re-auth gagal → jatuh ke logout normal (perilaku lama). Web tanpa token
+// Stockity juga jatuh ke perilaku lama.
+let _reauthInFlight: Promise<string | null> | null = null;
+async function reauthWithStockityToken(): Promise<string | null> {
+  if (_reauthInFlight) return _reauthInFlight;
+  _reauthInFlight = (async () => {
+    try {
+      const stockityToken = (await storage.get('stc_stockity_token')) ?? '';
+      const deviceId = (await storage.get(SESSION_KEYS.DEVICE_ID)) ?? '';
+      if (!stockityToken) return null;
+      const res = await fetch(`${getBase()}/api/v1/auth/session-from-token`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ authToken: stockityToken, deviceId }),
+        cache: 'no-store',
+      });
+      if (!res.ok) return null;
+      const data = await res.json().catch(() => ({}));
+      const jwt = (data as any)?.accessToken;
+      if (typeof jwt === 'string' && jwt) {
+        await storage.set(SESSION_KEYS.AUTHTOKEN, jwt);
+        return jwt;
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  })();
+  const out = await _reauthInFlight;
+  _reauthInFlight = null;
+  return out;
 }
 
 // emit custom event untuk logout — tidak pakai window.location.href
@@ -29,7 +71,7 @@ async function deviceOffline(): Promise<boolean> {
   return (await deviceAuth()) !== null;
 }
 
-async function req<T>(method: string, path: string, body?: unknown, tokenOverride?: string): Promise<T> {
+async function req<T>(method: string, path: string, body?: unknown, tokenOverride?: string, _retried?: boolean): Promise<T> {
   // v4: tanpa VPS. Di APK, semua jalur penting sudah dialihkan ke perangkat
   // sebelum sampai ke sini, jadi apa pun yang masih menembak backend adalah
   // sisa lama. Daripada gagal dan memunculkan pesan galat, dijawab aman:
@@ -56,6 +98,13 @@ async function req<T>(method: string, path: string, body?: unknown, tokenOverrid
     // Jangan picu logout app-wide; tampilkan pesan kata sandi.
     if (path.startsWith('/auth/login')) {
       throw new Error('Kata sandi salah. Silakan login ulang.');
+    }
+    // Self-heal SEKALI: app-JWT kedaluwarsa → mint baru dari token Stockity
+    // perangkat, lalu ulangi request. Hindari loop: tidak untuk request
+    // session-from-token itu sendiri, dan hanya sekali (_retried).
+    if (!_retried && !path.startsWith('/auth/session-from-token')) {
+      const fresh = await reauthWithStockityToken();
+      if (fresh) return req<T>(method, path, body, fresh, true);
     }
     // ✅ FIX: JANGAN sessionLogout() di sini.
     //    Kalau loadAll() fire 12 request sekaligus dan satu balik 401,
