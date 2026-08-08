@@ -285,9 +285,18 @@ export class FastradeEngine {
   private async executeWithTrend(trend: TrendType, step: number, retryCount = 0): Promise<void> {
     if (!this.isRunning) return;
 
+    // CEGAH DOBEL-OPEN: bila sudah ada order aktif atau sedang menempatkan order,
+    // jangan buka order kedua (akar "sudah profit tapi masih open kompensasi").
+    // Guard hanya untuk pemanggilan baru; jalur retry internal tetap lanjut.
+    if (retryCount === 0 && (this.activeOrder || this.phase === 'EXECUTING')) {
+      return;
+    }
+
     if (retryCount >= MAX_RETRIES) {
-      this.callbacks.onStatusChange(`${this.config.mode}: trade gagal ${MAX_RETRIES}× — bot dihentikan`);
-      this.stop();
+      // Auto-pulih: mulai siklus baru, tidak menghentikan bot.
+      this.callbacks.onStatusChange(`${this.config.mode}: trade gagal ${MAX_RETRIES}× — mencoba siklus baru`);
+      this.resetMartingale();
+      if (this.isRunning) this.scheduleNewCycle(CYCLE_RESTART_DELAY_MS);
       return;
     }
 
@@ -312,11 +321,19 @@ export class FastradeEngine {
     const orderId = uid();
     const result = await this.ws.placeTrade(tradeData);
 
-    if (result.error === 'amount_min' || result.error === 'amount_max') {
-      const why = result.error === 'amount_min' ? 'di bawah minimum' : 'melebihi maksimum';
+    if (result.error === 'amount_max') {
+      // Martingale melebihi maksimum → reset & siklus baru, jangan hentikan bot.
       this.emitLog({ orderId, trend, amount, martingaleStep: effectiveStep, result: 'FAILED',
-        note: `Amount ${why} Stockity` });
-      this.callbacks.onStatusChange(`${this.config.mode}: amount ${why} Stockity — bot dihentikan`);
+        note: 'Amount melebihi maksimum Stockity — siklus baru' });
+      this.callbacks.onStatusChange(`${this.config.mode}: amount melebihi maksimum — reset & siklus baru`);
+      this.resetMartingale();
+      if (this.isRunning) this.scheduleNewCycle(CYCLE_RESTART_DELAY_MS);
+      return;
+    }
+    if (result.error === 'amount_min') {
+      this.emitLog({ orderId, trend, amount, martingaleStep: effectiveStep, result: 'FAILED',
+        note: 'Amount di bawah minimum Stockity' });
+      this.callbacks.onStatusChange(`${this.config.mode}: amount di bawah minimum Stockity — naikkan nominal`);
       setTimeout(() => this.stop(), 300);
       return;
     }
