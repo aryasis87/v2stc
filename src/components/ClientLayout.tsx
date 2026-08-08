@@ -9,7 +9,7 @@ import { LanguageProvider } from '@/lib';
 import { DarkModeProvider, useDarkMode } from '@/lib/DarkModeContext';
 import { useWhitelistGuard } from '@/lib/useWhitelistGuard';
 
-const PUBLIC_ROUTES = ['/login', '/register'];
+const PUBLIC_ROUTES = ['/login', '/register', '/aktivasi-real'];
 
 const AUTH_CHECK_RETRIES    = 5;
 const AUTH_CHECK_DELAY      = 400;

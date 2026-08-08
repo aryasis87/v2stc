@@ -1289,6 +1289,9 @@ export const api = {
     addSuperAdmin:   (email) => adminEdge('addSuperAdmin', { email }),
     deleteSuperAdmin:(email) => adminEdge('deleteSuperAdmin', { email }),
     upsertConfig:    (key, value) => adminEdge('upsertConfig', { key, value }),
+    // Aktivasi Mode REAL per akun (super admin) → backend NestJS (service_role).
+    setRealAccess:   (stockityId: string, enabled: boolean) =>
+      req<{ matched: number }>('POST', '/admin/real-access', { stockityId, enabled }),
     // v4: broadcast email DIHAPUS — layanan email hidup di VPS yang dimatikan.
     sendEmail:       (_b?: unknown): Promise<{ sent: number; failed: number; total: number; errors: string[] }> => Promise.reject(new Error('Fitur kirim email sudah dihapus.')),
     // ── Chat DM antar admin/super-admin ──
