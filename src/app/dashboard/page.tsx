@@ -2395,7 +2395,8 @@ const APK_LOCK_STR: Record<string, { title: string; body: string; hint: string; 
   ms: { title: 'Buka dalam Aplikasi Android', body: 'Mod REAL hanya berjalan dalam aplikasi STC AutoTrade untuk Android.', hint: 'Dalam aplikasi, pesanan dilaksanakan terus dari sambungan peranti anda sendiri — lebih selamat dan mematuhi peraturan platform. Versi web kekal untuk mod DEMO dan pemantauan.', cta: 'Muat Turun Aplikasi', close: 'Tutup' },
 };
 
-const RealLockedModal: React.FC<{ open: boolean; onClose: () => void; onRegister: () => void; lang: string; reason?: RealLockReason }> = ({ open, onClose, onRegister, lang, reason = 'account' }) => {
+const REAL_ACT_LABEL: Record<string, string> = { id: 'Aktivasi Mode REAL', en: 'Activate REAL Mode', ru: 'Активировать REAL', es: 'Activar Modo REAL', ms: 'Aktifkan Mod REAL' };
+const RealLockedModal: React.FC<{ open: boolean; onClose: () => void; onRegister: () => void; onActivate: () => void; lang: string; reason?: RealLockReason }> = ({ open, onClose, onRegister, onActivate, lang, reason = 'account' }) => {
   if (!open) return null;
   const S = reason === 'platform'
     ? (APK_LOCK_STR[lang] ?? APK_LOCK_STR.en)
@@ -2413,8 +2414,10 @@ const RealLockedModal: React.FC<{ open: boolean; onClose: () => void; onRegister
         <p style={{fontSize:13,color:C.sub,lineHeight:1.5,marginBottom:4}}>{S.body}</p>
         <p style={{fontSize:12,color:C.muted,lineHeight:1.55,marginBottom:16}}>{S.hint}</p>
         <div style={{display:'flex',gap:8}}>
-          <button onClick={onClose} style={{flex:1,padding:'11px 0',borderRadius:12,background:C.card2,border:`1px solid ${C.bdr}`,cursor:'pointer',fontSize:13,fontWeight:600,color:C.sub}}>{S.close}</button>
-          <button onClick={onRegister} style={{flex:1.2,padding:'11px 0',borderRadius:12,background:C.cyan,border:'none',cursor:'pointer',fontSize:13,fontWeight:700,color:'#06251b'}}>{S.cta}</button>
+          {reason === 'platform' && (
+            <button onClick={onRegister} style={{flex:1,padding:'11px 0',borderRadius:12,background:C.card2,border:`1px solid ${C.bdr}`,cursor:'pointer',fontSize:13,fontWeight:600,color:C.sub}}>{S.cta}</button>
+          )}
+          <button onClick={onActivate} style={{flex:reason==='platform'?1.2:1,padding:'11px 0',borderRadius:12,background:C.cyan,border:'none',cursor:'pointer',fontSize:13,fontWeight:700,color:'#06251b'}}>{REAL_ACT_LABEL[lang] ?? REAL_ACT_LABEL.en}</button>
         </div>
       </div>
     </div>
@@ -5318,15 +5321,8 @@ export default function DashboardPage() {
           open={realLockOpen}
           reason={realLockReason}
           onClose={()=>setRealLockOpen(false)}
-          onRegister={()=>{
-            setRealLockOpen(false);
-            if (realLockReason === 'platform') {
-              window.open('https://stcautotrade.id/download', '_blank', 'noopener');
-              return;
-            }
-            // Mode REAL dibuka lewat aktivasi berbayar (Rp 180.000) di portal.
-            router.push('/aktivasi-real');
-          }}
+          onRegister={()=>{ setRealLockOpen(false); window.open('https://stcautotrade.id/download', '_blank', 'noopener'); }}
+          onActivate={()=>{ setRealLockOpen(false); router.push('/aktivasi-real'); }}
           lang={language}
         />
         <CapitalAdviceModal open={adviceOpen} onClose={()=>{setAdviceOpen(false); setPromoOpen(true);}} lang={language} minAmount={currencyConfig.minAmount} currUnit={currencyConfig.currencyUnit}/>

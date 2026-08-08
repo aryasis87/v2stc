@@ -1249,49 +1249,6 @@ const ReactivationRequestsDialog: React.FC<{ onClose: () => void; onChanged: () 
     </Modal>
   );
 };
-
-// ═════════════════════════════════════════════════════════════════════════════
-// MAIN ADMIN PAGE
-// ═════════════════════════════════════════════════════════════════════════════
-const RealActivationModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
-  const [sid, setSid] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
-  const activate = async () => {
-    const id = sid.trim();
-    if (id.length < 3 || busy) return;
-    setBusy(true); setMsg(null);
-    try {
-      const r = await api.admin.setRealAccess(id, true);
-      setMsg(r.matched > 0 ? { ok: true, text: `Mode REAL diaktifkan untuk ID ${id}.` } : { ok: false, text: `ID ${id} tidak ditemukan di daftar user.` });
-      if (r.matched > 0) setSid('');
-    } catch (e: any) { setMsg({ ok: false, text: e?.message || 'Gagal mengaktifkan. Coba lagi.' }); }
-    finally { setBusy(false); }
-  };
-  return (
-    <div className="fixed inset-0 z-[95] flex items-end sm:items-center justify-center p-0 sm:p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full sm:max-w-md bg-white rounded-t-2xl sm:rounded-2xl p-5 shadow-2xl">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-600">{Icon.shield('w-5 h-5')}</div>
-          <div className="flex-1">
-            <h3 className="text-base font-bold text-slate-800">Aktivasi Mode REAL</h3>
-            <p className="text-[11px] text-slate-500">Setujui pembayaran user (dari notif Telegram)</p>
-          </div>
-          <button onClick={onClose} className="text-slate-400 text-xl leading-none px-2">×</button>
-        </div>
-        <label className="block text-xs font-semibold text-slate-600 mb-1.5">ID Akun Stockity</label>
-        <input value={sid} onChange={e => setSid(e.target.value.replace(/[^0-9]/g, ''))} inputMode="numeric" placeholder="mis. 183xxxxxx" className="w-full px-3.5 py-3 rounded-xl border border-slate-200 outline-none text-[15px] font-medium focus:border-emerald-400" />
-        {msg && <p className={`text-[13px] mt-3 ${msg.ok ? 'text-emerald-600' : 'text-rose-600'}`}>{msg.text}</p>}
-        <button onClick={activate} disabled={sid.trim().length < 3 || busy} className="w-full mt-4 py-3.5 rounded-xl bg-emerald-600 text-white text-[15px] font-bold disabled:opacity-50 hover:bg-emerald-700 transition-colors">
-          {busy ? 'Memproses…' : 'Aktifkan REAL'}
-        </button>
-        <p className="text-[11px] text-slate-400 text-center mt-3 leading-relaxed">User bisa memakai Mode REAL setelah login ulang / segarkan aplikasi.</p>
-      </div>
-    </div>
-  );
-};
-
 export default function AdminPage() {
   const router = useRouter();
 
@@ -1321,7 +1278,6 @@ export default function AdminPage() {
   const [editUser,      setEditUser]      = useState<WhitelistUser | null>(null);
   const [importOpen,    setImportOpen]    = useState(false);
   const [adminMgmt,     setAdminMgmt]     = useState(false);
-  const [realActOpen,   setRealActOpen]   = useState(false);
   const [chatOpen,      setChatOpen]      = useState(false);
   const [reactReqOpen,  setReactReqOpen]  = useState(false);
   const [statsFilter,   setStatsFilter]   = useState<StatsFilter | null>(null);
@@ -1510,15 +1466,8 @@ export default function AdminPage() {
             >
               {Icon.clock('w-4 h-4')} Reaktivasi
             </button>
-            <button
-              onClick={() => setRealActOpen(true)}
-              className="flex-1 py-2 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm font-semibold flex items-center justify-center gap-2 hover:bg-emerald-100 transition-colors"
-            >
-              {Icon.shield('w-4 h-4')} Aktivasi REAL
-            </button>
           </div>
         )}
-        {realActOpen && <RealActivationModal onClose={() => setRealActOpen(false)} />}
       </div>
 
       <div className="px-4 pt-4 space-y-4">

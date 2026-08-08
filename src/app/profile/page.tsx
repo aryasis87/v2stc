@@ -691,6 +691,56 @@ const EmailComposer: React.FC<{ open: boolean; onClose: () => void }> = ({ open,
 // ─────────────────────────────────────────────
 type AiWlUser = { userId: string; name?: string; email?: string };
 
+const RealActivationManager: React.FC<{ open: boolean; onClose: () => void }> = ({ open, onClose }) => {
+  const [sid, setSid] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  useEffect(() => {
+    if (!open) return;
+    setSid(''); setMsg(null);
+    const prev = document.body.style.overflow; document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = prev; };
+  }, [open]);
+  if (!open) return null;
+  const activate = async () => {
+    const id = sid.trim();
+    if (id.length < 3 || busy) return;
+    setBusy(true); setMsg(null);
+    try {
+      const r = await api.admin.setRealAccess(id, true);
+      setMsg(r.matched > 0 ? { ok: true, text: `Mode REAL diaktifkan untuk ID ${id}.` } : { ok: false, text: `ID ${id} tidak ditemukan / tidak memenuhi syarat (mis. akun afiliasi).` });
+      if (r.matched > 0) setSid('');
+    } catch (e: any) { setMsg({ ok: false, text: e?.message || 'Gagal mengaktifkan.' }); }
+    finally { setBusy(false); }
+  };
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 90, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.72)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }} />
+      <div style={{ position: 'relative', width: '100%', maxWidth: 420, background: 'var(--bg, #0c0e12)', color: 'var(--text, #e8eaed)', borderRadius: 16, border: '1px solid var(--bdr, rgba(255,255,255,0.1))', overflow: 'hidden' }}>
+        <div style={{ height: 3, background: 'linear-gradient(90deg, #10b981, transparent)' }} />
+        <div style={{ padding: '18px 20px 22px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+            <div style={{ width: 40, height: 40, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#10b981' }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#04210b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+            </div>
+            <div style={{ flex: 1 }}>
+              <p style={{ fontSize: 16, fontWeight: 800 }}>Aktivasi Mode REAL</p>
+              <p style={{ fontSize: 11.5, color: 'var(--muted, #8a8f98)', marginTop: 1 }}>Setujui pembayaran user (ID dari notif Telegram)</p>
+            </div>
+          </div>
+          <label style={{ display: 'block', fontSize: 11, color: 'var(--muted, #8a8f98)', letterSpacing: '0.04em', marginBottom: 7 }}>ID AKUN STOCKITY</label>
+          <input value={sid} onChange={e => setSid(e.target.value.replace(/[^0-9]/g, ''))} inputMode="numeric" placeholder="mis. 183xxxxxx" style={{ width: '100%', padding: '13px 14px', borderRadius: 10, fontSize: 15, fontWeight: 600, background: 'var(--s1, rgba(255,255,255,0.04))', color: 'var(--text, #e8eaed)', border: '1px solid var(--bdr, rgba(255,255,255,0.12))', outline: 'none' }} />
+          {msg && <p style={{ fontSize: 13, marginTop: 12, color: msg.ok ? '#10b981' : '#f87171' }}>{msg.text}</p>}
+          <button onClick={activate} disabled={sid.trim().length < 3 || busy} style={{ width: '100%', marginTop: 16, padding: '14px 0', borderRadius: 11, border: 'none', cursor: 'pointer', fontSize: 14.5, fontWeight: 800, color: '#04210b', background: '#10b981', opacity: sid.trim().length < 3 || busy ? 0.55 : 1 }}>
+            {busy ? 'Memproses…' : 'Aktifkan REAL'}
+          </button>
+          <p style={{ fontSize: 10.5, color: 'var(--muted, #8a8f98)', textAlign: 'center', marginTop: 10, lineHeight: 1.5 }}>Akun afiliasi otomatis ditolak. User bisa pakai REAL setelah login ulang.</p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const AiSignalManager: React.FC<{ open: boolean; onClose: () => void }> = ({ open, onClose }) => {
   const [users, setUsers]         = useState<AiWlUser[]>([]);
   const [allow, setAllow]         = useState<Set<string>>(new Set());
@@ -1001,6 +1051,7 @@ function ProfilePageContent() {
   const [showLogout, setShowLogout]           = useState(false);
   const [emailOpen, setEmailOpen]             = useState(false);
   const [aiMgrOpen, setAiMgrOpen]             = useState(false);
+  const [realMgrOpen, setRealMgrOpen]         = useState(false);
   const [maintMgrOpen, setMaintMgrOpen]       = useState(false);
   const [logoutSplash, setLogoutSplash]       = useState(false);
   const [copied, setCopied]                   = useState(false);
@@ -1349,6 +1400,14 @@ function ProfilePageContent() {
                   onClick={() => setAiMgrOpen(true)}
                   last={!isSuperAdminUser}
                 />
+                {isSuperAdminUser && (
+                  <TappableRow
+                    icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>}
+                    iconBg="linear-gradient(135deg,#10b981,#059669)"
+                    label="Aktivasi Mode REAL"
+                    onClick={() => setRealMgrOpen(true)}
+                  />
+                )}
                 {/* Mode pemeliharaan — KHUSUS super admin */}
                 {isSuperAdminUser && (
                   <TappableRow
@@ -1362,17 +1421,6 @@ function ProfilePageContent() {
                 {/* v4: broadcast email dihapus (layanan email ada di VPS yang dimatikan) */}
               </Card>
             )}
-            {/* Aktivasi Mode REAL — pintu masuk portal pembayaran (semua user) */}
-            <Card>
-              <TappableRow
-                icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>}
-                iconBg="linear-gradient(135deg,#10b981,#059669)"
-                label="Aktivasi Mode REAL"
-                value="Rp 180.000"
-                onClick={() => router.push('/aktivasi-real')}
-                last
-              />
-            </Card>
             <Card>
               <TappableRow
                 icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>}
@@ -1522,6 +1570,14 @@ function ProfilePageContent() {
                   onClick={() => setAiMgrOpen(true)}
                   last={!isSuperAdminUser}
                 />
+                {isSuperAdminUser && (
+                  <TappableRow
+                    icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>}
+                    iconBg="linear-gradient(135deg,#10b981,#059669)"
+                    label="Aktivasi Mode REAL"
+                    onClick={() => setRealMgrOpen(true)}
+                  />
+                )}
                 {/* Mode pemeliharaan — KHUSUS super admin */}
                 {isSuperAdminUser && (
                   <TappableRow
@@ -1591,6 +1647,7 @@ function ProfilePageContent() {
       <LogoutAlert open={showLogout} onCancel={() => setShowLogout(false)} onConfirm={handleLogout} />
       <EmailComposer open={emailOpen} onClose={() => setEmailOpen(false)} />
       <AiSignalManager open={aiMgrOpen} onClose={() => setAiMgrOpen(false)} />
+      <RealActivationManager open={realMgrOpen} onClose={() => setRealMgrOpen(false)} />
       <MaintenanceManager open={maintMgrOpen} onClose={() => setMaintMgrOpen(false)} />
     </div>
   );
