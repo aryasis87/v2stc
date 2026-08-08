@@ -1,14 +1,26 @@
 'use client';
 // app/aktivasi-real/page.tsx
-// Portal publik aktivasi Mode REAL — STC AutoTrade.
-// Brand emerald, layout satu-alur bernomor. Submit → backend → Telegram admin.
+// Portal publik aktivasi Mode REAL — STC AutoTrade. Desain modern gelap
+// (Apple-like dark): permukaan gelap lembut, aksen emerald, elemen trust.
 
 import { useState, useRef } from 'react';
-import { Upload, Check, Loader2, ShieldCheck, X } from 'lucide-react';
+import { Upload, Check, Loader2, ShieldCheck, X, Lock, BadgeCheck } from 'lucide-react';
 
 const PRICE = 'Rp 180.000';
 const API = process.env.NEXT_PUBLIC_API_URL ?? '';
 const AC = '#10b981';
+
+// Metode pembayaran didukung QRIS — badge brand-warna (bukan logo resmi).
+const PAYMENTS: { name: string; fg: string }[] = [
+  { name: 'DANA', fg: '#38A9F5' },
+  { name: 'OVO', fg: '#9B7BD4' },
+  { name: 'GoPay', fg: '#37C6E6' },
+  { name: 'ShopeePay', fg: '#F5734F' },
+  { name: 'BCA', fg: '#3B93E0' },
+  { name: 'Mandiri', fg: '#5B8FD1' },
+  { name: 'BRI', fg: '#4F9BE0' },
+  { name: 'BNI', fg: '#E8A24E' },
+];
 
 export default function AktivasiRealPage() {
   const [name, setName] = useState('');
@@ -35,30 +47,25 @@ export default function AktivasiRealPage() {
     setBusy(true); setErr('');
     try {
       const res = await fetch(`${API}/api/v1/activation/request`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ app: 'stc', name: name.trim(), stockityId: sid.trim(), proof }),
       });
       if (!res.ok) throw new Error((await res.json().catch(() => ({})))?.message || 'Gagal mengirim. Coba lagi.');
       setDone(true);
     } catch (e: any) {
       setErr(e?.message || 'Gagal mengirim. Periksa koneksi lalu coba lagi.');
-    } finally {
-      setBusy(false);
-    }
+    } finally { setBusy(false); }
   };
 
   if (done) {
     return (
       <div style={sx.page}>
         <div style={sx.wrap}>
-          <div style={{ ...sx.panel, textAlign: 'center', padding: '40px 24px' }}>
-            <div style={{ width: 64, height: 64, borderRadius: '50%', background: AC, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 18px' }}>
-              <Check style={{ width: 32, height: 32, color: '#04210b' }} />
-            </div>
-            <h1 style={{ fontSize: 20, fontWeight: 800, marginBottom: 8, color: '#eaf2ee' }}>Pengajuan Terkirim</h1>
-            <p style={{ fontSize: 14, lineHeight: 1.6, color: '#9fb3aa', maxWidth: 360, margin: '0 auto' }}>
-              Pembayaranmu akan diverifikasi. Mode <b style={{ color: '#eaf2ee' }}>REAL</b> diaktifkan pada akun Stockity <b style={{ color: AC }}>{sid}</b> paling lambat 1×24 jam.
+          <div style={{ ...sx.card, textAlign: 'center', padding: '44px 26px' }}>
+            <div style={sx.doneBadge}><Check style={{ width: 34, height: 34, color: '#04210b' }} /></div>
+            <h1 style={{ fontSize: 22, fontWeight: 700, marginBottom: 10, letterSpacing: '-0.4px', color: '#f4f6f5' }}>Pengajuan Terkirim</h1>
+            <p style={{ fontSize: 14.5, lineHeight: 1.6, color: '#9aa6a1', maxWidth: 360, margin: '0 auto' }}>
+              Pembayaran diverifikasi admin. Mode <b style={{ color: '#f4f6f5' }}>REAL</b> akan aktif pada akun <b style={{ color: AC }}>{sid}</b> paling lambat 1×24 jam.
             </p>
           </div>
         </div>
@@ -69,66 +76,81 @@ export default function AktivasiRealPage() {
   return (
     <div style={sx.page}>
       <div style={sx.wrap}>
-        <div style={{ textAlign: 'center', marginBottom: 22 }}>
-          <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.2em', color: AC }}>STC · AUTOTRADE</span>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginTop: 8 }}>
-            <ShieldCheck style={{ width: 24, height: 24, color: AC }} />
-            <h1 style={{ fontSize: 23, fontWeight: 800, letterSpacing: '-0.5px', color: '#eaf2ee' }}>Aktivasi Mode REAL</h1>
+        {/* hero */}
+        <div style={{ textAlign: 'center', marginBottom: 26 }}>
+          <div style={sx.heroIcon}><ShieldCheck style={{ width: 28, height: 28, color: '#04210b' }} /></div>
+          <h1 style={{ fontSize: 26, fontWeight: 700, letterSpacing: '-0.6px', lineHeight: 1.12, color: '#f4f6f5' }}>Aktivasi Mode REAL</h1>
+          <p style={{ fontSize: 14.5, color: '#9aa6a1', marginTop: 8, lineHeight: 1.55, maxWidth: 380, marginInline: 'auto' }}>
+            Buka trading akun REAL di STC AutoTrade. Sekali bayar <b style={{ color: AC }}>{PRICE}</b>.
+          </p>
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap', marginTop: 14 }}>
+            <span style={sx.trustChip}><BadgeCheck style={{ width: 13, height: 13, color: AC }} />Tanpa aplikasi</span>
+            <span style={sx.trustChip}><Lock style={{ width: 12, height: 12, color: AC }} />Pembayaran aman</span>
+            <span style={sx.trustChip}><Check style={{ width: 13, height: 13, color: AC }} />Aktif ≤ 24 jam</span>
           </div>
-          <p style={{ fontSize: 13.5, color: '#9fb3aa', marginTop: 8, lineHeight: 1.6 }}>
-            Buka trading akun REAL. Biaya aktivasi sekali bayar <b style={{ color: AC }}>{PRICE}</b>.
+        </div>
+
+        <div style={sx.note}>
+          <BadgeCheck style={{ width: 18, height: 18, color: AC, flexShrink: 0, marginTop: 1 }} />
+          <p style={{ fontSize: 13, lineHeight: 1.55, color: '#c4cec9' }}>
+            Aktivasi bisa langsung di sini — <b style={{ color: '#f4f6f5' }}>tanpa perlu mengunduh atau memakai aplikasi</b>. Setelah aktif, Mode REAL dapat dipakai di versi web maupun aplikasi.
           </p>
         </div>
 
-        <div style={sx.panel}>
-          {/* langkah 1 */}
-          <div style={sx.stepRow}><span style={sx.num}>1</span><span style={sx.stepTitle}>Data Kamu</span></div>
+        <div style={sx.card}>
+          <div style={sx.stepHead}><span style={sx.stepNum}>1</span><span style={sx.stepTitle}>Data Kamu</span></div>
           <label style={sx.label}>NAMA LENGKAP</label>
           <input value={name} onChange={e => setName(e.target.value)} placeholder="Nama sesuai identitas" style={sx.input} />
           <label style={{ ...sx.label, marginTop: 14 }}>ID AKUN STOCKITY</label>
           <input value={sid} onChange={e => setSid(e.target.value.replace(/[^0-9]/g, ''))} inputMode="numeric" placeholder="mis. 183xxxxxx" style={sx.input} />
+        </div>
 
-          <div style={sx.divider} />
-
-          {/* langkah 2 */}
-          <div style={sx.stepRow}><span style={sx.num}>2</span><span style={sx.stepTitle}>Bayar {PRICE} · QRIS</span></div>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
-            <div style={{ padding: 12, background: '#fff', borderRadius: 14 }}>
+        <div style={sx.card}>
+          <div style={sx.stepHead}><span style={sx.stepNum}>2</span><span style={sx.stepTitle}>Bayar {PRICE}</span></div>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
+            <div style={sx.qrisFrame}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/qris-aktivasi.jpg" alt="QRIS" style={{ width: 230, maxWidth: '68vw', height: 'auto', display: 'block', borderRadius: 8 }} />
+              <img src="/qris-aktivasi.jpg" alt="QRIS" style={{ width: 232, maxWidth: '66vw', height: 'auto', display: 'block', borderRadius: 10 }} />
             </div>
-            <p style={{ fontSize: 12.5, color: '#9fb3aa', textAlign: 'center', lineHeight: 1.55 }}>Scan dengan bank/e-wallet, bayar tepat <b style={{ color: AC }}>{PRICE}</b>, simpan buktinya.</p>
+            <p style={{ fontSize: 12.5, color: '#9aa6a1', textAlign: 'center', lineHeight: 1.55 }}>Scan <b style={{ color: '#f4f6f5' }}>QRIS</b>, bayar tepat <b style={{ color: AC }}>{PRICE}</b>, simpan buktinya.</p>
           </div>
+          <div style={{ marginTop: 4 }}>
+            <p style={{ fontSize: 10.5, fontWeight: 700, color: '#7d8a84', textAlign: 'center', letterSpacing: '0.06em', margin: '14px 0 10px' }}>DIDUKUNG SEMUA E-WALLET &amp; BANK VIA QRIS</p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, justifyContent: 'center' }}>
+              {PAYMENTS.map(p => (
+                <span key={p.name} style={{ fontSize: 11.5, fontWeight: 800, color: p.fg, background: 'rgba(255,255,255,0.05)', border: `1px solid ${p.fg}33`, borderRadius: 8, padding: '5px 10px' }}>{p.name}</span>
+              ))}
+            </div>
+          </div>
+        </div>
 
-          <div style={sx.divider} />
-
-          {/* langkah 3 */}
-          <div style={sx.stepRow}><span style={sx.num}>3</span><span style={sx.stepTitle}>Unggah Bukti Bayar</span></div>
+        <div style={sx.card}>
+          <div style={sx.stepHead}><span style={sx.stepNum}>3</span><span style={sx.stepTitle}>Unggah Bukti Bayar</span></div>
           <input ref={fileRef} type="file" accept="image/*" hidden onChange={e => pickFile(e.target.files?.[0] ?? null)} />
           {proof ? (
             <div style={{ position: 'relative' }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={proof} alt="bukti" style={{ width: '100%', maxHeight: 260, objectFit: 'contain', borderRadius: 12, border: '1px solid #23433a', background: '#0d1512' }} />
-              <button onClick={() => { setProof(''); setProofName(''); }} style={{ position: 'absolute', top: 8, right: 8, width: 30, height: 30, borderRadius: '50%', background: 'rgba(0,0,0,0.6)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <X style={{ width: 16, height: 16, color: '#fff' }} />
-              </button>
-              <p style={{ fontSize: 11.5, color: '#8fa89f', marginTop: 6 }}>{proofName}</p>
+              <img src={proof} alt="bukti" style={{ width: '100%', maxHeight: 260, objectFit: 'contain', borderRadius: 14, border: '1px solid #1f3a31', background: '#0c1512' }} />
+              <button onClick={() => { setProof(''); setProofName(''); }} style={sx.removeBtn}><X style={{ width: 16, height: 16, color: '#fff' }} /></button>
+              <p style={{ fontSize: 11.5, color: '#7d8a84', marginTop: 7 }}>{proofName}</p>
             </div>
           ) : (
-            <button onClick={() => fileRef.current?.click()} style={{ width: '100%', padding: '26px 0', borderRadius: 12, border: `1.5px dashed ${AC}66`, background: 'rgba(16,185,129,0.06)', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+            <button onClick={() => fileRef.current?.click()} style={sx.upload}>
               <Upload style={{ width: 24, height: 24, color: AC }} />
-              <span style={{ fontSize: 13.5, fontWeight: 600, color: '#cfe0d8' }}>Pilih gambar bukti bayar</span>
-              <span style={{ fontSize: 11, color: '#7d9389' }}>JPG / PNG · maks 5MB</span>
+              <span style={{ fontSize: 14, fontWeight: 600, color: '#c4cec9' }}>Pilih gambar bukti bayar</span>
+              <span style={{ fontSize: 11.5, color: '#7d8a84' }}>JPG / PNG · maks 5MB</span>
             </button>
           )}
-
-          {err && <p style={{ fontSize: 12.5, color: '#f87171', textAlign: 'center', marginTop: 14 }}>{err}</p>}
-
-          <button onClick={submit} disabled={!valid || busy} style={{ ...sx.submit, opacity: valid && !busy ? 1 : 0.5, cursor: valid && !busy ? 'pointer' : 'not-allowed' }}>
-            {busy ? <><Loader2 style={{ width: 18, height: 18, animation: 'spin 1s linear infinite' }} />MENGIRIM…</> : <>KIRIM PENGAJUAN</>}
-          </button>
         </div>
-        <p style={{ fontSize: 11, color: '#7d9389', textAlign: 'center', marginTop: 12, lineHeight: 1.5 }}>Data diverifikasi admin untuk aktivasi. Diproses maksimal 1×24 jam.</p>
+
+        {err && <p style={{ fontSize: 13, color: '#f87171', textAlign: 'center', marginBottom: 12 }}>{err}</p>}
+
+        <button onClick={submit} disabled={!valid || busy} style={{ ...sx.submit, opacity: valid && !busy ? 1 : 0.5, cursor: valid && !busy ? 'pointer' : 'not-allowed' }}>
+          {busy ? <><Loader2 style={{ width: 18, height: 18, animation: 'spin 1s linear infinite' }} />Mengirim…</> : <>Kirim Pengajuan Aktivasi</>}
+        </button>
+        <p style={{ fontSize: 11.5, color: '#7d8a84', textAlign: 'center', marginTop: 14, lineHeight: 1.55, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+          <Lock style={{ width: 12, height: 12 }} /> Data diverifikasi admin · maksimal 1×24 jam
+        </p>
       </div>
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </div>
@@ -136,14 +158,20 @@ export default function AktivasiRealPage() {
 }
 
 const sx: Record<string, React.CSSProperties> = {
-  page: { minHeight: '100%', background: '#080b0a', color: '#eaf2ee', padding: '24px 16px 44px', overflowY: 'auto' },
+  page: { minHeight: '100%', background: '#070a09', color: '#f4f6f5', padding: '28px 16px 48px', overflowY: 'auto', fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", system-ui, sans-serif' },
   wrap: { maxWidth: 460, margin: '0 auto' },
-  panel: { background: '#0d1512', border: '1px solid #1c332b', borderRadius: 18, padding: 20, marginBottom: 6 },
-  stepRow: { display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 },
-  num: { width: 24, height: 24, borderRadius: 7, background: 'rgba(16,185,129,0.14)', border: `1px solid ${AC}55`, color: AC, fontSize: 12, fontWeight: 800, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-  stepTitle: { fontSize: 14, fontWeight: 700, color: '#eaf2ee' },
-  label: { display: 'block', fontSize: 10.5, fontWeight: 700, letterSpacing: '0.05em', color: '#7d9389', marginBottom: 6 },
-  input: { width: '100%', padding: '13px 14px', borderRadius: 11, border: '1px solid #23433a', outline: 'none', fontSize: 15, fontWeight: 500, background: '#0a110e', color: '#eaf2ee' },
-  divider: { height: 1, background: '#1c332b', margin: '18px 0' },
-  submit: { width: '100%', marginTop: 18, padding: '15px 0', borderRadius: 12, border: 'none', fontSize: 14.5, fontWeight: 800, letterSpacing: '0.03em', color: '#04210b', background: AC, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8 },
+  card: { background: '#0d1512', borderRadius: 22, padding: 20, marginBottom: 16, border: '1px solid #17251f', boxShadow: '0 8px 30px -18px rgba(0,0,0,0.6)' },
+  heroIcon: { width: 60, height: 60, borderRadius: 20, background: `linear-gradient(160deg,${AC},#34d399)`, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16, boxShadow: `0 12px 30px -8px ${AC}55` },
+  trustChip: { display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11.5, fontWeight: 600, color: '#c4cec9', background: '#0d1512', border: '1px solid #1c2b24', borderRadius: 99, padding: '6px 11px' },
+  note: { display: 'flex', gap: 10, padding: '14px 16px', borderRadius: 16, background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.22)', marginBottom: 16 },
+  stepHead: { display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 },
+  stepNum: { width: 26, height: 26, borderRadius: 9, background: AC, color: '#04210b', fontSize: 13, fontWeight: 800, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+  stepTitle: { fontSize: 15.5, fontWeight: 700, letterSpacing: '-0.2px', color: '#f4f6f5' },
+  label: { display: 'block', fontSize: 10.5, fontWeight: 700, letterSpacing: '0.05em', color: '#7d8a84', marginBottom: 7 },
+  input: { width: '100%', padding: '14px 15px', borderRadius: 13, border: '1px solid #1f3a31', outline: 'none', fontSize: 15.5, fontWeight: 500, background: '#0a1210', color: '#f4f6f5' },
+  qrisFrame: { padding: 14, background: '#fff', borderRadius: 18 },
+  upload: { width: '100%', padding: '30px 0', borderRadius: 16, border: `1.5px dashed ${AC}55`, background: 'rgba(16,185,129,0.05)', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 9 },
+  removeBtn: { position: 'absolute', top: 10, right: 10, width: 30, height: 30, borderRadius: '50%', background: 'rgba(0,0,0,0.6)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+  submit: { width: '100%', padding: '17px 0', borderRadius: 16, border: 'none', fontSize: 16, fontWeight: 800, color: '#04210b', background: `linear-gradient(160deg,${AC},#34d399)`, boxShadow: `0 12px 28px -10px ${AC}66`, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, letterSpacing: '-0.2px' },
+  doneBadge: { width: 68, height: 68, borderRadius: '50%', background: `linear-gradient(160deg,${AC},#34d399)`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', boxShadow: `0 14px 32px -10px ${AC}66` },
 };

@@ -2388,8 +2388,8 @@ const REAL_LOCK_STR: Record<string, { title: string; body: string; hint: string;
 type RealLockReason = 'account' | 'platform';
 
 const APK_LOCK_STR: Record<string, { title: string; body: string; hint: string; cta: string; close: string }> = {
-  id: { title: 'Buka di Aplikasi Android', body: 'Mode REAL hanya berjalan di aplikasi STC AutoTrade untuk Android.', hint: 'Di aplikasi, order dieksekusi langsung dari koneksi internet perangkat Anda sendiri — lebih aman dan sesuai ketentuan platform. Versi web tetap bisa dipakai untuk mode DEMO dan memantau hasil.', cta: 'Download Aplikasi', close: 'Tutup' },
-  en: { title: 'Open in the Android App', body: 'REAL mode runs only in the STC AutoTrade Android app.', hint: 'In the app, orders execute directly from your own device connection — safer and in line with platform rules. The web version stays available for DEMO mode and monitoring.', cta: 'Download App', close: 'Close' },
+  id: { title: 'Aktifkan Mode REAL', body: 'Akun Anda saat ini masih DEMO. Buka mode REAL dengan aktivasi sekali bayar Rp 180.000.', hint: 'Aktivasi bisa dilakukan langsung di sini — TANPA perlu mengunduh atau memakai aplikasi Android. Setelah aktif, mode REAL bisa dipakai di versi web maupun aplikasi.', cta: 'Download Aplikasi', close: 'Tutup' },
+  en: { title: 'Activate REAL Mode', body: 'Your account is currently on DEMO. Unlock REAL mode with a one-time Rp 180,000 activation.', hint: 'You can activate right here — with NO need to download or use the Android app. Once active, REAL mode works on both the web and the app.', cta: 'Download App', close: 'Close' },
   ru: { title: 'Откройте в приложении Android', body: 'Режим REAL работает только в приложении STC AutoTrade для Android.', hint: 'В приложении сделки исполняются напрямую с вашего устройства — безопаснее и соответствует правилам платформы. Веб-версия остаётся для режима ДЕМО и мониторинга.', cta: 'Скачать приложение', close: 'Закрыть' },
   es: { title: 'Ábrelo en la app de Android', body: 'El modo REAL solo funciona en la app STC AutoTrade para Android.', hint: 'En la app, las órdenes se ejecutan desde la conexión de tu propio dispositivo: más seguro y conforme a las reglas de la plataforma. La versión web sigue disponible para el modo DEMO y seguimiento.', cta: 'Descargar app', close: 'Cerrar' },
   ms: { title: 'Buka dalam Aplikasi Android', body: 'Mod REAL hanya berjalan dalam aplikasi STC AutoTrade untuk Android.', hint: 'Dalam aplikasi, pesanan dilaksanakan terus dari sambungan peranti anda sendiri — lebih selamat dan mematuhi peraturan platform. Versi web kekal untuk mod DEMO dan pemantauan.', cta: 'Muat Turun Aplikasi', close: 'Tutup' },
@@ -4681,7 +4681,7 @@ export default function DashboardPage() {
   // v4: pengalihan ke mode REAL dijaga terpusat di sini; setting REAL yang
   // tersimpan dari sesi lama juga dipaksa kembali ke DEMO bila tak berhak.
   const handleDemoChange = (v: boolean) => {
-    if (!v && !isApk)      { setRealLockReason('platform'); setRealLockOpen(true); return; }
+    if (!v && !isApk && !realAccess) { setRealLockReason('platform'); setRealLockOpen(true); return; }
     if (!v && !realAccess) { setRealLockReason('account');  setRealLockOpen(true); return; }
     setIsDemo(v);
   };
@@ -4814,7 +4814,7 @@ export default function DashboardPage() {
     // Pertahanan lapis dua: mode aisignal tersimpan dari sesi lama tetap tak bisa start
     if(tradingMode==='aisignal' && !aiUnlocked){ setAiLockOpen(true); return; }
     // v4: start di akun REAL butuh APK + real_access — selain itu demo-only
-    if(!isDemo && !isApk)      { setRealLockReason('platform'); setRealLockOpen(true); return; }
+    if(!isDemo && !isApk && !realAccess) { setRealLockReason('platform'); setRealLockOpen(true); return; }
     if(!isDemo && !realAccess) { setRealLockReason('account');  setRealLockOpen(true); return; }
     if(isBelowMin&&tradingMode!=='indicator'){setError(`Amount di bawah minimum ${CURR_UNIT} ${FMT(MIN_AMOUNT)}.`);return;}
     // Cegah start jika ada mode LAIN yang sedang berjalan (hanya 1 mode boleh aktif)
