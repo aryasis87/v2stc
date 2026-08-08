@@ -60,7 +60,7 @@ export function DarkModeProvider({ children }: { children: ReactNode }) {
   const showSplash = (toDark: boolean) => {
     setSplashTo(toDark);
     if (splashTimer.current) clearTimeout(splashTimer.current);
-    splashTimer.current = setTimeout(() => setSplashTo(null), 950);
+    splashTimer.current = setTimeout(() => setSplashTo(null), 2500);
   };
   useEffect(() => () => { if (splashTimer.current) clearTimeout(splashTimer.current); }, []);
 

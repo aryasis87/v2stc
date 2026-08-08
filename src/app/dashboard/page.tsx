@@ -84,6 +84,8 @@ function getColors(isDark: boolean) {
     // Warning / martingale
     amber: isDark ? '#FBBF24' : '#B45309',
     ambd:  isDark ? 'rgba(251,191,36,0.14)'  : 'rgba(180,83,9,0.09)',
+    // Teks di atas amber solid — adaptif agar selalu terbaca (lihat catatan koalaColors)
+    onAmber: isDark ? '#1a1612' : '#ffffff',
     // Misc accent colors
     violet: isDark ? '#C084FC' : '#7C3AED',
     vltd:  isDark ? 'rgba(192,132,252,0.14)' : 'rgba(124,58,237,0.08)',
@@ -2362,7 +2364,7 @@ const AiLockedModal: React.FC<{ open: boolean; onClose: () => void; lang: string
         <div style={{display:'flex',gap:8}}>
           <button onClick={onClose} style={{flex:1,padding:'11px 0',borderRadius:12,background:C.card2,border:`1px solid ${C.bdr}`,cursor:'pointer',fontSize:13,fontWeight:600,color:C.sub}}>{S.close}</button>
           <a href={buildActivationMailto(AI_SIGNAL_CONTACT_EMAIL, 'Mode AI Signal', userId, email)}
-             style={{flex:1,padding:'11px 0',borderRadius:12,background:C.amber,border:'none',cursor:'pointer',fontSize:13,fontWeight:700,color:'#1a1612',textDecoration:'none',display:'flex',alignItems:'center',justifyContent:'center'}}>
+             style={{flex:1,padding:'11px 0',borderRadius:12,background:C.amber,border:'none',cursor:'pointer',fontSize:13,fontWeight:700,color:C.onAmber,textDecoration:'none',display:'flex',alignItems:'center',justifyContent:'center'}}>
             {S.mail}
           </a>
         </div>

@@ -193,7 +193,7 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
           {!isPublic && !navHidden && <BottomNav />}
 
           {/* Tombol support melayang — HANYA di halaman profil */}
-          {pathname === '/profile' && !navHidden && <SupportButton />}
+          {(pathname === '/profile' || pathname === '/profile/') && !navHidden && <SupportButton />}
 
           {/* ── Whitelist Blocked Overlay ───────────────────────────────── */}
           {isBlocked && (
