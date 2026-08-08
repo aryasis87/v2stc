@@ -17,6 +17,7 @@ import AssetIcon from '@/components/common/AssetIcon';
 import { storage, isSessionValid, SESSION_KEYS } from '@/lib/storage';
 import { ui } from '@/lib/uiText';
 import { useTradingSettings } from '@/lib/useTradingSettings';
+import { computeBestConfig, type BestConfigResult } from '@/lib/bestConfig';
 import { isAiSignalUnlocked, AI_SIGNAL_CONTACT_EMAIL } from '@/lib/aiSignalAccess';
 import { hasRealAccess } from '@/lib/realAccess';
 import { getMaintenance, MAINTENANCE_OFF, type MaintenanceInfo } from '@/lib/maintenanceConfig';
@@ -2466,6 +2467,140 @@ const CapitalAdviceModal: React.FC<{ open: boolean; onClose: () => void; lang: s
 };
 
 // ─── Modal KODE PROMO pengguna baru (muncul setelah saran manajemen modal) ───
+// ═══════════════════════════════════════════════════════════════════════════
+// FORMULA TRADING (Best Config) — saran setting terbaik dari saldo.
+// Gaya STC: "spec-sheet / struk" — baris rincian bergaris, meter risiko
+// tersegmen, tangga step vertikal, angka tabular. SENGAJA beda dari koala.
+// ═══════════════════════════════════════════════════════════════════════════
+const FormulaTradingModal: React.FC<{
+  open: boolean; onClose: () => void; minAmount: number; currUnit: string;
+  onApply: (r: BestConfigResult) => void;
+}> = ({ open, onClose, minAmount, currUnit, onApply }) => {
+  const [balStr, setBalStr] = useState('');
+  const [applied, setApplied] = useState(false);
+  useEffect(() => { if (open) { setApplied(false); } }, [open]);
+  if (!open) return null;
+
+  const balance = Number(String(balStr).replace(/[^\d]/g, '')) || 0;
+  const min = Math.max(minAmount || 0, 1);
+  const valid = balance >= min;
+  const cfg = valid ? computeBestConfig({ balance, minAmount: min }) : null;
+  const fmt = (n: number) => `${currUnit} ${Math.round(n).toLocaleString('id-ID')}`;
+  const riskColor = !cfg ? C.muted : cfg.riskLevel === 'aman' ? C.cyan : cfg.riskLevel === 'sedang' ? C.amber : C.coral;
+  const riskLabel = !cfg ? '' : cfg.riskLevel === 'aman' ? 'AMAN' : cfg.riskLevel === 'sedang' ? 'SEDANG' : 'AGRESIF';
+  const riskIdx = !cfg ? -1 : cfg.riskLevel === 'aman' ? 2 : cfg.riskLevel === 'sedang' ? 1 : 0;
+  const mono: React.CSSProperties = { fontVariantNumeric: 'tabular-nums', fontFeatureSettings: '"tnum"' };
+
+  // baris rincian bergaris (struk)
+  const specRow = (label: string, value: string, accent?: string, last?: boolean) => (
+    <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 10, padding: '11px 0', borderBottom: last ? 'none' : `1px dashed ${C.bdr}` }}>
+      <span style={{ fontSize: 12, color: C.muted, whiteSpace: 'nowrap' }}>{label}</span>
+      <span style={{ flex: 1, borderBottom: `1px dotted ${C.bdr}`, transform: 'translateY(-3px)', opacity: 0.5 }} />
+      <span style={{ fontSize: 14, fontWeight: 800, color: accent ?? C.text, whiteSpace: 'nowrap', ...mono }}>{value}</span>
+    </div>
+  );
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 90, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, animation: 'fade-in 0.15s ease' }}>
+      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.74)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }} />
+      <div style={{ position: 'relative', width: '100%', maxWidth: 420, maxHeight: '90vh', overflowY: 'auto', background: C.bg, borderRadius: 16, border: `1px solid ${C.bdr}`, overflowX: 'hidden', animation: 'slide-up 0.28s cubic-bezier(0.32,0.72,0,1)' }}>
+        {/* pita aksen atas */}
+        <div style={{ height: 3, background: `linear-gradient(90deg, ${C.cyan}, ${C.sky}, ${C.cyan})` }} />
+        <div style={{ padding: '18px 20px 22px' }}>
+          {/* header */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+            <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.18em', color: C.cyan }}>FORMULA · TRADING</span>
+            <button onClick={onClose} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 2 }}><X style={{ width: 17, height: 17, color: C.muted }} /></button>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+            <BarChart2 style={{ width: 20, height: 20, color: C.cyan }} />
+            <p style={{ fontSize: 18, fontWeight: 800, color: C.text, letterSpacing: '-0.3px' }}>Best Config Otomatis</p>
+          </div>
+
+          {/* input saldo — gaya garis bawah */}
+          <label style={{ display: 'block', fontSize: 11, color: C.muted, marginBottom: 4, letterSpacing: '0.04em' }}>SALDO KAMU</label>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, borderBottom: `2px solid ${valid ? C.cyan : C.bdr}`, paddingBottom: 6, transition: 'border-color 0.2s' }}>
+            <span style={{ fontSize: 16, fontWeight: 700, color: C.sub }}>{currUnit}</span>
+            <input
+              inputMode="numeric" autoFocus placeholder="0"
+              value={balance ? balance.toLocaleString('id-ID') : ''}
+              onChange={(e) => setBalStr(e.target.value.replace(/[^\d]/g, ''))}
+              style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', fontSize: 26, fontWeight: 800, color: C.text, width: '100%', ...mono }}
+            />
+          </div>
+
+          {!valid && (
+            <p style={{ fontSize: 12, color: C.muted, marginTop: 14, lineHeight: 1.6, display: 'flex', gap: 8 }}>
+              <Info style={{ width: 14, height: 14, color: C.muted, flexShrink: 0, marginTop: 2 }} />
+              Masukkan saldo — sistem menghitung nominal, martingale, dan batas risiko terbaik.
+            </p>
+          )}
+
+          {cfg && (
+            <>
+              {/* meter risiko tersegmen */}
+              <div style={{ marginTop: 18, marginBottom: 4, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: 11, color: C.muted, letterSpacing: '0.04em' }}>TINGKAT RISIKO</span>
+                <span style={{ fontSize: 11.5, fontWeight: 800, color: riskColor, letterSpacing: '0.08em' }}>{riskLabel}</span>
+              </div>
+              <div style={{ display: 'flex', gap: 5 }}>
+                {['agresif', 'sedang', 'aman'].map((_, i) => (
+                  <div key={i} style={{ flex: 1, height: 6, borderRadius: 3, background: i <= riskIdx ? riskColor : C.bdr, opacity: i <= riskIdx ? 1 : 0.5, transition: 'background 0.3s' }} />
+                ))}
+              </div>
+              <p style={{ fontSize: 11.5, color: C.sub, marginTop: 9 }}>Saldo tahan <b style={{ color: riskColor, ...mono }}>{cfg.survivableCycles}×</b> kekalahan beruntun satu siklus penuh.</p>
+
+              {cfg.belowRecommended && (
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginTop: 12, padding: '10px 12px', borderRadius: 10, background: `${C.coral}12`, border: `1px solid ${C.coral}30` }}>
+                  <AlertCircle style={{ width: 14, height: 14, color: C.coral, flexShrink: 0, marginTop: 1 }} />
+                  <p style={{ fontSize: 11.5, color: C.sub, lineHeight: 1.5 }}>Di bawah saldo saran (min <b style={{ color: C.text }}>{fmt(cfg.recommendedMinBalance)}</b>). Setting dibuat lebih defensif.</p>
+                </div>
+              )}
+
+              {/* struk rincian */}
+              <div style={{ marginTop: 16, padding: '2px 14px', borderRadius: 12, background: C.card, border: `1px solid ${C.bdr}` }}>
+                {specRow('Nominal Awal', fmt(cfg.baseAmount), C.cyan)}
+                {specRow('Martingale', `${cfg.maxStep} step`)}
+                {specRow('Multiplier', `${cfg.multiplier}×`)}
+                {specRow('Stop Loss', fmt(cfg.stopLoss), C.coral)}
+                {specRow('Stop Profit', fmt(cfg.stopProfit), C.cyan)}
+                {specRow('Durasi', '1 menit', undefined, true)}
+              </div>
+
+              {/* tangga step vertikal */}
+              <p style={{ fontSize: 10.5, color: C.muted, letterSpacing: '0.04em', margin: '16px 0 8px' }}>TANGGA MARTINGALE</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                {cfg.perStep.map((v, i) => {
+                  const w = Math.min((v / cfg.perStep[cfg.perStep.length - 1]) * 100, 100);
+                  return (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+                      <span style={{ fontSize: 10, fontWeight: 700, color: C.muted, width: 26, ...mono }}>#{i + 1}</span>
+                      <div style={{ flex: 1, height: 22, borderRadius: 6, background: C.card, border: `1px solid ${C.bdr}`, position: 'relative', overflow: 'hidden' }}>
+                        <div style={{ position: 'absolute', inset: 0, width: `${w}%`, background: `${C.cyan}22`, borderRight: `2px solid ${C.cyan}` }} />
+                        <span style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', fontSize: 11, fontWeight: 700, color: C.text, ...mono }}>{fmt(v)}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <p style={{ fontSize: 11, color: C.muted, marginTop: 10, ...mono }}>Σ 1 siklus penuh: <b style={{ color: C.sub }}>{fmt(cfg.cycleRisk)}</b> · {Math.round(cfg.cycleRisk / balance * 100)}% saldo</p>
+
+              {/* apply */}
+              <button
+                onClick={() => { onApply(cfg); setApplied(true); setTimeout(onClose, 550); }}
+                style={{ width: '100%', marginTop: 18, padding: '14px 0', borderRadius: 12, border: 'none', cursor: 'pointer', fontSize: 14.5, fontWeight: 800, letterSpacing: '0.02em', color: '#04210b', background: applied ? C.cyan : `linear-gradient(135deg, ${C.cyan}, ${C.sky})`, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+              >
+                {applied ? <><Check style={{ width: 18, height: 18 }} />DITERAPKAN</> : <>TERAPKAN KE PENGATURAN<ArrowRight style={{ width: 16, height: 16 }} /></>}
+              </button>
+              <p style={{ fontSize: 10.5, color: C.muted, textAlign: 'center', marginTop: 10, lineHeight: 1.5 }}>Kalkulasi risiko otomatis — bukan jaminan profit. Trading tetap berisiko.</p>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const PROMO_CODE = 'AUTOTRADE100';
 const PROMO_STR: Record<string, { title: string; body: string; bonus: string; soon: string; note: string; daftar: string; ok: string }> = {
   id: { title: 'Kode Promo Pengguna Baru', body: 'Promo bonus untuk pengguna baru segera hadir — nantikan!', bonus: 'Bonus saldo 100% dari jumlah deposit Anda.', soon: 'Segera hadir · 17 Agustus', note: 'Daftar sekarang agar siap saat promo dibuka.', daftar: 'Daftar', ok: 'Tutup' },
@@ -2890,6 +3025,7 @@ const SettingsCard: React.FC<{
   const durationOpts = [{value:'60',label:'1 Menit'},{value:'120',label:'2 Menit'},{value:'300',label:'5 Menit'},{value:'600',label:'10 Menit'},{value:'900',label:'15 Menit'},{value:'1800',label:'30 Menit'}];
   const acOpts: PickerOpt[] = [{value:'demo',label:'Demo',sub:'Virtual · tidak pakai dana nyata'},{value:'real',label:'Real',sub:'Menggunakan saldo sesungguhnya'}];
   const ac = modeAccent(mode);
+  const [formulaOpen, setFormulaOpen] = useState(false);
   const isBelowMin = amount > 0 && amount < MIN_AMOUNT;
   const isNewMode = mode==='aisignal'||mode==='indicator'||mode==='momentum';
   // Nama mode dibuat RINGKAS agar muat satu baris pada label pengaturan
@@ -2901,6 +3037,17 @@ const SettingsCard: React.FC<{
     <>
       <MartingaleDialog open={showMartingaleDialog} onClose={()=>setShowMartingaleDialog(false)} martingale={martingale} onMartingaleChange={onMartingaleChange} mode={mode}/>
       <PickerModal open={pickerOpen==='actype'} onClose={()=>setPickerOpen(null)} title={T('dashboard.settings.accountType')} options={acOpts} value={isDemo?'demo':'real'} onSelect={v=>onDemoChange(v==='demo')} isDark={isDarkMode}/>
+      <FormulaTradingModal
+        open={formulaOpen} onClose={()=>setFormulaOpen(false)}
+        minAmount={MIN_AMOUNT} currUnit={CURR_UNIT}
+        onApply={(r)=>{
+          onAmountChange(r.baseAmount);
+          onMartingaleChange({ enabled:true, maxStep:r.maxStep, multiplier:r.multiplier, alwaysSignal: martingale.alwaysSignal ?? false });
+          onSlChange(r.stopLoss);
+          onSpChange(r.stopProfit);
+          onDurationChange(r.duration);
+        }}
+      />
       <PickerModal open={pickerOpen==='duration'} onClose={()=>setPickerOpen(null)} title={T('dashboard.settings.orderDuration')} options={durationOpts} value={String(duration)} onSelect={v=>onDurationChange(+v)} isDark={isDarkMode}/>
       <PickerModal open={pickerOpen==='ftTf'} onClose={()=>setPickerOpen(null)} title={T('dashboard.settings.fastradeTimeframe')} options={FT_TF.map(t=>({value:t.value,label:t.label}))} value={ftTf} onSelect={v=>onFtTfChange(v as FastTradeTimeframe)} isDark={isDarkMode}/>
 
@@ -2925,6 +3072,21 @@ const SettingsCard: React.FC<{
 
         {open&&(
           <div style={{ padding:'18px 18px 20px',pointerEvents:disabled?'none':undefined,display:'flex',flexDirection:'column',gap:18 }}>
+
+            {/* Formula Trading — pintasan saran setting terbaik (gaya STC: garis + label mono) */}
+            <button
+              disabled={disabled} onClick={()=>setFormulaOpen(true)}
+              style={{ width:'100%',display:'flex',alignItems:'center',gap:12,padding:'12px 14px',borderRadius:12,cursor:disabled?'not-allowed':'pointer',textAlign:'left',
+                background:C.card, border:`1px solid ${C.cyan}40`, position:'relative', overflow:'hidden' }}
+            >
+              <span style={{ position:'absolute', left:0, top:0, bottom:0, width:3, background:`linear-gradient(180deg, ${C.cyan}, ${C.sky})` }}/>
+              <BarChart2 style={{ width:19,height:19,color:C.cyan,flexShrink:0,marginLeft:4 }}/>
+              <span style={{ flex:1 }}>
+                <span style={{ display:'block',fontSize:9.5,fontWeight:800,letterSpacing:'0.16em',color:C.cyan }}>FORMULA · TRADING</span>
+                <span style={{ display:'block',fontSize:13,fontWeight:700,color:C.text,marginTop:1 }}>Best Config dari saldomu</span>
+              </span>
+              <ArrowRight style={{ width:16,height:16,color:C.cyan,flexShrink:0 }}/>
+            </button>
 
             {/* Konfigurasi Akun */}
             <div>
