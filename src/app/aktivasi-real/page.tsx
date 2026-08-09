@@ -37,7 +37,7 @@ function PayLogo({ p }: { p: (typeof PAYMENTS)[number] }) {
   return (
     <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', height: 36, minWidth: 66, padding: '0 12px', background: '#fff', borderRadius: 10, boxShadow: '0 2px 8px -2px rgba(0,0,0,0.4)' }}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={`/pay/${p.name.toLowerCase()}.png`} alt={p.name} onError={() => setErr(true)} style={{ height: 21, width: 'auto', maxWidth: 84, objectFit: 'contain', display: 'block' }} />
+      <img src={`/pay/${p.name.toLowerCase()}.svg`} alt={p.name} onError={() => setErr(true)} style={{ height: 22, width: 'auto', maxWidth: 84, objectFit: 'contain', display: 'block' }} />
     </span>
   );
 }
