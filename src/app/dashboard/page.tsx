@@ -5036,8 +5036,8 @@ export default function DashboardPage() {
       border: 1px solid ${C.bdr};
       border-radius: 16px !important;
       box-shadow: ${isDarkMode
-        ? 'inset 0 1px 0 rgba(255,255,255,0.045), 0 1px 2px rgba(0,0,0,0.35), 0 12px 32px -16px rgba(0,0,0,0.55)'
-        : '0 1px 2px rgba(15,23,42,0.04), 0 8px 24px -16px rgba(15,23,42,0.10)'};
+        ? 'inset 0 1px 0 rgba(255,255,255,0.05), 0 1px 2px rgba(0,0,0,0.4), 0 10px 30px -16px rgba(0,0,0,0.6)'
+        : '0 1px 1px rgba(15,23,42,0.04), 0 2px 4px rgba(15,23,42,0.03), 0 12px 28px -16px rgba(15,23,42,0.12)'};
       transition: background 0.3s, border-color 0.18s ease, box-shadow 0.18s ease;
     }
     @media (max-width: 767px) {
@@ -5046,8 +5046,22 @@ export default function DashboardPage() {
     /* Kartu KPI / stat tile — dipakai desktop, tablet & mobile */
     .dsh-tile { padding: 16px 18px; min-width: 0; }
     .dsh-tile-sm { padding: 13px 15px; min-width: 0; }
-    .dsh-tile-tap { cursor: pointer; }
-    .dsh-tile-tap:hover { border-color: ${isDarkMode ? 'rgba(255,255,255,0.16)' : 'rgba(2,6,23,0.16)'}; }
+    .dsh-tile-tap { cursor: pointer; transition: border-color 0.18s ease, box-shadow 0.2s ease, transform 0.14s cubic-bezier(0.4,0,0.2,1); }
+    /* Hover elevasi halus (desktop) — afordans "bisa ditekan" yang terasa mahal */
+    @media (min-width: 768px) {
+      .dsh-tile-tap:hover {
+        border-color: ${isDarkMode ? 'rgba(255,255,255,0.18)' : 'rgba(2,6,23,0.18)'};
+        box-shadow: ${isDarkMode
+          ? 'inset 0 1px 0 rgba(255,255,255,0.06), 0 2px 6px rgba(0,0,0,0.42), 0 18px 44px -20px rgba(0,0,0,0.62)'
+          : '0 1px 2px rgba(15,23,42,0.05), 0 16px 36px -20px rgba(15,23,42,0.18)'};
+        transform: translateY(-1px);
+      }
+    }
+    /* Umpan-balik tekan + fokus keyboard yang jelas & aksesibel */
+    .dsh-tile-tap:active { transform: scale(0.994); }
+    .dsh-tile-tap:focus-visible, .ds-card button:focus-visible, .ds-card [role="button"]:focus-visible {
+      outline: 2px solid ${C.cyan}; outline-offset: 2px;
+    }
     /* Label meta 11px — SATU gaya label untuk seluruh dashboard */
     .dsh-label {
       font-size: 11px; font-weight: 500; letter-spacing: 0.01em;
