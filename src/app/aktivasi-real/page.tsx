@@ -120,9 +120,9 @@ export default function AktivasiRealPage() {
         <div style={sx.card}>
           <div style={sx.stepHead}><span style={sx.stepNum}>1</span><span style={sx.stepTitle}>Data Kamu</span></div>
           <label style={sx.label}>NAMA LENGKAP</label>
-          <input value={name} onChange={e => setName(e.target.value)} placeholder="Nama sesuai identitas" style={sx.input} />
+          <input value={name} onChange={e => setName(e.target.value)} placeholder="Nama sesuai identitas" className="aktv-in" style={sx.input} />
           <label style={{ ...sx.label, marginTop: 14 }}>ID AKUN STOCKITY</label>
-          <input value={sid} onChange={e => setSid(e.target.value.replace(/[^0-9]/g, ''))} inputMode="numeric" placeholder="mis. 183xxxxxx" style={sx.input} />
+          <input value={sid} onChange={e => setSid(e.target.value.replace(/[^0-9]/g, ''))} inputMode="numeric" placeholder="mis. 183xxxxxx" className="aktv-in" style={sx.input} />
         </div>
 
         <div style={sx.card}>
@@ -132,7 +132,7 @@ export default function AktivasiRealPage() {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/qris-aktivasi.jpg" alt="QRIS" style={{ width: 232, maxWidth: '66vw', height: 'auto', display: 'block', borderRadius: 10 }} />
             </div>
-            <a href="/qris-aktivasi.jpg" download="QRIS-StcAutoTrade.jpg" style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 12.5, fontWeight: 700, color: AC, background: 'rgba(16,185,129,0.12)', border: `1px solid ${AC}44`, borderRadius: 10, padding: '9px 16px', textDecoration: 'none' }}>
+            <a href="/qris-aktivasi.jpg" download="QRIS-StcAutoTrade.jpg" className="aktv-tap" style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 12.5, fontWeight: 700, color: AC, background: 'rgba(16,185,129,0.12)', border: `1px solid ${AC}44`, borderRadius: 10, padding: '9px 16px', textDecoration: 'none' }}>
               <Download style={{ width: 15, height: 15 }} /> Unduh QRIS
             </a>
             <p style={{ fontSize: 12.5, color: '#9aa6a1', textAlign: 'center', lineHeight: 1.55 }}>Scan atau unduh <b style={{ color: '#f4f6f5' }}>QRIS</b>, bayar tepat <b style={{ color: AC }}>{PRICE}</b>, simpan buktinya.</p>
@@ -156,7 +156,7 @@ export default function AktivasiRealPage() {
               <p style={{ fontSize: 11.5, color: '#7d8a84', marginTop: 7 }}>{proofName}</p>
             </div>
           ) : (
-            <button onClick={() => fileRef.current?.click()} style={sx.upload}>
+            <button onClick={() => fileRef.current?.click()} className="aktv-tap" style={sx.upload}>
               <Upload style={{ width: 24, height: 24, color: AC }} />
               <span style={{ fontSize: 14, fontWeight: 600, color: '#c4cec9' }}>Pilih gambar bukti bayar</span>
               <span style={{ fontSize: 11.5, color: '#7d8a84' }}>JPG / PNG · maks 5MB</span>
@@ -166,14 +166,25 @@ export default function AktivasiRealPage() {
 
         {err && <p style={{ fontSize: 13, color: '#f87171', textAlign: 'center', marginBottom: 12 }}>{err}</p>}
 
-        <button onClick={submit} disabled={!valid || busy} style={{ ...sx.submit, opacity: valid && !busy ? 1 : 0.5, cursor: valid && !busy ? 'pointer' : 'not-allowed' }}>
+        <button onClick={submit} disabled={!valid || busy} className="aktv-btn" style={{ ...sx.submit, opacity: valid && !busy ? 1 : 0.5, cursor: valid && !busy ? 'pointer' : 'not-allowed' }}>
           {busy ? <><Loader2 style={{ width: 18, height: 18, animation: 'spin 1s linear infinite' }} />Mengirim…</> : <>Kirim Pengajuan Aktivasi</>}
         </button>
         <p style={{ fontSize: 11.5, color: '#7d8a84', textAlign: 'center', marginTop: 14, lineHeight: 1.55, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
           <Lock style={{ width: 12, height: 12 }} /> Data diverifikasi admin · admin online 24 jam · verifikasi rata-rata ~10 menit
         </p>
       </div>
-      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+      <style>{`
+        @keyframes spin{to{transform:rotate(360deg)}}
+        .aktv-in{ transition:border-color .16s ease, box-shadow .16s ease, background .16s ease; }
+        .aktv-in::placeholder{ color:#5f6f68; }
+        .aktv-in:focus{ border-color:${AC}; box-shadow:0 0 0 3px ${AC}2e; background:#0c1512; }
+        .aktv-btn{ transition:transform .12s ease, filter .16s ease; }
+        .aktv-btn:not(:disabled):hover{ filter:brightness(1.05); }
+        .aktv-btn:not(:disabled):active{ transform:scale(.985); }
+        .aktv-tap{ transition:background .15s ease, transform .12s ease; -webkit-tap-highlight-color:transparent; }
+        .aktv-tap:active{ transform:scale(.98); }
+        .aktv-in:focus-visible, .aktv-btn:focus-visible, .aktv-tap:focus-visible{ outline:2px solid ${AC}; outline-offset:2px; }
+      `}</style>
     </div>
   );
 }
@@ -182,7 +193,7 @@ const sx: Record<string, React.CSSProperties> = {
   page: { minHeight: '100%', background: '#070a09', color: '#f4f6f5', padding: '28px 16px 48px', overflowY: 'auto', fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", system-ui, sans-serif' },
   wrap: { maxWidth: 460, margin: '0 auto' },
   card: { background: '#0d1512', borderRadius: 22, padding: 20, marginBottom: 16, border: '1px solid #17251f', boxShadow: '0 8px 30px -18px rgba(0,0,0,0.6)' },
-  heroIcon: { width: 60, height: 60, borderRadius: 20, background: `linear-gradient(160deg,${AC},#34d399)`, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16, boxShadow: `0 12px 30px -8px ${AC}55` },
+  heroIcon: { width: 60, height: 60, borderRadius: 20, background: `linear-gradient(160deg,${AC},#34d399)`, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16, boxShadow: `0 8px 20px -10px ${AC}35` },
   trustChip: { display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11.5, fontWeight: 600, color: '#c4cec9', background: '#0d1512', border: '1px solid #1c2b24', borderRadius: 99, padding: '6px 11px' },
   note: { display: 'flex', gap: 10, padding: '14px 16px', borderRadius: 16, background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.22)', marginBottom: 16 },
   stepHead: { display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 },
@@ -193,6 +204,6 @@ const sx: Record<string, React.CSSProperties> = {
   qrisFrame: { padding: 14, background: '#fff', borderRadius: 18 },
   upload: { width: '100%', padding: '30px 0', borderRadius: 16, border: `1.5px dashed ${AC}55`, background: 'rgba(16,185,129,0.05)', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 9 },
   removeBtn: { position: 'absolute', top: 10, right: 10, width: 30, height: 30, borderRadius: '50%', background: 'rgba(0,0,0,0.6)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-  submit: { width: '100%', padding: '17px 0', borderRadius: 16, border: 'none', fontSize: 16, fontWeight: 800, color: '#04210b', background: `linear-gradient(160deg,${AC},#34d399)`, boxShadow: `0 12px 28px -10px ${AC}66`, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, letterSpacing: '-0.2px' },
-  doneBadge: { width: 68, height: 68, borderRadius: '50%', background: `linear-gradient(160deg,${AC},#34d399)`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', boxShadow: `0 14px 32px -10px ${AC}66` },
+  submit: { width: '100%', padding: '17px 0', borderRadius: 16, border: 'none', fontSize: 16, fontWeight: 800, color: '#04210b', background: `linear-gradient(160deg,${AC},#34d399)`, boxShadow: `0 8px 20px -12px ${AC}44`, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, letterSpacing: '-0.2px' },
+  doneBadge: { width: 68, height: 68, borderRadius: '50%', background: `linear-gradient(160deg,${AC},#34d399)`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', boxShadow: `0 10px 26px -14px ${AC}44` },
 };
