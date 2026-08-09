@@ -425,12 +425,6 @@ function HistoryPageContent() {
         boxShadow: P.shadow,
         overflow: 'hidden',
       }}>
-        {/* subtle accent wash */}
-        <div style={{
-          position: 'absolute', top: 0, left: 0, right: 0, height: '100%',
-          background: `radial-gradient(120% 90% at 0% 0%, ${pnlPos ? P.green : P.red}${isDarkMode ? '14' : '0D'} 0%, transparent 55%)`,
-          pointerEvents: 'none',
-        }} />
         <div style={{ position: 'relative', padding: '18px 18px 16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
             {/* Left: P&L */}
@@ -491,9 +485,7 @@ function HistoryPageContent() {
     const profitPos = (log.profit ?? 0) >= 0;
     const pending   = !log.result;
 
-    const accentGrad = res
-      ? `linear-gradient(180deg,${res.color},${res.color}CC)`
-      : P.bdr;
+    const accentGrad = res ? res.color : P.bdr;
 
     return (
       <div style={{ display: 'flex', alignItems: 'stretch', borderBottom: last ? 'none' : `1px solid ${P.hair}`, position: 'relative' }}>
@@ -603,10 +595,14 @@ function HistoryPageContent() {
 
         .hist-group { animation: fade-up 0.32s cubic-bezier(0.22,1,0.36,1) both; }
 
-        /* Hover hanya di device yang mendukung (hindari stuck hover di mobile) */
+        /* Baris riwayat — sorot lembut saat hover (device pendukung saja) */
+        .hist-row > div { transition: background 0.15s ease; }
         @media (hover: hover) {
           .hist-sidebar button:hover { background: ${P.press} !important; }
+          .hist-row:hover > div { background: ${P.press}; }
         }
+        /* Fokus keyboard yang jelas & aksesibel */
+        .hist-tap:focus-visible { outline: 2px solid ${P.accent}; outline-offset: 2px; }
 
         @media (min-width: 768px) {
           .hist-layout { display: grid; grid-template-columns: 280px 1fr; gap: 24px; align-items: start; }
