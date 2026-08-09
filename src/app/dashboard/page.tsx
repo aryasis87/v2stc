@@ -18,7 +18,7 @@ import { storage, isSessionValid, SESSION_KEYS } from '@/lib/storage';
 import { ui } from '@/lib/uiText';
 import { useTradingSettings } from '@/lib/useTradingSettings';
 import { computeBestConfig, type BestConfigResult } from '@/lib/bestConfig';
-import { isAiSignalUnlocked, AI_SIGNAL_CONTACT_EMAIL } from '@/lib/aiSignalAccess';
+import { isAiSignalUnlocked } from '@/lib/aiSignalAccess';
 import { hasRealAccess } from '@/lib/realAccess';
 import { getMaintenance, MAINTENANCE_OFF, type MaintenanceInfo } from '@/lib/maintenanceConfig';
 import { checkIsSuperAdmin } from '@/lib/supabaseRepository';
@@ -2338,14 +2338,14 @@ function buildActivationMailto(to: string, feature: string, userId?: string, ema
 }
 
 const AI_LOCK_STR: Record<string, { title: string; body: string; hint: string; mail: string; close: string }> = {
-  id: { title: 'Mode AI Signal Terkunci',  body: 'Fitur AI Signal belum aktif di akun Anda.', hint: 'Untuk mengaktifkannya, hubungi tim kami melalui email di bawah dan sertakan User ID Stockity Anda.', mail: 'Hubungi Support', close: 'Tutup' },
-  en: { title: 'AI Signal Mode Locked',    body: 'The AI Signal feature is not active on your account yet.', hint: 'To activate it, contact our team via the email below and include your Stockity User ID.', mail: 'Contact Support', close: 'Close' },
-  ru: { title: 'Режим AI Signal заблокирован', body: 'Функция AI Signal ещё не активна на вашем аккаунте.', hint: 'Чтобы активировать её, напишите нам на email ниже и укажите ваш Stockity User ID.', mail: 'Связаться с поддержкой', close: 'Закрыть' },
-  es: { title: 'Modo AI Signal bloqueado', body: 'La función AI Signal aún no está activa en tu cuenta.', hint: 'Para activarla, contacta a nuestro equipo por el correo de abajo e incluye tu User ID de Stockity.', mail: 'Contactar soporte', close: 'Cerrar' },
-  ms: { title: 'Mod AI Signal Dikunci',    body: 'Ciri AI Signal belum aktif pada akaun anda.', hint: 'Untuk mengaktifkannya, hubungi pasukan kami melalui e-mel di bawah dan sertakan User ID Stockity anda.', mail: 'Hubungi Sokongan', close: 'Tutup' },
+  id: { title: 'Mode AI Signal Terkunci',  body: 'Fitur AI Signal belum aktif di akun Anda.', hint: 'Aktifkan dengan langganan Rp 85.000 / bulan. Verifikasi rata-rata ~10 menit, admin online 24 jam.', mail: 'Aktivasi Mode AI Signal', close: 'Tutup' },
+  en: { title: 'AI Signal Mode Locked',    body: 'The AI Signal feature is not active on your account yet.', hint: 'Activate with a Rp 85,000 / month subscription. Verification ~10 minutes on average, admin online 24 hours.', mail: 'Activate AI Signal', close: 'Close' },
+  ru: { title: 'Режим AI Signal заблокирован', body: 'Функция AI Signal ещё не активна на вашем аккаунте.', hint: 'Активируйте по подписке Rp 85.000 / месяц. Проверка в среднем ~10 минут.', mail: 'Активировать AI Signal', close: 'Закрыть' },
+  es: { title: 'Modo AI Signal bloqueado', body: 'La función AI Signal aún no está activa en tu cuenta.', hint: 'Actívalo con una suscripción de Rp 85.000 / mes. Verificación ~10 minutos en promedio.', mail: 'Activar AI Signal', close: 'Cerrar' },
+  ms: { title: 'Mod AI Signal Dikunci',    body: 'Ciri AI Signal belum aktif pada akaun anda.', hint: 'Aktifkan dengan langganan Rp 85.000 / bulan. Pengesahan purata ~10 minit.', mail: 'Aktifkan AI Signal', close: 'Tutup' },
 };
 
-const AiLockedModal: React.FC<{ open: boolean; onClose: () => void; lang: string; userId?: string; email?: string }> = ({ open, onClose, lang, userId, email }) => {
+const AiLockedModal: React.FC<{ open: boolean; onClose: () => void; lang: string; onActivate: () => void }> = ({ open, onClose, lang, onActivate }) => {
   if (!open) return null;
   const S = AI_LOCK_STR[lang] ?? AI_LOCK_STR.en;
   return (
@@ -2357,16 +2357,13 @@ const AiLockedModal: React.FC<{ open: boolean; onClose: () => void; lang: string
         </div>
         <p style={{fontSize:16,fontWeight:700,color:C.text,marginBottom:6}}>{S.title}</p>
         <p style={{fontSize:13,color:C.sub,lineHeight:1.5,marginBottom:4}}>{S.body}</p>
-        <p style={{fontSize:12,color:C.muted,lineHeight:1.55,marginBottom:14}}>{S.hint}</p>
-        <div style={{padding:'10px 12px',borderRadius:12,background:C.card2,border:`1px solid ${C.bdr}`,marginBottom:16}}>
-          <p style={{fontSize:13,fontWeight:700,color:C.text,userSelect:'all',wordBreak:'break-all'}}>{AI_SIGNAL_CONTACT_EMAIL}</p>
-        </div>
+        <p style={{fontSize:12,color:C.muted,lineHeight:1.55,marginBottom:16}}>{S.hint}</p>
         <div style={{display:'flex',gap:8}}>
           <button onClick={onClose} style={{flex:1,padding:'11px 0',borderRadius:12,background:C.card2,border:`1px solid ${C.bdr}`,cursor:'pointer',fontSize:13,fontWeight:600,color:C.sub}}>{S.close}</button>
-          <a href={buildActivationMailto(AI_SIGNAL_CONTACT_EMAIL, 'Mode AI Signal', userId, email)}
-             style={{flex:1,padding:'11px 0',borderRadius:12,background:C.amber,border:'none',cursor:'pointer',fontSize:13,fontWeight:700,color:C.onAmber,textDecoration:'none',display:'flex',alignItems:'center',justifyContent:'center'}}>
+          <button onClick={onActivate}
+             style={{flex:1.4,padding:'11px 0',borderRadius:12,background:C.amber,border:'none',cursor:'pointer',fontSize:13,fontWeight:700,color:C.onAmber,display:'flex',alignItems:'center',justifyContent:'center'}}>
             {S.mail}
-          </a>
+          </button>
         </div>
       </div>
     </div>
@@ -5320,7 +5317,7 @@ export default function DashboardPage() {
             </div>
           </div>
         )}
-        <AiLockedModal open={aiLockOpen} onClose={()=>setAiLockOpen(false)} lang={language} userId={meId} email={meEmail}/>
+        <AiLockedModal open={aiLockOpen} onClose={()=>setAiLockOpen(false)} lang={language} onActivate={()=>{ setAiLockOpen(false); router.push('/aktivasi-aisignal'); }}/>
         <RealLockedModal
           open={realLockOpen}
           reason={realLockReason}
