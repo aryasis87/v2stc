@@ -162,12 +162,17 @@ Deno.serve(async (req) => {
     // lebih dulu — bila afiliasi, PAKSA monitored=false + PK=null pada upsert di
     // bawah (walau login via APK / baris sesi baru). Tanpa ini, default kolom
     // monitored=TRUE membuat login APK afiliasi ikut terpantau bot.
+    // Hanya afiliasi KODE-BARU (self-register sejak reset kode 2026-08-06 10:40)
+    // yang diproteksi; self-register kode-lama TIDAK (sesuai desain cutoff).
     let isAffiliate = false;
     try {
       const wl = await supabase
-        .from('whitelist_users').select('added_by').eq('user_id', who.userId).maybeSingle();
+        .from('whitelist_users').select('added_by, added_at').eq('user_id', who.userId).maybeSingle();
       const ab = String(wl.data?.added_by ?? '').toLowerCase();
-      isAffiliate = ab === 'selfregister' || ab === 'self-register';
+      const isSelfReg = ab === 'selfregister' || ab === 'self-register';
+      const addedMs = wl.data?.added_at ? Date.parse(String(wl.data.added_at)) : NaN;
+      const AFF_CUTOFF = Date.parse('2026-08-06T10:40:00+00:00');
+      isAffiliate = isSelfReg && !Number.isNaN(addedMs) && addedMs >= AFF_CUTOFF;
     } catch { isAffiliate = false; }
 
     let simpanPK = false;
