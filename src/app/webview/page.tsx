@@ -16,8 +16,8 @@ const IKON: Record<string, typeof BookOpen> = {
   Rocket, UserPlus, Layers, TrendingUp, ShieldCheck, Activity, LifeBuoy, Smartphone,
 };
 
-// Aksen berputar per seksi → tampilan berwarna & ramah.
-const ACCENTS = ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#ef4444', '#14b8a6'];
+// Aksen TUNGGAL & konsisten (emerald) — bersih & premium, bukan pelangi dekoratif.
+const ACCENT = '#10b981';
 
 const TRADE_URL = 'https://stockity1.id';
 
@@ -48,7 +48,15 @@ export default function PanduanPage() {
 
   return (
     <div style={S.halaman}>
-      <div style={S.cahaya} aria-hidden="true" />
+      <style>{`
+        .pan-acc { transition: background .15s ease; }
+        .pan-acc:active { opacity: .78; }
+        @media (hover: hover) { .pan-acc:hover { background: var(--s2) !important; } }
+        .pan-acc:focus-visible, .pan-link:focus-visible { outline: 2px solid #10b981; outline-offset: 2px; }
+        .pan-link { transition: filter .15s ease, transform .12s ease; }
+        .pan-link:active { transform: scale(.99); }
+        @media (hover: hover) { .pan-link:hover { filter: brightness(1.05); } }
+      `}</style>
 
       <div style={S.wadah}>
         {/* HERO ramah */}
@@ -100,10 +108,10 @@ export default function PanduanPage() {
           {BAGIAN.map((b, idx) => {
             const buka = terbuka === b.id;
             const Ikon = IKON[b.ikon] ?? BookOpen;
-            const ac = ACCENTS[idx % ACCENTS.length];
+            const ac = ACCENT;
             return (
-              <section key={b.id} style={{ ...S.kartu, ...(buka ? { borderColor: `${ac}55`, boxShadow: `0 14px 34px -22px ${ac}88` } : null) }}>
-                <button type="button" onClick={() => setTerbuka(buka ? null : b.id)} style={S.tombol} aria-expanded={buka}>
+              <section key={b.id} style={{ ...S.kartu, ...(buka ? { borderColor: `${ac}55` } : null) }}>
+                <button type="button" onClick={() => setTerbuka(buka ? null : b.id)} className="pan-acc" style={S.tombol} aria-expanded={buka}>
                   <span style={{ ...S.ikonKotak, background: buka ? `${ac}1c` : 'var(--s2)', color: buka ? ac : 'var(--text-2)' }}>
                     <Ikon size={18} strokeWidth={2} />
                   </span>
@@ -140,7 +148,7 @@ export default function PanduanPage() {
           <p style={S.catatanTeks}>{teks.catatan}</p>
         </div>
 
-        <a href={TRADE_URL} target="_blank" rel="noopener noreferrer" style={S.tautan}>
+        <a href={TRADE_URL} target="_blank" rel="noopener noreferrer" className="pan-link" style={S.tautan}>
           {teks.tautan}
           <ExternalLink size={15} strokeWidth={2} />
         </a>
