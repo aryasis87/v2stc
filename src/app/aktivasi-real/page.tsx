@@ -4,7 +4,7 @@
 // (Apple-like dark): permukaan gelap lembut, aksen emerald, elemen trust.
 
 import { useState, useRef } from 'react';
-import { Upload, Check, Loader2, ShieldCheck, X, Lock, BadgeCheck } from 'lucide-react';
+import { Upload, Check, Loader2, ShieldCheck, X, Lock, BadgeCheck, Download } from 'lucide-react';
 
 const PRICE = 'Rp 180.000';
 const API = process.env.NEXT_PUBLIC_API_URL ?? '';
@@ -85,7 +85,7 @@ export default function AktivasiRealPage() {
             <div style={sx.doneBadge}><Check style={{ width: 34, height: 34, color: '#04210b' }} /></div>
             <h1 style={{ fontSize: 22, fontWeight: 700, marginBottom: 10, letterSpacing: '-0.4px', color: '#f4f6f5' }}>Pengajuan Terkirim</h1>
             <p style={{ fontSize: 14.5, lineHeight: 1.6, color: '#9aa6a1', maxWidth: 360, margin: '0 auto' }}>
-              Pembayaran diverifikasi admin. Mode <b style={{ color: '#f4f6f5' }}>REAL</b> akan aktif pada akun <b style={{ color: AC }}>{sid}</b> paling lambat 1×24 jam.
+              Pembayaran diverifikasi admin. Mode <b style={{ color: '#f4f6f5' }}>REAL</b> akan aktif pada akun <b style={{ color: AC }}>{sid}</b> biasanya dalam ~10 menit. Admin online 24 jam.
             </p>
           </div>
         </div>
@@ -106,7 +106,7 @@ export default function AktivasiRealPage() {
           <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap', marginTop: 14 }}>
             <span style={sx.trustChip}><BadgeCheck style={{ width: 13, height: 13, color: AC }} />Tanpa aplikasi</span>
             <span style={sx.trustChip}><Lock style={{ width: 12, height: 12, color: AC }} />Pembayaran aman</span>
-            <span style={sx.trustChip}><Check style={{ width: 13, height: 13, color: AC }} />Aktif ≤ 24 jam</span>
+            <span style={sx.trustChip}><Check style={{ width: 13, height: 13, color: AC }} />Verifikasi ~10 menit</span>
           </div>
         </div>
 
@@ -132,7 +132,10 @@ export default function AktivasiRealPage() {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/qris-aktivasi.jpg" alt="QRIS" style={{ width: 232, maxWidth: '66vw', height: 'auto', display: 'block', borderRadius: 10 }} />
             </div>
-            <p style={{ fontSize: 12.5, color: '#9aa6a1', textAlign: 'center', lineHeight: 1.55 }}>Scan <b style={{ color: '#f4f6f5' }}>QRIS</b>, bayar tepat <b style={{ color: AC }}>{PRICE}</b>, simpan buktinya.</p>
+            <a href="/qris-aktivasi.jpg" download="QRIS-StcAutoTrade.jpg" style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 12.5, fontWeight: 700, color: AC, background: 'rgba(16,185,129,0.12)', border: `1px solid ${AC}44`, borderRadius: 10, padding: '9px 16px', textDecoration: 'none' }}>
+              <Download style={{ width: 15, height: 15 }} /> Unduh QRIS
+            </a>
+            <p style={{ fontSize: 12.5, color: '#9aa6a1', textAlign: 'center', lineHeight: 1.55 }}>Scan atau unduh <b style={{ color: '#f4f6f5' }}>QRIS</b>, bayar tepat <b style={{ color: AC }}>{PRICE}</b>, simpan buktinya.</p>
           </div>
           <div style={{ marginTop: 4 }}>
             <p style={{ fontSize: 10.5, fontWeight: 700, color: '#7d8a84', textAlign: 'center', letterSpacing: '0.06em', margin: '14px 0 10px' }}>DIDUKUNG SEMUA E-WALLET &amp; BANK VIA QRIS</p>
@@ -167,7 +170,7 @@ export default function AktivasiRealPage() {
           {busy ? <><Loader2 style={{ width: 18, height: 18, animation: 'spin 1s linear infinite' }} />Mengirim…</> : <>Kirim Pengajuan Aktivasi</>}
         </button>
         <p style={{ fontSize: 11.5, color: '#7d8a84', textAlign: 'center', marginTop: 14, lineHeight: 1.55, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-          <Lock style={{ width: 12, height: 12 }} /> Data diverifikasi admin · maksimal 1×24 jam
+          <Lock style={{ width: 12, height: 12 }} /> Data diverifikasi admin · admin online 24 jam · verifikasi rata-rata ~10 menit
         </p>
       </div>
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
