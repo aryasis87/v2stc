@@ -4691,7 +4691,9 @@ export default function DashboardPage() {
     if (!settingsLoaded) return;
     // Paksa DEMO bila akun tak berhak REAL, atau bila dibuka di browser
     // (eksekusi order butuh APK).
-    const mayReal = realCheckDone && realAccess && isApk;
+    // REAL diizinkan bila akun punya akses (aktivasi berbayar) — di APK MAUPUN
+    // web. Tanpa realAccess tetap dipaksa DEMO. Akun afiliasi ditolak backend guard.
+    const mayReal = realCheckDone && realAccess;
     if (!mayReal && !_s.isDemo) setIsDemo(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settingsLoaded, realCheckDone, realAccess, isApk, _s.isDemo]);
