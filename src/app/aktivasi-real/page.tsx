@@ -4,7 +4,7 @@
 // (Apple-like dark): permukaan gelap lembut, aksen emerald, elemen trust.
 
 import { useState, useRef } from 'react';
-import { Upload, Check, Loader2, ShieldCheck, X, Lock, BadgeCheck, Wallet, Landmark } from 'lucide-react';
+import { Upload, Check, Loader2, ShieldCheck, X, Lock, BadgeCheck } from 'lucide-react';
 
 const PRICE = 'Rp 180.000';
 const API = process.env.NEXT_PUBLIC_API_URL ?? '';
@@ -12,14 +12,14 @@ const AC = '#10b981';
 
 // Metode pembayaran didukung QRIS — badge brand-warna (bukan logo resmi).
 const PAYMENTS: { name: string; color: string; type: 'ewallet' | 'bank' }[] = [
-  { name: 'DANA', color: '#38A9F5', type: 'ewallet' },
-  { name: 'OVO', color: '#9B7BD4', type: 'ewallet' },
-  { name: 'GoPay', color: '#37C6E6', type: 'ewallet' },
-  { name: 'ShopeePay', color: '#F5734F', type: 'ewallet' },
-  { name: 'BCA', color: '#3B93E0', type: 'bank' },
-  { name: 'Mandiri', color: '#5B8FD1', type: 'bank' },
-  { name: 'BRI', color: '#4F9BE0', type: 'bank' },
-  { name: 'BNI', color: '#E8A24E', type: 'bank' },
+  { name: 'DANA', color: '#118EEA', type: 'ewallet' },
+  { name: 'OVO', color: '#4C2A86', type: 'ewallet' },
+  { name: 'GoPay', color: '#0093C4', type: 'ewallet' },
+  { name: 'ShopeePay', color: '#EE4D2D', type: 'ewallet' },
+  { name: 'BCA', color: '#0060AF', type: 'bank' },
+  { name: 'Mandiri', color: '#003D79', type: 'bank' },
+  { name: 'BRI', color: '#00529C', type: 'bank' },
+  { name: 'BNI', color: '#EE7203', type: 'bank' },
 ];
 
 // Menampilkan logo pembayaran asli dari /public/pay/<nama>.png (mis. /pay/dana.png).
@@ -27,12 +27,10 @@ const PAYMENTS: { name: string; color: string; type: 'ewallet' | 'bank' }[] = [
 function PayLogo({ p }: { p: (typeof PAYMENTS)[number] }) {
   const [err, setErr] = useState(false);
   if (err) {
+    // Fallback (belum ada file logo): kartu putih dengan nama brand di warna khasnya.
     return (
-      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, color: '#fff', background: p.color, borderRadius: 10, padding: '6px 11px 6px 9px', boxShadow: `0 3px 10px -2px ${p.color}55` }}>
-        <span style={{ display: 'inline-flex', width: 18, height: 18, borderRadius: 6, background: 'rgba(255,255,255,0.25)', alignItems: 'center', justifyContent: 'center' }}>
-          {p.type === 'ewallet' ? <Wallet style={{ width: 12, height: 12, color: '#fff' }} /> : <Landmark style={{ width: 12, height: 12, color: '#fff' }} />}
-        </span>
-        {p.name}
+      <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', height: 36, minWidth: 64, padding: '0 13px', background: '#fff', borderRadius: 10, boxShadow: '0 2px 8px -2px rgba(0,0,0,0.4)' }}>
+        <span style={{ fontSize: 13, fontWeight: 800, color: p.color, letterSpacing: '-0.01em' }}>{p.name}</span>
       </span>
     );
   }
