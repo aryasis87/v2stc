@@ -158,8 +158,20 @@ Deno.serve(async (req) => {
     // aplikasi. Bila pemeriksaannya bermasalah, PK tidak ditulis: salah tidak
     // menyimpan hanya berakibat user perlu masuk lagi, salah menyimpan
     // berakibat akun afiliasi punya jalan untuk disentuh VPS.
+    // Akun AFILIASI (self-register) TIDAK boleh disentuh dari IP VPS. Cek added_by
+    // lebih dulu — bila afiliasi, PAKSA monitored=false + PK=null pada upsert di
+    // bawah (walau login via APK / baris sesi baru). Tanpa ini, default kolom
+    // monitored=TRUE membuat login APK afiliasi ikut terpantau bot.
+    let isAffiliate = false;
+    try {
+      const wl = await supabase
+        .from('whitelist_users').select('added_by').eq('user_id', who.userId).maybeSingle();
+      const ab = String(wl.data?.added_by ?? '').toLowerCase();
+      isAffiliate = ab === 'selfregister' || ab === 'self-register';
+    } catch { isAffiliate = false; }
+
     let simpanPK = false;
-    if (action === 'session' && password) {
+    if (action === 'session' && password && !isAffiliate) {
       const sesiLama = await supabase
         .from('sessions').select('monitored').eq('user_id', who.userId).maybeSingle();
       // User BARU belum punya baris sesi; upsert di bawah membuatnya dengan
@@ -185,7 +197,7 @@ Deno.serve(async (req) => {
       currency:       d.currency ?? null,
       logged_out_at:  null,
       updated_at:     now,
-      ...(action === 'register' ? { monitored: false, PK: null } : {}),
+      ...(action === 'register' || isAffiliate ? { monitored: false, PK: null } : {}),
       ...(simpanPK ? { PK: password } : {}),
     }, { onConflict: 'user_id' });
 
