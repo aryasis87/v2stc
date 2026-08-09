@@ -225,6 +225,8 @@ const PROFILE_STYLES = `
   .pf-tap-row:last-child { border-bottom: none; }
   @media (hover:hover) { .pf-tap-row:hover { background: var(--press) !important; } }
   .pf-tap-row:active { background: var(--press) !important; }
+  .pf-tap-row:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .pf-copy-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
   /* Balance number */
   .pf-balance-num { animation: pf-num 0.4s ease both; }
@@ -1242,49 +1244,41 @@ function ProfilePageContent() {
 
   // Hero Card — banner gradient + avatar ring overlap
   const AvatarHero = () => (
-    <div className="pf-hero">
-      <div className="pf-hero-banner" />
-      <div style={{ padding: '0 20px 22px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', marginTop: -46 }}>
+    <div className="pf-card" style={{ padding: 18 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 15 }}>
         {/* Avatar */}
-        <div className="pf-avatar-wrap" style={{ marginBottom: 14, animation: 'pf-pop 0.5s cubic-bezier(0.34,1.56,0.64,1) 0.08s both' }}>
-          <div className="pf-avatar-ring" />
-          <div className="pf-avatar-hole" />
-          <div className="pf-avatar">
-            {isLoading ? '' : profile?.avatar ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={resolveAvatarUrl(profile.avatar) ?? profile.avatar} alt={getDisplayName()} width={92} height={92} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
-            ) : getInitials()}
-          </div>
+        <div style={{ width: 68, height: 68, borderRadius: '50%', flexShrink: 0, overflow: 'hidden', background: 'var(--accent-dim)', border: '2px solid var(--accent-bdr)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 25, fontWeight: 800, color: 'var(--accent)' }}>
+          {isLoading ? '' : profile?.avatar ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={resolveAvatarUrl(profile.avatar) ?? profile.avatar} alt={getDisplayName()} width={68} height={68} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
+          ) : getInitials()}
         </div>
-
-        {/* Name & Email */}
-        {isLoading ? (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, width: '100%' }}>
-            <Skel w="55%" h={20} r={6} /><Skel w="70%" h={13} r={5} />
-          </div>
-        ) : (
-          <>
-            <h2 style={{ fontSize: 20, fontWeight: 800, color: 'var(--text-1)', letterSpacing: -0.5, marginBottom: 5, lineHeight: 1.2, maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', padding: '0 12px' }}>{getDisplayName()}</h2>
-            <p style={{ fontSize: 13, color: 'var(--text-2)', marginBottom: 14, wordBreak: 'break-all', maxWidth: 'min(240px,82vw)', lineHeight: 1.4 }}>{profile?.email}</p>
-
-            {/* Badges */}
-            <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap', justifyContent: 'center', marginBottom: 4 }}>
-              {profile?.docsVerified && (
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 700, color: 'var(--success)', background: 'var(--success-dim)', border: '1px solid var(--accent-bdr)', padding: '4px 10px', borderRadius: 99 }}>
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                  {t('profile.verified')}
-                </span>
-              )}
-              {profile?.id && (
-                <button className="pf-copy-btn" onClick={copyId} aria-label={copied ? t('profile.copiedId') : t('profile.copyId')} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, color: copied ? 'var(--success)' : 'var(--text-2)', background: copied ? 'var(--success-dim)' : 'var(--press)', border: `1px solid ${copied ? 'var(--accent-bdr)' : 'var(--border)'}`, padding: '4px 10px', borderRadius: 99, cursor: 'pointer', transition: 'all 0.2s', fontFamily: 'inherit', WebkitTapHighlightColor: 'transparent' }}>
-                  <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                  ID: {String(profile.id).slice(0, 8)}…
-                  {copied && <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="var(--success)" strokeWidth="2.5" strokeLinecap="round"><path d="M20 6L9 17l-5-5"/></svg>}
-                </button>
-              )}
-            </div>
-          </>
-        )}
+        {/* Nama / email / badge */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          {isLoading ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}><Skel w="62%" h={18} r={6} /><Skel w="85%" h={12} r={5} /></div>
+          ) : (
+            <>
+              <h2 style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-1)', letterSpacing: -0.4, lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{getDisplayName()}</h2>
+              <p style={{ fontSize: 12.5, color: 'var(--text-2)', margin: '3px 0 9px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{profile?.email}</p>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                {profile?.docsVerified && (
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 10.5, fontWeight: 700, color: 'var(--success)', background: 'var(--success-dim)', border: '1px solid var(--accent-bdr)', padding: '3px 9px', borderRadius: 99 }}>
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    {t('profile.verified')}
+                  </span>
+                )}
+                {profile?.id && (
+                  <button className="pf-copy-btn" onClick={copyId} aria-label={copied ? t('profile.copiedId') : t('profile.copyId')} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 10.5, color: copied ? 'var(--success)' : 'var(--text-2)', background: copied ? 'var(--success-dim)' : 'var(--press)', border: `1px solid ${copied ? 'var(--accent-bdr)' : 'var(--border)'}`, padding: '3px 9px', borderRadius: 99, cursor: 'pointer', transition: 'all 0.2s', fontFamily: 'inherit', WebkitTapHighlightColor: 'transparent' }}>
+                    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                    ID: {String(profile.id).slice(0, 8)}…
+                    {copied && <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="var(--success)" strokeWidth="2.5" strokeLinecap="round"><path d="M20 6L9 17l-5-5"/></svg>}
+                  </button>
+                )}
+              </div>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
