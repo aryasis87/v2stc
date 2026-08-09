@@ -22,6 +22,28 @@ const PAYMENTS: { name: string; color: string; type: 'ewallet' | 'bank' }[] = [
   { name: 'BNI', color: '#E8A24E', type: 'bank' },
 ];
 
+// Menampilkan logo pembayaran asli dari /public/pay/<nama>.png (mis. /pay/dana.png).
+// Jika berkas logo belum ada, jatuh ke chip berwarna (ikon + nama) sebagai fallback.
+function PayLogo({ p }: { p: (typeof PAYMENTS)[number] }) {
+  const [err, setErr] = useState(false);
+  if (err) {
+    return (
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, color: '#fff', background: p.color, borderRadius: 10, padding: '6px 11px 6px 9px', boxShadow: `0 3px 10px -2px ${p.color}55` }}>
+        <span style={{ display: 'inline-flex', width: 18, height: 18, borderRadius: 6, background: 'rgba(255,255,255,0.25)', alignItems: 'center', justifyContent: 'center' }}>
+          {p.type === 'ewallet' ? <Wallet style={{ width: 12, height: 12, color: '#fff' }} /> : <Landmark style={{ width: 12, height: 12, color: '#fff' }} />}
+        </span>
+        {p.name}
+      </span>
+    );
+  }
+  return (
+    <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', height: 36, minWidth: 66, padding: '0 12px', background: '#fff', borderRadius: 10, boxShadow: '0 2px 8px -2px rgba(0,0,0,0.4)' }}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={`/pay/${p.name.toLowerCase()}.png`} alt={p.name} onError={() => setErr(true)} style={{ height: 21, width: 'auto', maxWidth: 84, objectFit: 'contain', display: 'block' }} />
+    </span>
+  );
+}
+
 export default function AktivasiRealPage() {
   const [name, setName] = useState('');
   const [sid, setSid] = useState('');
@@ -117,24 +139,7 @@ export default function AktivasiRealPage() {
           <div style={{ marginTop: 4 }}>
             <p style={{ fontSize: 10.5, fontWeight: 700, color: '#7d8a84', textAlign: 'center', letterSpacing: '0.06em', margin: '14px 0 10px' }}>DIDUKUNG SEMUA E-WALLET &amp; BANK VIA QRIS</p>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center' }}>
-              {PAYMENTS.map(p => (
-                <span
-                  key={p.name}
-                  style={{
-                    display: 'inline-flex', alignItems: 'center', gap: 6,
-                    fontSize: 12, fontWeight: 700, color: '#fff', background: p.color,
-                    borderRadius: 10, padding: '6px 11px 6px 9px', letterSpacing: '0.01em',
-                    boxShadow: `0 3px 10px -2px ${p.color}55`,
-                  }}
-                >
-                  <span style={{ display: 'inline-flex', width: 18, height: 18, borderRadius: 6, background: 'rgba(255,255,255,0.25)', alignItems: 'center', justifyContent: 'center' }}>
-                    {p.type === 'ewallet'
-                      ? <Wallet style={{ width: 12, height: 12, color: '#fff' }} />
-                      : <Landmark style={{ width: 12, height: 12, color: '#fff' }} />}
-                  </span>
-                  {p.name}
-                </span>
-              ))}
+              {PAYMENTS.map(p => <PayLogo key={p.name} p={p} />)}
             </div>
           </div>
         </div>

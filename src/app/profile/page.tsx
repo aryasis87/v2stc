@@ -12,6 +12,7 @@ import { getMaintenance, setMaintenance } from '@/lib/maintenanceConfig';
 import { LanguageProvider, useLanguage, formatCurrency, formatDate, Language } from '@/lib';
 import { applyLanguageFromCountry } from '@/lib/LanguageContext';
 import { SESSION_KEYS } from '@/lib/storage';
+import { hasRealAccess } from '@/lib/realAccess';
 import { APP_VERSION_NAME } from '@/lib/appVersion';
 import { LanguageSheet } from '@/components/LanguageSelector';
 
@@ -1053,6 +1054,7 @@ function ProfilePageContent() {
   const [aiMgrOpen, setAiMgrOpen]             = useState(false);
   const [realMgrOpen, setRealMgrOpen]         = useState(false);
   const [maintMgrOpen, setMaintMgrOpen]       = useState(false);
+  const [realActive, setRealActive]           = useState(false);
   const [logoutSplash, setLogoutSplash]       = useState(false);
   const [copied, setCopied]                   = useState(false);
   const [isAdminUser, setIsAdminUser]         = useState(false);
@@ -1074,6 +1076,10 @@ function ProfilePageContent() {
       const sessionValid = await isSessionValid();
       if (!sessionValid) { router.push('/login'); return; }
       loadProfile();
+      try {
+        const uid = await storage.get(SESSION_KEYS.USER_ID);
+        setRealActive(await hasRealAccess(uid));
+      } catch { /* ignore */ }
       try {
         const email = await storage.get('stc_email') ?? '';
         if (email) {
@@ -1285,6 +1291,7 @@ function ProfilePageContent() {
 
   // Balance Block — dua kartu (Real emerald / Demo amber), label + icon + big value
   const BalanceBlock = () => (
+    <>
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
       {[
         {
@@ -1323,6 +1330,18 @@ function ProfilePageContent() {
         </div>
       ))}
     </div>
+    {realActive && (
+      <div style={{ display: 'flex', alignItems: 'center', gap: 11, marginTop: 10, padding: '12px 14px', borderRadius: 14, background: 'var(--success-dim)' }}>
+        <div style={{ width: 30, height: 30, borderRadius: 9, background: 'var(--success)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+        </div>
+        <div style={{ minWidth: 0 }}>
+          <p style={{ fontSize: 12.5, fontWeight: 800, color: 'var(--success)', marginBottom: 2 }}>Mode REAL aktif</p>
+          <p style={{ fontSize: 11.5, color: 'var(--text-3)', lineHeight: 1.45 }}>Akun kamu sudah bisa trading dengan saldo asli.</p>
+        </div>
+      </div>
+    )}
+    </>
   );
 
   return (
