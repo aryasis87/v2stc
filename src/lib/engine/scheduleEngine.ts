@@ -442,6 +442,10 @@ export class ScheduleEngine {
       if (order.martingaleState.isActive && order.martingaleState.currentStep > 0) {
         this.processMartingaleResult(orderIdx, false, false, dealId);
       } else {
+        // Langkah dasar (step 0) KALAH lalu dilanjutkan martingale — hasilnya
+        // wajib dicatat lebih dulu, kalau tidak ia menggantung "Menunggu" dan
+        // modalnya tidak ikut dihitung di P/L sesi.
+        this.recordStepLoss(order, 0, dealId);
         this.startMartingale(order, orderIdx);
       }
     } else {
@@ -487,6 +491,9 @@ export class ScheduleEngine {
       clearActive();
       this.completeOrder(orderIdx, 'LOSE', dealId);
     } else {
+      // Langkah ini kalah tetapi perjalanannya belum selesai. Catat dulu
+      // hasilnya sebelum naik ke langkah berikutnya.
+      this.recordStepLoss(order, step, dealId);
       const next = step + 1;
       this.updateMartingaleStep(orderIdx, next);
       void this.placeMartingaleTrade(order, next, this.calcAmount(next));
@@ -622,6 +629,38 @@ export class ScheduleEngine {
   }
 
   // ── Penyelesaian order ─────────────────────────
+
+  /**
+   * Catat KEKALAHAN satu langkah martingale yang perjalanannya belum selesai.
+   *
+   * Sebelum ini, langkah yang kalah lalu dilanjutkan ke langkah berikutnya tidak
+   * pernah dicatat hasilnya: log penempatannya (id `<order>_s<step>`) tetap tanpa
+   * `result`, sehingga di halaman Riwayat selamanya tertulis "Menunggu". Lebih
+   * jauh lagi, `sessionPnL` hanya diperbarui di completeOrder — jadi modal yang
+   * hangus di langkah itu TIDAK PERNAH dikurangi dan P/L sesi tampak lebih besar
+   * daripada kenyataannya.
+   *
+   * id-nya sengaja sama dengan log penempatan supaya entri lama ditimpa, bukan
+   * menambah baris baru.
+   */
+  private recordStepLoss(order: ScheduledOrder, step: number, dealId?: string) {
+    const info   = this.executionInfoMap.get(order.id);
+    const amount = info?.amount ?? this.calcAmount(step);
+    const pnl    = -amount;
+
+    this.sessionPnL += pnl;
+    this.callbacks.onSessionPnL?.(this.sessionPnL);
+
+    this.callbacks.onLog({
+      id: `${order.id}_s${step}`,
+      orderId: order.id, time: order.time, trend: order.trend,
+      amount, martingaleStep: step, dealId,
+      result: 'LOSE', profit: pnl, sessionPnL: this.sessionPnL,
+      executedAt: Date.now(),
+      note: `Result: LOSE | PnL: ${pnl}`,
+      isDemoAccount: this.config.isDemoAccount,
+    });
+  }
 
   private completeOrder(orderIdx: number, result: 'WIN' | 'LOSE' | 'DRAW', dealId?: string) {
     const order = this.orders[orderIdx];
