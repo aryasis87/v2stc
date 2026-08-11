@@ -2,6 +2,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { BottomNav } from '@/components/BottomNav';
+import { SessionPill } from '@/components/SessionPill';
 import SupportButton from '@/components/SupportButton';
 import { TabLoadingBar } from '@/components/TabLoadingBar';
 import { isSessionValid, sessionLogout } from '@/lib/storage';
@@ -190,6 +191,7 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
           </main>
 
           {/* BottomNav disembunyikan saat logout splash aktif */}
+          {!isPublic && !navHidden && <SessionPill />}
           {!isPublic && !navHidden && <BottomNav />}
 
           {/* Tombol support melayang — HANYA di halaman profil */}

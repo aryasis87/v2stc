@@ -21,6 +21,7 @@ import { useTradingSettings } from '@/lib/useTradingSettings';
 import { computeBestConfig, type BestConfigResult } from '@/lib/bestConfig';
 import { isAiSignalUnlocked } from '@/lib/aiSignalAccess';
 import { getAiSignalEntry } from '@/lib/aiSignalAccess';
+import { sessionBeacon } from '@/lib/sessionBeacon';
 import { getRealAccessAt } from '@/lib/realAccess';
 import { hasRealAccess } from '@/lib/realAccess';
 import { getMaintenance, MAINTENANCE_OFF, type MaintenanceInfo } from '@/lib/maintenanceConfig';
@@ -4735,6 +4736,18 @@ export default function DashboardPage() {
     if(tradingMode==='momentum') return momentumStatus?.sessionPnL??0;
     return 0;
   })();
+
+  // ── Siarkan keadaan sesi ke cangkang aplikasi ────────────────────────────
+  // Pil sesi di semua tab membaca dari sini. Beranda satu-satunya yang benar
+  // tahu mode apa yang jalan dan berapa P/L-nya, jadi ia yang mengumumkan.
+  useEffect(() => {
+    sessionBeacon.publish({
+      running: isAnyModeRunning,
+      modeLabel: {schedule:'Signal',fastrade:'Fastrade FTT',ctc:'Fastrade CTC',aisignal:'AI Signal',indicator:'Indicator',momentum:'Momentum'}[tradingMode] ?? 'Sesi',
+      pnlCents: sessionPnL,
+      currencyUnit: currencyConfig.currencyUnit,
+    });
+  }, [isAnyModeRunning, tradingMode, sessionPnL, currencyConfig.currencyUnit]);
 
   const profitToday = React.useMemo(()=>{
     // ✅ FIX FLICKER: Gunakan stableProfitRef sebagai source of truth.
