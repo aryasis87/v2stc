@@ -3811,6 +3811,18 @@ const DarkModeToggleStrip: React.FC<{
   </button>
 );
 
+// ─────────────────────────────────────────────────────────────────────
+// Program afiliasi dihentikan 2026-08-11. Seluruh eksekusi kini berjalan di
+// server (VPS), baik di versi web maupun APK, supaya sesi tetap jalan ketika
+// aplikasi ditutup dan notifikasi Telegram berlaku untuk semua pengguna.
+//
+// Mesin client-side (lib/engine/deviceSession) DINONAKTIFKAN lewat tetapan ini.
+// Kodenya sengaja belum dihapus: mematikan jalurnya cukup untuk mengubah
+// perilaku, dan penghapusan berkas mesin lebih aman dikerjakan terpisah setelah
+// pemindahan ini terbukti stabil di produksi.
+// ─────────────────────────────────────────────────────────────────────
+const PAKAI_MESIN_PERANGKAT = false;
+
 export default function DashboardPage() {
   const router = useRouter();
   const { t, language, setLanguage: setLanguageHook } = useLanguage();
@@ -4760,9 +4772,11 @@ export default function DashboardPage() {
     return () => clearInterval(id);
   }, [deviceEngineOn]);
 
-  /** Saat aplikasi dibuka: tawarkan melanjutkan sesi yang tertunda */
+  /** Saat aplikasi dibuka: tawarkan melanjutkan sesi yang tertunda.
+   *  Sesi tertunda hanya ada pada mesin perangkat; sejak eksekusi dipindah ke
+   *  server, tawaran ini tidak berlaku lagi. */
   useEffect(() => {
-    if (!isApk) return;
+    if (!PAKAI_MESIN_PERANGKAT || !isApk) return;
     let cancelled = false;
     (async () => {
       try {
@@ -4839,7 +4853,7 @@ export default function DashboardPage() {
     if(otherRunning){showBlock(T('dashboard.modePicker.stopActiveFirst'));return;}
     setActionLoading(true);setError(null);
     try{
-      if(tradingMode==='schedule' && isApk && deviceSession.available()){
+      if(tradingMode==='schedule' && PAKAI_MESIN_PERANGKAT && isApk && deviceSession.available()){
         // v4: eksekusi di perangkat user (tanpa VPS)
         const engineConfig: EngineConfig = {
           asset:{ric:selectedRic,name:selectedAsset?.name??selectedRic,profitRate:selectedAsset?.profitRate},
@@ -4862,7 +4876,7 @@ export default function DashboardPage() {
           stopLoss:stopLoss?stopLoss*100:undefined,stopProfit:stopProfit?stopProfit*100:undefined,
         });
         await api.scheduleStart();
-      } else if(isApk && deviceSession.available()){
+      } else if(PAKAI_MESIN_PERANGKAT && isApk && deviceSession.available()){
         // v4: mode lain juga dieksekusi di perangkat (tanpa VPS)
         const baseCfg = {
           asset:{ric:selectedRic,name:selectedAsset?.name??selectedRic,profitRate:selectedAsset?.profitRate},

@@ -186,10 +186,13 @@ function RegisterContent() {
   const [showPass, setShowPass] = useState(false);
   const [showConf, setShowConf] = useState(false);
   const [loading, setLoading]   = useState(false);
-  // Pendaftaran hanya mungkin lewat aplikasi. Diperiksa sekali saat halaman
-  // dipasang agar pengguna diberi tahu di depan, bukan setelah mengisi form.
+  // Program afiliasi dihentikan 2026-08-11, jadi pendaftaran lewat browser
+  // dibuka kembali: aturan Affiliate TOP yang dulu melarangnya tidak lagi
+  // berlaku. Tetapan ini dipertahankan supaya jalurnya bisa ditutup lagi
+  // dengan satu baris bila diperlukan.
+  const WAJIB_LEWAT_APLIKASI = false;
   const [webOnly, setWebOnly] = useState(false);
-  useEffect(() => { setWebOnly(!isNativeApp()); }, []);
+  useEffect(() => { setWebOnly(WAJIB_LEWAT_APLIKASI && !isNativeApp()); }, []);
   const [error, setError]       = useState('');
   const [errorKey, setErrorKey] = useState(0);
   const [focused, setFocused]   = useState<'email' | 'password' | 'confirm' | null>(null);

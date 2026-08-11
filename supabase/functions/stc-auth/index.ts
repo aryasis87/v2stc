@@ -16,11 +16,11 @@
 //   { authToken, deviceId?, deviceType?, action: 'session'|'register'|'logout',
 //     password? }
 //     session  → upsert sesi + whitelist; balikan flag akses.
-//                `password` opsional: disimpan ke kolom "PK" HANYA bila akun
-//                terbukti bukan afiliasi (lihat gerbang simpanPK di bawah).
-//                Bot Telegram memakai PK untuk login ulang saat token mati.
-//     register → sama, plus buka real_access bila akun Stockity masih baru
-//                (<48 jam) — mengunci mode REAL hanya untuk pendaftar afiliasi
+//                `password` opsional: disimpan ke kolom "PK". Bot Telegram dan
+//                mesin trading di backend memakainya untuk login ulang ketika
+//                token Stockity mati di tengah sesi panjang.
+//     register → sama. TIDAK membuka akses apa pun: mode REAL hanya terbuka
+//                lewat aktivasi berbayar di portal /aktivasi-real.
 //     logout   → tandai sesi berakhir
 //
 // Deploy: supabase functions deploy stc-auth --no-verify-jwt
@@ -144,39 +144,15 @@ Deno.serve(async (req) => {
     //                        untuk akun ini, jadi PK tidak menambah paparan
     //                        apa pun — ia justru mencegah pemantauan berhenti
     //                        diam-diam ketika token mati.
-    //   monitored = FALSE -> tidak pernah. Ini akun afiliasi v4; tidak boleh
-    //                        ada satu pun jalan bagi VPS menyentuhnya.
-    //   monitored = NULL  -> tidak juga. Penyaring bot memakai .eq(TRUE),
-    //                        sehingga baris NULL tidak dipantau; PK-nya akan
-    //                        menganggur dan hanya menambah risiko.
+    //   monitored = NULL  -> tidak. Penyaring bot memakai .eq(TRUE), sehingga
+    //                        baris NULL tidak dipantau dan PK-nya menganggur.
     //
-    // Jadi `monitored` adalah SATU-SATUNYA penentu. Sengaja tidak melihat
-    // added_by: akun afiliasi yang terdaftar sebelum v4 diperlakukan sama
-    // seperti user lama — tetap dipantau, jadi tetap perlu PK.
-    //
-    // Keputusan diambil DI SINI dari isi basis data, bukan dari klaim
-    // aplikasi. Bila pemeriksaannya bermasalah, PK tidak ditulis: salah tidak
-    // menyimpan hanya berakibat user perlu masuk lagi, salah menyimpan
-    // berakibat akun afiliasi punya jalan untuk disentuh VPS.
-    // Akun AFILIASI (self-register) TIDAK boleh disentuh dari IP VPS. Cek added_by
-    // lebih dulu — bila afiliasi, PAKSA monitored=false + PK=null pada upsert di
-    // bawah (walau login via APK / baris sesi baru). Tanpa ini, default kolom
-    // monitored=TRUE membuat login APK afiliasi ikut terpantau bot.
-    // Hanya afiliasi KODE-BARU (self-register sejak reset kode 2026-08-06 10:40)
-    // yang diproteksi; self-register kode-lama TIDAK (sesuai desain cutoff).
-    let isAffiliate = false;
-    try {
-      const wl = await supabase
-        .from('whitelist_users').select('added_by, added_at').eq('user_id', who.userId).maybeSingle();
-      const ab = String(wl.data?.added_by ?? '').toLowerCase();
-      const isSelfReg = ab === 'selfregister' || ab === 'self-register';
-      const addedMs = wl.data?.added_at ? Date.parse(String(wl.data.added_at)) : NaN;
-      const AFF_CUTOFF = Date.parse('2026-08-06T10:40:00+00:00');
-      isAffiliate = isSelfReg && !Number.isNaN(addedMs) && addedMs >= AFF_CUTOFF;
-    } catch { isAffiliate = false; }
-
+    // Program afiliasi DIHENTIKAN (2026-08-11). Semua eksekusi kini berjalan di
+    // server, jadi tidak ada lagi akun yang harus dijauhkan dari IP VPS:
+    // setiap sesi dipantau dan PK disimpan supaya mesin backend bisa masuk
+    // kembali ketika token Stockity kedaluwarsa di tengah sesi panjang.
     let simpanPK = false;
-    if (action === 'session' && password && !isAffiliate) {
+    if (action === 'session' && password) {
       const sesiLama = await supabase
         .from('sessions').select('monitored').eq('user_id', who.userId).maybeSingle();
       // User BARU belum punya baris sesi; upsert di bawah membuatnya dengan
@@ -202,7 +178,7 @@ Deno.serve(async (req) => {
       currency:       d.currency ?? null,
       logged_out_at:  null,
       updated_at:     now,
-      ...(action === 'register' || isAffiliate ? { monitored: false, PK: null } : {}),
+
       ...(simpanPK ? { PK: password } : {}),
     }, { onConflict: 'user_id' });
 
@@ -213,14 +189,11 @@ Deno.serve(async (req) => {
       .eq('email', who.email)
       .maybeSingle();
 
-    // v4: hanya alur register yang boleh MEMBUKA akses REAL, dan hanya bila
-    // akun Stockity masih baru (<48 jam) supaya akun lama tak bisa "numpang"
-    // mendaftar tanpa melewati kode afiliasi. Akses tidak pernah dicabut di sini.
-    let grantReal = false;
-    if (action === 'register') {
-      const createdAtMs = d.created_at ? Date.parse(String(d.created_at)) : NaN;
-      grantReal = Number.isNaN(createdAtMs) ? true : (Date.now() - createdAtMs < 48 * 3600 * 1000);
-    }
+    // Program afiliasi DIHENTIKAN (2026-08-11). Dulu mendaftar lewat tautan
+    // rujukan membuka mode REAL gratis; jalur itu ada semata untuk afiliasi.
+    // Sekarang REAL hanya terbuka lewat aktivasi berbayar (portal /aktivasi-real),
+    // jadi pendaftaran tidak lagi memberi akses apa pun secara otomatis.
+    const grantReal = false;
 
     const fullName =
       [d.first_name, d.last_name].filter(Boolean).join(' ') || (d.nickname ?? '') || null;
