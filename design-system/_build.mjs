@@ -167,12 +167,20 @@ const COMPONENTS_CSS = `/* ─────────────────�
 .s-tl-time{font-size:11px;color:var(--s-muted);font-variant-numeric:tabular-nums}
 .s-tl-amt{font-size:13px;font-weight:750;font-variant-numeric:tabular-nums}
 
-/* ── Dok navigasi ────────────────────────────────────────── */
-.s-dock{display:flex;background:var(--s-bg-el);border-top:1px solid var(--s-line);
-  padding:6px 4px calc(6px + env(safe-area-inset-bottom))}
-.s-dock a{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 0;
-  text-decoration:none;color:var(--s-muted);font-size:10px;font-weight:650}
-.s-dock a[aria-current="page"]{color:var(--s-acc)}
+/* ── Dok navigasi ─────────────────────────────────────────────
+   Dok MENGAMBANG, bukan bilah menempel di tepi. Bentuk ini diambil dari
+   aplikasi STC yang sudah berjalan — ia lebih baik daripada bilah polos:
+   sudut membulat penuh, latar buram, dan garis rambut membuatnya terbaca
+   sebagai lapisan di atas konten, bukan potongan layar yang hilang.
+   Design system mengikuti aplikasi di sini, bukan sebaliknya. */
+.s-dock{position:relative;display:flex;gap:2px;margin:0 12px 12px;padding:6px;
+  border-radius:var(--s-r-pill);background:var(--s-bg-el);
+  border:1px solid var(--s-line);box-shadow:var(--s-shadow-card);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.s-dock a{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
+  padding:8px 0;border-radius:var(--s-r-pill);text-decoration:none;
+  color:var(--s-muted);font-size:10px;font-weight:650}
+.s-dock a[aria-current="page"]{color:var(--s-acc);background:var(--s-acc-tint)}
 
 /* ── Pil sesi ────────────────────────────────────────────── */
 .s-pill{display:flex;align-items:center;gap:10px;padding:9px 13px;border-radius:var(--s-r-pill);
