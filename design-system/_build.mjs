@@ -41,7 +41,12 @@ const LIGHT = `
      karena color-mix butuh WebView Chrome 111+ dan APK berjalan di perangkat lama. */
   --s-header:rgba(247,248,249,0.90);
   /* Lapis dialog & isian — dipakai halaman profil. */
-  --s-acc-bdr:rgba(5,150,105,0.30);
+  --s-acc-bdr:rgba(5,150,105,0.30);            --s-acc-bdr-act:rgba(5,150,105,0.45);
+  /* Hijau KEDUA, sengaja dibedakan dari --s-acc: dipakai menandai kategori
+     di dashboard, bukan aksi utama. Kalau disamakan, penanda kategori jadi
+     tak bisa dibedakan dari tombol aksi. */
+  --s-sky:#16A34A;       --s-sky-tint:rgba(22,163,74,0.09);
+  --s-orange-tint:rgba(234,88,12,0.09);        --s-pink-tint:rgba(190,24,93,0.08);
   --s-modal:#FFFFFF;     --s-backdrop:rgba(15,23,42,0.40);   --s-input-bg:#F1F3F5;
   --s-hero-grad:linear-gradient(135deg, rgba(5,150,105,0.14) 0%, rgba(5,150,105,0.03) 55%, rgba(37,99,235,0.06) 100%);
   --s-shadow-card:0 1px 2px rgba(20,22,26,0.05), 0 8px 24px -16px rgba(20,22,26,0.18);
@@ -66,7 +71,9 @@ const DARK = `
   --s-blue:#60A5FA;      --s-pink:#F472B6;     --s-orange:#FB923C;   --s-grey:#98989F;
   --s-press:rgba(255,255,255,0.06);            --s-skel:rgba(255,255,255,0.07);
   --s-header:rgba(15,17,20,0.88);
-  --s-acc-bdr:rgba(45,212,167,0.30);
+  --s-acc-bdr:rgba(45,212,167,0.30);           --s-acc-bdr-act:rgba(45,212,167,0.55);
+  --s-sky:#4ADE80;       --s-sky-tint:rgba(74,222,128,0.14);
+  --s-orange-tint:rgba(251,146,60,0.14);       --s-pink-tint:rgba(244,114,182,0.14);
   --s-modal:#1E2024;     --s-backdrop:rgba(0,0,0,0.65);      --s-input-bg:rgba(255,255,255,0.07);
   --s-hero-grad:linear-gradient(135deg, rgba(45,212,167,0.22) 0%, rgba(45,212,167,0.05) 55%, rgba(96,165,250,0.08) 100%);
   --s-shadow-card:0 1px 2px rgba(0,0,0,0.4), 0 10px 30px -18px rgba(0,0,0,0.8);

@@ -49,27 +49,53 @@ interface CombinedLog {
 // memakainya untuk hal non-warna. Menghapusnya menyentuh banyak tempat
 // sekaligus — dikerjakan terpisah supaya perubahan ini tetap bisa ditelusuri.
 // ─────────────────────────────────────────────
-function getP(_dark: boolean) {
-  return {
-    bg:     'var(--s-bg)',
-    header: 'var(--s-header)',
-    card:   'var(--s-card)',
-    card2:  'var(--s-card-2)',
-    hair:   'var(--s-hair)',
-    bdr:    'var(--s-line)',
-    text:   'var(--s-text)',
-    sub:    'var(--s-sub)',
-    muted:  'var(--s-muted)',
-    faint:  'var(--s-muted)',
-    press:  'var(--s-press)',
-    skel:   'var(--s-skel)',
-    shadow: 'var(--s-shadow-card)',
-    accent: 'var(--s-acc)',
-    // Untung/rugi memakai token maknanya sendiri, bukan warna kategori.
-    green:  'var(--s-gain)', red: 'var(--s-loss)', amber: 'var(--s-warn)',
-    blue:   'var(--s-blue)', purple: 'var(--s-violet)', pink: 'var(--s-pink)',
-    grey:   'var(--s-grey)', orange: 'var(--s-orange)',
-  };
+// ⚠ BELUM BISA MEMAKAI var(--s-*) DI SINI. Berkas ini menyisipkan alfa dengan
+// MENYAMBUNG hex — `${P.red}1A` menjadi #E11D481A (22 tempat). Pola itu hanya
+// bekerja pada hex; `var(--s-loss)1A` bukan CSS yang sah, propertinya dibuang
+// diam-diam, dan latar/tint-nya hilang tanpa galat apa pun.
+//
+// Prasyaratnya: token kanal RGB (mis. --s-loss-rgb:225,29,72) supaya bisa
+// ditulis rgba(var(--s-loss-rgb),.10). color-mix() TIDAK dipakai — butuh
+// WebView Chrome 111+, sedangkan APK berjalan di perangkat lama.
+// Sampai itu ada, nilainya tetap hex dan tetap disalin dua kali di sini.
+function getP(dark: boolean) {
+  return dark
+    ? {
+        bg:     '#0F1114',
+        header: 'rgba(15,17,20,0.88)',
+        card:   '#1A1C20',
+        card2:  '#24262B',
+        hair:   'rgba(255,255,255,0.06)',
+        bdr:    'rgba(255,255,255,0.11)',
+        text:   '#F4F5F7',
+        sub:    '#AEB5BF',
+        muted:  '#A1A8B3',
+        faint:  'rgba(161,168,179,0.55)',
+        press:  'rgba(255,255,255,0.06)',
+        skel:   'rgba(255,255,255,0.07)',
+        shadow: 'inset 0 1px 0 rgba(255,255,255,0.03), 0 8px 24px -16px rgba(0,0,0,0.6)',
+        accent: '#2DD4A7',
+        green:  '#2DD4A7', red: '#FB7185', amber: '#FBBF24',
+        blue:   '#60A5FA', purple: '#C084FC', pink: '#F472B6', grey: '#98989F', orange: '#FB923C',
+      }
+    : {
+        bg:     '#F6F7F9',
+        header: 'rgba(246,247,249,0.90)',
+        card:   '#FFFFFF',
+        card2:  '#F1F3F5',
+        hair:   'rgba(2,6,23,0.06)',
+        bdr:    '#E6E8EB',
+        text:   '#0F172A',
+        sub:    '#334155',
+        muted:  '#64748B',
+        faint:  '#94A3B8',
+        press:  'rgba(2,6,23,0.045)',
+        skel:   'rgba(2,6,23,0.06)',
+        shadow: '0 1px 0 rgba(2,6,23,0.03), 0 2px 12px rgba(2,6,23,0.04)',
+        accent: '#059669',
+        green:  '#059669', red: '#E11D48', amber: '#B45309',
+        blue:   '#2563EB', purple: '#7C3AED', pink: '#BE185D', grey: '#8E8E93', orange: '#EA580C',
+      };
 }
 type Palette = ReturnType<typeof getP>;
 
