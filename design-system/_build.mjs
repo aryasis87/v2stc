@@ -40,14 +40,23 @@ const LIGHT = `
   /* Bilah atas tembus pandang. Ditulis tegas, bukan color-mix() dari --s-bg,
      karena color-mix butuh WebView Chrome 111+ dan APK berjalan di perangkat lama. */
   --s-header:rgba(247,248,249,0.90);
+  /* Lapis dialog & isian — dipakai halaman profil. */
+  --s-acc-bdr:rgba(5,150,105,0.30);
+  --s-modal:#FFFFFF;     --s-backdrop:rgba(15,23,42,0.40);   --s-input-bg:#F1F3F5;
+  --s-hero-grad:linear-gradient(135deg, rgba(5,150,105,0.14) 0%, rgba(5,150,105,0.03) 55%, rgba(37,99,235,0.06) 100%);
   --s-shadow-card:0 1px 2px rgba(20,22,26,0.05), 0 8px 24px -16px rgba(20,22,26,0.18);
   --s-shadow-sheet:0 -8px 40px -12px rgba(20,22,26,0.22);
   --s-card-hi:#FFFFFF;   --s-card-lo:#FBFCFC;  --s-card-edge:rgba(255,255,255,0.9);
 `;
 
 const DARK = `
-  --s-bg:#0B0D10;        --s-bg-el:#121519;
-  --s-card:#141821;      --s-card-2:#1B2029;   --s-faint:#10141A;
+  /* Jarak antartingkat gelap sengaja dilebarkan. Ramp sebelumnya
+     (#0B0D10 / #141821 / #1B2029) hanya berselisih sekitar sembilan tingkat,
+     sehingga kartu nyaris tak terpisah dari latarnya dan halaman terlihat
+     rata — ditemukan saat menggarap halaman profil, lalu diangkat ke sini
+     supaya seluruh aplikasi ikut, bukan satu halaman saja. */
+  --s-bg:#0F1114;        --s-bg-el:#171A1F;
+  --s-card:#1A1C20;      --s-card-2:#24262B;   --s-faint:#141619;
   --s-text:#F2F4F6;      --s-sub:#A8B0BA;      --s-muted:#6E7784;
   --s-line:rgba(255,255,255,0.11);             --s-hair:rgba(255,255,255,0.07);
   --s-acc:#2DD4A7;       --s-acc-tint:rgba(45,212,167,0.14); --s-on-acc:#08201A;
@@ -56,7 +65,10 @@ const DARK = `
   --s-violet:#C084FC;    --s-violet-tint:rgba(192,132,252,0.14);
   --s-blue:#60A5FA;      --s-pink:#F472B6;     --s-orange:#FB923C;   --s-grey:#98989F;
   --s-press:rgba(255,255,255,0.06);            --s-skel:rgba(255,255,255,0.07);
-  --s-header:rgba(11,13,16,0.88);
+  --s-header:rgba(15,17,20,0.88);
+  --s-acc-bdr:rgba(45,212,167,0.30);
+  --s-modal:#1E2024;     --s-backdrop:rgba(0,0,0,0.65);      --s-input-bg:rgba(255,255,255,0.07);
+  --s-hero-grad:linear-gradient(135deg, rgba(45,212,167,0.22) 0%, rgba(45,212,167,0.05) 55%, rgba(96,165,250,0.08) 100%);
   --s-shadow-card:0 1px 2px rgba(0,0,0,0.4), 0 10px 30px -18px rgba(0,0,0,0.8);
   --s-shadow-sheet:0 -10px 44px -12px rgba(0,0,0,0.7);
   --s-card-hi:#171C25;   --s-card-lo:#12161D;  --s-card-edge:rgba(255,255,255,0.05);

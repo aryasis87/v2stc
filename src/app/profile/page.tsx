@@ -66,64 +66,38 @@ interface CurrencyOption { iso: string; name?: string; symbol?: string; }
 // ─────────────────────────────────────────────
 const PROFILE_STYLES = `
   .pf-root, .pf-root * { box-sizing: border-box; }
+  /* Nama variabel lokal DIPERTAHANKAN (--surface, --text-1, dst) supaya 200+
+     pemakaian di bawah tidak perlu disentuh; isinya kini menunjuk ke token.
+     Blok terang yang dulu ada di bawah ini DIHAPUS: token sudah berpindah
+     sendiri lewat [data-theme], jadi salinan kedua hanya menunggu untuk
+     menyimpang. Ramp gelap yang lebih renggang — temuan halaman ini — sudah
+     diangkat ke design system, sehingga seluruh aplikasi ikut merasakannya. */
   .pf-root {
-    /* Lapisan gelap sengaja diberi jarak terang yang jelas antartingkat.
-       Versi sebelumnya menumpuk #0B0C0E / #141518 / #1B1D21 — selisihnya
-       hanya sekitar sembilan tingkat, sehingga kartu nyaris tak terpisah
-       dari latarnya dan halaman terlihat rata. Sekarang tiap tingkat
-       berjarak sekitar enam belas. */
-    --bg:          #0F1114;
-    --surface:     #1A1C20;
-    --surface-2:   #24262B;
-    --border:      rgba(255,255,255,0.11);
-    --hairline:    rgba(255,255,255,0.08);
-    --text-1:      #F4F5F7;
-    --text-2:      #AEB5BF;
-    --text-3:      rgba(174,181,191,0.62);
-    --accent:      #2DD4A7;
-    --accent-dim:  rgba(45,212,167,0.13);
-    --accent-bdr:  rgba(45,212,167,0.30);
-    --error:       #FB7185;
-    --error-dim:   rgba(251,113,133,0.12);
-    --warn:        #FBBF24;
-    --warn-dim:    rgba(251,191,36,0.12);
-    --success:     #2DD4A7;
-    --success-dim: rgba(45,212,167,0.12);
-    --modal:       #1E2024;
-    --modal-hair:  rgba(255,255,255,0.11);
-    --backdrop:    rgba(0,0,0,0.65);
-    --input-bg:    rgba(255,255,255,0.07);
-    --press:       rgba(255,255,255,0.08);
-    --hero-grad:   linear-gradient(135deg, rgba(45,212,167,0.22) 0%, rgba(45,212,167,0.05) 55%, rgba(96,165,250,0.08) 100%);
-    --card-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 8px 24px -16px rgba(0,0,0,0.6);
-    --font:        -apple-system, 'SF Pro Display', BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
-  }
-
-  body[data-theme="light"] .pf-root {
-    --bg:          #F6F7F9;
-    --surface:     #FFFFFF;
-    --surface-2:   #F1F3F5;
-    --border:      #E6E8EB;
-    --hairline:    rgba(2,6,23,0.06);
-    --text-1:      #0F172A;
-    --text-2:      #475569;
-    --text-3:      #94A3B8;
-    --accent:      #059669;
-    --accent-dim:  rgba(5,150,105,0.09);
-    --accent-bdr:  rgba(5,150,105,0.30);
-    --error:       #E11D48;
-    --error-dim:   rgba(225,29,72,0.08);
-    --warn:        #B45309;
-    --warn-dim:    rgba(180,83,9,0.10);
-    --success:     #059669;
-    --success-dim: rgba(5,150,105,0.10);
-    --modal:       #FFFFFF;
-    --modal-hair:  rgba(2,6,23,0.08);
-    --backdrop:    rgba(15,23,42,0.40);
-    --input-bg:    #F1F3F5;
-    --press:       rgba(2,6,23,0.045);
-    --hero-grad:   linear-gradient(135deg, rgba(5,150,105,0.14) 0%, rgba(5,150,105,0.03) 55%, rgba(37,99,235,0.06) 100%);
-    --card-shadow: 0 1px 0 rgba(2,6,23,0.03), 0 2px 12px rgba(2,6,23,0.04);
+    --bg:          var(--s-bg);
+    --surface:     var(--s-card);
+    --surface-2:   var(--s-card-2);
+    --border:      var(--s-line);
+    --hairline:    var(--s-hair);
+    --text-1:      var(--s-text);
+    --text-2:      var(--s-sub);
+    --text-3:      var(--s-muted);
+    --accent:      var(--s-acc);
+    --accent-dim:  var(--s-acc-tint);
+    --accent-bdr:  var(--s-acc-bdr);
+    --error:       var(--s-loss);
+    --error-dim:   var(--s-loss-tint);
+    --warn:        var(--s-warn);
+    --warn-dim:    var(--s-warn-tint);
+    --success:     var(--s-acc);
+    --success-dim: var(--s-acc-tint);
+    --modal:       var(--s-modal);
+    --modal-hair:  var(--s-line);
+    --backdrop:    var(--s-backdrop);
+    --input-bg:    var(--s-input-bg);
+    --press:       var(--s-press);
+    --hero-grad:   var(--s-hero-grad);
+    --card-shadow: var(--s-shadow-card);
+    --font:        var(--s-font);
   }
 
   @keyframes pf-skel  { 0%,100%{opacity:.35} 50%{opacity:.75} }
