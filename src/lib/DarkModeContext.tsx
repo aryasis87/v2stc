@@ -52,17 +52,10 @@ export function DarkModeProvider({ children }: { children: ReactNode }) {
     //    Mengikuti sistem HP menyebabkan konflik saat HP user di light mode.
   }, []);
 
-  // ── Jembatan ke token CSS ─────────────────────────────────────────────────
-  // Token di src/app/ds/tokens.css berpindah lewat [data-theme] pada <html>.
-  // Tanpa efek ini, tema hanya hidup sebagai state React: palet berbasis
-  // JavaScript ikut berganti, sedangkan apa pun yang memakai var(--s-*) tidak —
-  // halaman jadi setengah terang setengah gelap. Ditulis tegas (bukan
-  // mengandalkan prefers-color-scheme) karena aplikasi memang SENGAJA tidak
-  // mengikuti preferensi sistem; lihat APP_DEFAULT_DARK di atas.
-  useEffect(() => {
-    if (typeof document === 'undefined') return;
-    document.documentElement.setAttribute('data-theme', isDarkMode ? 'dark' : 'light');
-  }, [isDarkMode]);
+  // Penanda tema (data-theme) SENGAJA tidak dipasang di sini. Pemiliknya satu:
+  // ThemeWrapper di ClientLayout.tsx, yang menempelkannya ke <html> DAN <body>
+  // sekaligus mewarnai bilah status/navigasi native. Memasangnya di dua tempat
+  // membuat keduanya bisa menyimpang tanpa ketahuan.
 
   // ── Splash transisi ganti tema ────────────────────────────────────────────
   // Hanya muncul saat pengguna MENGGANTI tema (bukan saat preferensi dimuat
