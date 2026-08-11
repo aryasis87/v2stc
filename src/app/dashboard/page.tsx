@@ -1,5 +1,6 @@
 'use client';
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { PAKAI_MESIN_PERANGKAT } from '@/lib/runtimeMode';
 import { useRouter } from 'next/navigation';
 import {
   api,
@@ -3811,17 +3812,6 @@ const DarkModeToggleStrip: React.FC<{
   </button>
 );
 
-// ─────────────────────────────────────────────────────────────────────
-// Program afiliasi dihentikan 2026-08-11. Seluruh eksekusi kini berjalan di
-// server (VPS), baik di versi web maupun APK, supaya sesi tetap jalan ketika
-// aplikasi ditutup dan notifikasi Telegram berlaku untuk semua pengguna.
-//
-// Mesin client-side (lib/engine/deviceSession) DINONAKTIFKAN lewat tetapan ini.
-// Kodenya sengaja belum dihapus: mematikan jalurnya cukup untuk mengubah
-// perilaku, dan penghapusan berkas mesin lebih aman dikerjakan terpisah setelah
-// pemindahan ini terbukti stabil di produksi.
-// ─────────────────────────────────────────────────────────────────────
-const PAKAI_MESIN_PERANGKAT = false;
 
 export default function DashboardPage() {
   const router = useRouter();

@@ -1,5 +1,6 @@
 // lib/api.ts  — maps to actual NestJS backend routes
 import { getAuthToken, sessionLogout, storage, SESSION_KEYS } from './storage';
+import { PAKAI_MESIN_PERANGKAT } from './runtimeMode';
 
 const getBase = () => process.env.NEXT_PUBLIC_API_URL ?? '';
 
@@ -771,6 +772,11 @@ async function adminViaBackend(action: string, payload?: any): Promise<any> {
 // ── v4: data akun langsung dari perangkat (pengganti /profile/* di VPS) ─────
 // Disambung di sini agar seluruh pemanggil lama tetap bekerja tanpa diubah.
 async function deviceAuth(): Promise<{ authToken: string; deviceId: string } | null> {
+  // Gerbang tunggal untuk SELURUH jalur mesin perangkat: status bot, daftar
+  // order, riwayat, keuntungan hari ini, jeda/lanjut. Saat eksekusi berjalan
+  // di server, semuanya HARUS ikut ke server — kalau tidak, dashboard membaca
+  // mesin yang tidak pernah hidup dan selalu melaporkan "STOPPED".
+  if (!PAKAI_MESIN_PERANGKAT) return null;
   try {
     const cap = (window as any)?.Capacitor;
     if (cap?.isNativePlatform?.() !== true) return null;
