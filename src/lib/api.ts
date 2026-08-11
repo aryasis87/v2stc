@@ -255,6 +255,9 @@ export interface FastradeStatus {
   activeTrend?: string | null;
   alwaysSignalActive?: boolean;
   alwaysSignalStep?: number;
+  /** Fast Reversal berjalan sebagai FTT + reversalSteps — ini satu-satunya
+   *  penanda yang membedakannya dari FTT biasa saat memulihkan keadaan. */
+  reversalSteps?: number[];
 }
 
 export interface FastradeLog {
@@ -276,6 +279,8 @@ export interface FastradeLog {
 }
 
 export interface StartFastradePayload {
+  /** Fast Reversal: langkah K yang arahnya dibalik. Kosong/undefined = FTT biasa. */
+  reversalSteps?: number[];
   mode: 'FTT' | 'CTC';
   asset: { ric: string; name: string; profitRate?: number; iconUrl?: string | null };
   martingale: {

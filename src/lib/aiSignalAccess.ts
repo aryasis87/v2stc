@@ -9,6 +9,8 @@
 
 import { supabase } from './supabase';
 import { api } from './api';
+import { isPrivilegedUser } from './adminEntitlement';
+import { bacaPetaAkses, masihBerlaku, type PetaAkses, type EntriAkses } from './aksesFitur';
 
 const KEY = 'aisignal_access';
 
@@ -34,6 +36,8 @@ export async function getAiSignalAllowlist(): Promise<string[]> {
 
 /** Apakah user (Stockity user_id) boleh memakai mode AI Signal */
 export async function isAiSignalUnlocked(userId: string | number | null | undefined): Promise<boolean> {
+  // Admin & super admin selalu berhak — lihat lib/adminEntitlement.ts
+  if (await isPrivilegedUser()) return true;
   const uid = String(userId ?? '').trim();
   if (!uid) return false;
   const list = await getAiSignalAllowlist();
@@ -46,4 +50,25 @@ export async function setAiSignalAllowlist(userIds: string[]): Promise<void> {
     new Set(userIds.map((u) => String(u).trim()).filter(Boolean)),
   );
   await api.admin.upsertConfig(KEY, JSON.stringify(unique));
+}
+
+/** Masa berlaku langganan AI Signal (hari). Ditagih bulanan. */
+export const AI_DURASI_HARI = 30;
+
+/** Peta akses AI Signal apa pun bentuk tersimpannya (array lama pun terbaca). */
+export async function getAiSignalMap(): Promise<PetaAkses> {
+  const { data, error } = await supabase
+    .from('app_config').select('value').eq('key', KEY).maybeSingle();
+  if (error || !data?.value) return {};
+  return bacaPetaAkses(data.value);
+}
+
+/** Entri akses satu pengguna — dipakai pemberitahuan aktivasi di dashboard. */
+export async function getAiSignalEntry(
+  userId: string | number | null | undefined,
+): Promise<EntriAkses | null> {
+  const uid = String(userId ?? '').trim();
+  if (!uid) return null;
+  const e = (await getAiSignalMap())[uid];
+  return masihBerlaku(e) ? e : null;
 }

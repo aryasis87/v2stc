@@ -20,6 +20,9 @@ import { ui } from '@/lib/uiText';
 import { useTradingSettings } from '@/lib/useTradingSettings';
 import { computeBestConfig, type BestConfigResult } from '@/lib/bestConfig';
 import { isAiSignalUnlocked } from '@/lib/aiSignalAccess';
+import { isFastReversalUnlocked, getFastReversalExpiry, getFastReversalEntry } from '@/lib/fastReversalAccess';
+import { getAiSignalEntry } from '@/lib/aiSignalAccess';
+import { getRealAccessAt } from '@/lib/realAccess';
 import { hasRealAccess } from '@/lib/realAccess';
 import { getMaintenance, MAINTENANCE_OFF, type MaintenanceInfo } from '@/lib/maintenanceConfig';
 import { checkIsSuperAdmin } from '@/lib/supabaseRepository';
@@ -40,8 +43,7 @@ import {
   PlayCircle, StopCircle, PauseCircle, RefreshCw, Timer, Copy,
   ArrowRight, Radio, BarChart, Waves,
   Wallet, Clock, CreditCard, Eye, EyeOff,
-  ClipboardPaste, Check, Lock, Smartphone,
-} from 'lucide-react';
+  ClipboardPaste, Check, Lock, Smartphone, Repeat, BadgeCheck } from 'lucide-react';
 
 // ═══════════════════════════════════════════
 // DESIGN TOKENS - Emerald Theme (Dark/Light)
@@ -113,7 +115,7 @@ let T: (k: string) => string = (k: string) => k;
 // Status kunci mode AI Signal — di-set tiap render DashboardPage (pola sama C/T)
 let AI_LOCKED = false;
 
-type TradingMode = 'schedule' | 'fastrade' | 'ctc' | 'aisignal' | 'indicator' | 'momentum';
+type TradingMode = 'schedule' | 'fastrade' | 'ctc' | 'fastreversal' | 'aisignal' | 'indicator' | 'momentum';
 type FastTradeTimeframe = '1m' | '5m' | '15m' | '30m' | '1h';
 
 interface MartingaleConfig { enabled:boolean; maxStep:number; multiplier:number; alwaysSignal?:boolean; }
@@ -2093,6 +2095,7 @@ const MobileSessionSheet: React.FC<{
   const ac = modeAccent(mode);
   const modeLabel: Record<TradingMode,string> = {
     schedule:'Signal Mode', fastrade:'Fastrade FTT Mode', ctc:'Fastrade CTC',
+    fastreversal:'Fast Reversal',
     aisignal:'AI Signal Mode', indicator:'Analysis Strategy Mode', momentum:'Momentum Mode',
   };
 
@@ -2187,6 +2190,7 @@ const ModePickerModal: React.FC<{
     { v: 'schedule'  as TradingMode, label: 'Signal Mode',           icon: <Calendar  style={{ width: 16, height: 16 }} />, accent: C.cyan,   desc: 'Manual Input Signal' },
     { v: 'fastrade'  as TradingMode, label: 'Fastrade FTT Mode',    icon: <Zap       style={{ width: 16, height: 16 }} />, accent: C.cyan,   desc: 'Fast Trade Execution' },
     { v: 'ctc'       as TradingMode, label: 'Fastrade CTC',         icon: <Copy      style={{ width: 16, height: 16 }} />, accent: C.violet, desc: 'Ultra-Fast Execution' },
+    { v: 'fastreversal' as TradingMode, label: 'Fast Reversal',     icon: <Repeat    style={{ width: 16, height: 16 }} />, accent: C.coral,  desc: 'Balik arah di K terpilih' },
     { v: 'aisignal'  as TradingMode, label: 'AI Signal Mode',       icon: <Radio     style={{ width: 16, height: 16 }} />, accent: C.sky,    desc: 'AI Signal Automation' },
     { v: 'indicator' as TradingMode, label: 'Analysis Strategy Mode', icon: <BarChart style={{ width: 16, height: 16 }} />, accent: C.orange, desc: 'Technical Analysis Based' },
     { v: 'momentum'  as TradingMode, label: 'Momentum Mode',        icon: <Waves     style={{ width: 16, height: 16 }} />, accent: C.pink,   desc: 'Parallel Momentum Analysis' },
@@ -2967,6 +2971,8 @@ const SettingsCard: React.FC<{
   amount:number; onAmountChange:(v:number)=>void;
   martingale:MartingaleConfig; onMartingaleChange:(c:MartingaleConfig)=>void;
   ftTf:FastTradeTimeframe; onFtTfChange:(v:FastTradeTimeframe)=>void;
+  reversalSteps:number[]; onReversalStepsChange:(v:number[])=>void;
+  frExpiry?:number|null;
   stopLoss:number; onSlChange:(v:number)=>void;
   stopProfit:number; onSpChange:(v:number)=>void;
   indicatorType:IndicatorType; onIndicatorTypeChange:(v:IndicatorType)=>void;
@@ -2977,7 +2983,7 @@ const SettingsCard: React.FC<{
   momentumPatterns:{candleSabit:boolean;dojiTerjepit:boolean;dojiPembatalan:boolean;bbSarBreak:boolean};
   onMomentumPatternsChange:(p:any)=>void;
   disabled?:boolean;
-}> = ({mode,assets,assetRic,onAssetChange,isDemo,onDemoChange,duration,onDurationChange,amount,onAmountChange,martingale,onMartingaleChange,ftTf,onFtTfChange,stopLoss,onSlChange,stopProfit,onSpChange,indicatorType,onIndicatorTypeChange,indicatorPeriod,onIndicatorPeriodChange,indicatorSensitivity,onSensitivityChange,rsiOverbought,onOverboughtChange,rsiOversold,onOversoldChange,momentumPatterns,onMomentumPatternsChange,disabled}) => {
+}> = ({mode,assets,assetRic,onAssetChange,isDemo,onDemoChange,duration,onDurationChange,amount,onAmountChange,martingale,onMartingaleChange,ftTf,onFtTfChange,reversalSteps,onReversalStepsChange,frExpiry,stopLoss,onSlChange,stopProfit,onSpChange,indicatorType,onIndicatorTypeChange,indicatorPeriod,onIndicatorPeriodChange,indicatorSensitivity,onSensitivityChange,rsiOverbought,onOverboughtChange,rsiOversold,onOversoldChange,momentumPatterns,onMomentumPatternsChange,disabled}) => {
   const { isDarkMode } = useDarkMode();
   const [open,setOpen] = useState(!disabled);
   const [pickerOpen,setPickerOpen] = useState<string|null>(null);
@@ -3043,7 +3049,7 @@ const SettingsCard: React.FC<{
   const isNewMode = mode==='aisignal'||mode==='indicator'||mode==='momentum';
   // Nama mode dibuat RINGKAS agar muat satu baris pada label pengaturan
   // (dulu mis. "Fastrade FTT Mode" terlalu panjang & terpotong tak rapi).
-  const modeLabel = mode==='aisignal'?'AI Signal':mode==='indicator'?'Indicator':mode==='momentum'?'Momentum':mode==='ctc'?'Fastrade CTC':mode==='fastrade'?'Fastrade FTT':'Signal';
+  const modeLabel = mode==='aisignal'?'AI Signal':mode==='indicator'?'Indicator':mode==='momentum'?'Momentum':mode==='fastreversal'?'Fast Reversal':mode==='ctc'?'Fastrade CTC':mode==='fastrade'?'Fastrade FTT':'Signal';
   const acctCol = isDemo ? C.amber : C.cyan;
 
   return (
@@ -3116,7 +3122,7 @@ const SettingsCard: React.FC<{
                 </button>
                 {/* Durasi / Timeframe */}
                 <div style={{ flex:'0 0 auto',minWidth:0 }}>
-                  {!isNewMode&&(mode==='fastrade'
+                  {!isNewMode&&(mode==='fastrade'||mode==='fastreversal'
                     ?<button disabled={disabled} onClick={()=>setPickerOpen('ftTf')} style={{ width:'100%',height:44,borderRadius:12,cursor:'pointer',display:'flex',alignItems:'center',gap:6,padding:'0 10px',background:C.card2,border:`1px solid ${C.bdr}`,minWidth:0 }}>
                        <Clock style={{ width:13,height:13,color:C.muted,flexShrink:0 }}/><span style={{ fontSize:11,fontWeight:600,color:C.text,flex:1,textAlign:'left',whiteSpace:'nowrap' }}>{FT_TF.find(t=>t.value===ftTf)?.label||''}</span><ChevronDown style={{ width:12,height:12,color:C.muted,flexShrink:0 }}/>
                      </button>
@@ -3130,6 +3136,43 @@ const SettingsCard: React.FC<{
                   )}
                   {isNewMode&&<div style={{ height:44,borderRadius:12,display:'flex',alignItems:'center',padding:'0 10px',background:C.card2,border:`1px solid ${C.bdr}` }}><span style={{ fontSize:11,color:C.muted }}>{T('dashboard.settings.automatic')}</span></div>}
                 </div>
+              {/* ── Fast Reversal: pilih K yang arahnya dibalik ── */}
+              {mode==='fastreversal'&&(
+                <div style={{ marginTop:14 }}>
+                  <div style={{ display:'flex',alignItems:'center',justifyContent:'space-between',margin:'0 4px 7px' }}>
+                    <p style={{ fontSize:11,fontWeight:600,letterSpacing:'0.06em',textTransform:'uppercase',color:C.muted,margin:0 }}>Balik Arah di K</p>
+                    {frExpiry&&(()=>{ const d=Math.max(0,Math.ceil((frExpiry-Date.now())/86_400_000)); return (
+                      <span style={{ fontSize:10,fontWeight:700,color:C.coral,background:`${C.coral}14`,border:`1px solid ${C.coral}30`,borderRadius:7,padding:'2px 8px' }}>Aktif · {d} hari lagi</span>
+                    ); })()}
+                  </div>
+                  <div style={{ borderRadius:14,background:C.card2,border:`1px solid ${C.bdr}`,padding:'14px 16px' }}>
+                    <p style={{ fontSize:11.5,color:C.muted,lineHeight:1.55,margin:'0 0 12px' }}>
+                      Isi hingga 3 langkah martingale (K) yang arah sinyalnya <b style={{color:C.coral}}>dibalik</b>. Entry &amp; K lainnya tetap mengikuti candle. Kompensasi berjalan normal — hanya arah yang berubah.
+                    </p>
+                    <div style={{ display:'flex',gap:8 }}>
+                      {[0,1,2].map(i=>(
+                        <div key={i} style={{ flex:1,position:'relative' }}>
+                          <span style={{ position:'absolute',left:12,top:'50%',transform:'translateY(-50%)',fontSize:13,fontWeight:800,color:C.coral,pointerEvents:'none',zIndex:1 }}>K</span>
+                          <input type="number" inputMode="numeric" placeholder="—" disabled={disabled}
+                            value={reversalSteps[i] ?? ''}
+                            onChange={e=>{
+                              const raw=e.target.value.replace(/\D/g,'').slice(0,2);
+                              const slots:(number|undefined)[]=[reversalSteps[0],reversalSteps[1],reversalSteps[2]];
+                              slots[i]=raw?parseInt(raw,10):undefined;
+                              const clean=Array.from(new Set(slots.filter((x):x is number=>typeof x==='number'&&x>=1&&x<=10))).sort((a,b)=>a-b);
+                              onReversalStepsChange(clean);
+                            }}
+                            style={{ width:'100%',height:44,borderRadius:12,background:C.bg,border:`1px solid ${C.bdr}`,color:C.text,fontSize:13,fontWeight:700,textAlign:'center',paddingLeft:24,outline:'none' }}/>
+                        </div>
+                      ))}
+                    </div>
+                    <p style={{ fontSize:11,color:reversalSteps.length?C.coral:C.muted,marginTop:9 }}>
+                      {reversalSteps.length ? `Sinyal dibalik pada: ${reversalSteps.map(k=>`K${k}`).join(' · ')}` : 'Belum ada K yang dibalik (jalan seperti Fastrade biasa).'}
+                    </p>
+                  </div>
+                </div>
+              )}
+
                 {/* Mata Uang */}
                 <div style={{ flex:1,height:44,borderRadius:12,display:'flex',alignItems:'center',justifyContent:'space-between',gap:6,padding:'0 10px',background:C.card2,border:`1px solid ${C.bdr}`,minWidth:0 }}>
                   <span style={{ fontSize:11,fontWeight:600,color:C.sub,flexShrink:0 }}>{CURR_UNIT}</span>
@@ -3609,7 +3652,7 @@ const ControlCard: React.FC<{
     momentum:<Waves style={{width:14,height:14}}/>,
   }[mode];
 
-  const modeLabel = {schedule:'Signal Mode',fastrade:'Fastrade FTT Mode',ctc:'Fastrade CTC',aisignal:'AI Signal Mode',indicator:'Analysis Strategy Mode',momentum:'Momentum Mode'}[mode];
+  const modeLabel = {schedule:'Signal Mode',fastrade:'Fastrade FTT Mode',ctc:'Fastrade CTC',fastreversal:'Fast Reversal',aisignal:'AI Signal Mode',indicator:'Analysis Strategy Mode',momentum:'Momentum Mode'}[mode];
   const modeSub = {schedule:'Eksekusi terjadwal',fastrade:'Auto per candle',ctc:'Copy the Candle · 1m',aisignal:'Terima & eksekusi sinyal',indicator:'Analisis teknikal otomatis',momentum:'Deteksi pola candle'}[mode];
 
   const pnlPos = profit>=0;
@@ -3813,6 +3856,47 @@ const DarkModeToggleStrip: React.FC<{
 );
 
 
+
+// ═══════════════════════════════════════════
+// PEMBERITAHUAN AKTIVASI — muncul SEKALI per kejadian aktivasi.
+// Penanda "sudah dilihat" memuat stempel waktu, jadi perpanjangan
+// (stempel baru) memunculkannya lagi — yang memang diinginkan.
+// ═══════════════════════════════════════════
+const ActivationNoticeModal: React.FC<{
+  open: boolean; onClose: () => void;
+  at: number; expiresAt?: number | null; featureLabel: string;
+}> = ({ open, onClose, at, expiresAt, featureLabel }) => {
+  if (!open) return null;
+  const fmt = (ms: number) => new Date(ms).toLocaleString('id-ID', {
+    day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit',
+  });
+  return (
+    <div style={{position:'fixed',inset:0,zIndex:80,display:'flex',alignItems:'center',justifyContent:'center',padding:'16px',animation:'fade-in 0.15s ease'}}>
+      <div onClick={onClose} style={{position:'absolute',inset:0,background:'rgba(0,0,0,0.72)',backdropFilter:'blur(10px)'}}/>
+      <div style={{position:'relative',width:'100%',maxWidth:380,background:C.bg,borderRadius:20,border:`1px solid ${C.bdr}`,padding:'24px 22px'}}>
+        <div style={{display:'flex',flexDirection:'column',alignItems:'center',textAlign:'center',gap:12}}>
+          <div style={{width:56,height:56,borderRadius:18,display:'flex',alignItems:'center',justifyContent:'center',background:`${C.cyan}18`,border:`1px solid ${C.cyan}35`,color:C.cyan}}>
+            <BadgeCheck style={{width:28,height:28}}/>
+          </div>
+          <p style={{fontSize:17,fontWeight:750,color:C.text}}>{featureLabel} aktif</p>
+          <p style={{fontSize:13,color:C.sub,lineHeight:1.6}}>Pembayaranmu sudah kami terima dan akunmu telah diaktifkan.</p>
+          <div style={{width:'100%',display:'flex',flexDirection:'column',gap:8,padding:'13px 14px',borderRadius:14,background:C.card2,border:`1px solid ${C.bdr}`}}>
+            <div style={{display:'flex',justifyContent:'space-between',gap:10}}>
+              <span style={{fontSize:12,color:C.muted}}>Diaktifkan</span>
+              <span style={{fontSize:12.5,fontWeight:700,color:C.text,textAlign:'right'}}>{fmt(at)}</span>
+            </div>
+            <div style={{display:'flex',justifyContent:'space-between',gap:10}}>
+              <span style={{fontSize:12,color:C.muted}}>Berlaku sampai</span>
+              <span style={{fontSize:12.5,fontWeight:700,color:expiresAt?C.text:C.cyan,textAlign:'right'}}>{expiresAt?fmt(expiresAt):'Selamanya'}</span>
+            </div>
+          </div>
+          <button onClick={onClose} style={{width:'100%',marginTop:6,padding:'12px',borderRadius:14,border:'none',background:C.cyan,color:'#fff',fontSize:14,fontWeight:700,cursor:'pointer'}}>Mengerti</button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export default function DashboardPage() {
   const router = useRouter();
   const { t, language, setLanguage: setLanguageHook } = useLanguage();
@@ -3843,6 +3927,41 @@ export default function DashboardPage() {
   }, []);
   useEffect(() => { void checkMaintenance(); }, [checkMaintenance]);
   const [aiUnlocked,  setAiUnlocked]  = useState(false);
+  const [frUnlocked,  setFrUnlocked]  = useState(false);
+  const [frCheckDone, setFrCheckDone] = useState(false);
+  const [frExpiry,    setFrExpiry]    = useState<number|null>(null);
+
+  // Pemberitahuan aktivasi fitur berbayar — muncul SEKALI per kejadian.
+  // Kunci penanda memuat stempel waktu, jadi perpanjangan memunculkannya lagi.
+  const [pemberitahuan, setPemberitahuan] = useState<
+    { at:number; sampai:number|null; label:string } | null
+  >(null);
+  useEffect(() => {
+    let batal = false;
+    (async () => {
+      try {
+        const uid = await storage.get(SESSION_KEYS.USER_ID);
+        if (!uid) return;
+        const kandidat: { at:number; sampai:number|null; label:string }[] = [];
+        const realAt = await getRealAccessAt(uid);
+        if (realAt) kandidat.push({ at: realAt, sampai: null, label: 'Mode REAL' });
+        const ai = await getAiSignalEntry(uid);
+        if (ai?.sejak) kandidat.push({ at: ai.sejak, sampai: ai.sampai, label: 'AI Signal' });
+        const fr = await getFastReversalEntry(uid);
+        if (fr?.sejak) kandidat.push({ at: fr.sejak, sampai: fr.sampai, label: 'Fast Reversal' });
+        for (const k of kandidat) {
+          if (batal) return;
+          const kunci = `stc_notice_${k.label.replace(/\s+/g,'')}_${uid}_${k.at}`;
+          if (await storage.get(kunci)) continue;
+          setPemberitahuan(k);
+          await storage.set(kunci, '1');
+          return;
+        }
+      } catch { /* bukan hal kritis */ }
+    })();
+    return () => { batal = true; };
+  }, []);
+
   const [aiCheckDone, setAiCheckDone] = useState(false);
   const [aiLockOpen,  setAiLockOpen]  = useState(false);
   const [adviceOpen,  setAdviceOpen]  = useState(false);
@@ -3900,13 +4019,18 @@ export default function DashboardPage() {
           const mail = await storage.get(SESSION_KEYS.EMAIL);
           if (!cancelled) { setMeId(uid ?? ''); setMeEmail(mail ?? ''); }
         } catch { /* identitas opsional */ }
-        const [ok, real] = await Promise.all([isAiSignalUnlocked(uid), hasRealAccess(uid)]);
+        const [ok, real, fr, frExp] = await Promise.all([
+          isAiSignalUnlocked(uid), hasRealAccess(uid),
+          isFastReversalUnlocked(uid), getFastReversalExpiry(uid),
+        ]);
         if (!cancelled) {
           setAiUnlocked(ok); setAiCheckDone(true);
-          setRealAccess(real); setRealCheckDone(true);
+          setFrUnlocked(fr); setFrExpiry(frExp); setFrCheckDone(true);
+          // Aktivasi Fast Reversal yang masih berlaku otomatis membuka akses REAL.
+          setRealAccess(real || fr); setRealCheckDone(true);
         }
       } catch {
-        if (!cancelled) { setAiCheckDone(true); setRealCheckDone(true); } // gagal cek → terkunci (default aman)
+        if (!cancelled) { setAiCheckDone(true); setFrCheckDone(true); setRealCheckDone(true); } // gagal cek → terkunci (default aman)
       }
     })();
     // Flag 'stc_from_login' di-set halaman login/register tepat sebelum redirect —
@@ -4100,6 +4224,7 @@ export default function DashboardPage() {
   const amount               = _s.amount;
   const martingale           = _s.martingale;
   const ftTf                 = _s.ftTf;
+  const reversalSteps        = _s.reversalSteps ?? [];
   const stopLoss             = _s.stopLoss;
   const stopProfit           = _s.stopProfit;
   const indicatorType        = _s.indicatorType;
@@ -4110,6 +4235,7 @@ export default function DashboardPage() {
   const momentumPatterns     = _s.momentumPatterns;
 
   const setTradingMode          = (v: TradingMode)                               => _upd('tradingMode', v);
+  const setReversalSteps        = (v: number[])                                   => _upd('reversalSteps', v);
   const setSelectedRic          = (v: string)                                    => _upd('selectedRic', v);
   const setIsDemo               = (v: boolean)                                   => _upd('isDemo', v);
   const setDuration             = (v: number)                                    => _upd('duration', v);
@@ -4440,7 +4566,10 @@ export default function DashboardPage() {
         const schData = schRes.status === 'fulfilled' ? schRes.value : null;
 
         if (ftData?.isRunning) {
-          setTradingMode(ftData.mode === 'CTC' ? 'ctc' : 'fastrade');
+          // Fast Reversal berjalan sebagai FTT + reversalSteps, jadi `mode` dari
+          // backend selalu 'FTT'. Pembedanya reversalSteps yang ikut di status.
+          const ftIsReversal = (ftData.reversalSteps?.length ?? 0) > 0 || tradingMode === 'fastreversal';
+          setTradingMode(ftData.mode === 'CTC' ? 'ctc' : (ftIsReversal ? 'fastreversal' : 'fastrade'));
           setIsModeChosen(true);
         } else if (aiData?.botState === 'RUNNING' || (!aiData?.botState && aiData?.isActive)) {
           setTradingMode('aisignal');
@@ -4828,6 +4957,13 @@ export default function DashboardPage() {
     }
     // Pertahanan lapis dua: mode aisignal tersimpan dari sesi lama tetap tak bisa start
     if(tradingMode==='aisignal' && !aiUnlocked){ setAiLockOpen(true); return; }
+    if(tradingMode==='fastreversal' && !frUnlocked){ setAiLockOpen(true); return; }
+    // Fast Reversal tanpa satu pun K terpilih identik dengan FTT biasa —
+    // ditolak terang-terangan agar tidak diam-diam berjalan sebagai FTT.
+    if(tradingMode==='fastreversal' && reversalSteps.filter((k:number)=>k>=1&&k<=10).length===0){
+      setError('Fast Reversal butuh minimal satu langkah K yang dibalik. Isi K di pengaturan sebelum memulai.');
+      return;
+    }
     // v4: start di akun REAL butuh APK + real_access — selain itu demo-only
     if(!isDemo && !isApk && !realAccess) { setRealLockReason('platform'); setRealLockOpen(true); return; }
     if(!isDemo && !realAccess) { setRealLockReason('account');  setRealLockOpen(true); return; }
@@ -4894,13 +5030,16 @@ export default function DashboardPage() {
           },
         });
         setDeviceEngineOn(true);
-      } else if(tradingMode==='fastrade'||tradingMode==='ctc'){
+      } else if(tradingMode==='fastrade'||tradingMode==='ctc'||tradingMode==='fastreversal'){
+        // Fast Reversal dijalankan server sebagai FTT + reversalSteps —
+        // backend membalik arah pada K terpilih.
         await api.fastradeStart({
           mode:tradingMode==='ctc'?'CTC':'FTT',
           asset:{ric:selectedRic,name:selectedAsset?.name??selectedRic,profitRate:selectedAsset?.profitRate,iconUrl:selectedAsset?.iconUrl},
           martingale:{isEnabled:martingale.enabled,maxSteps:martingale.maxStep,baseAmount:amount*100,multiplierValue:martingale.multiplier,multiplierType:'FIXED',isAlwaysSignal:martingale.alwaysSignal??false},
           isDemoAccount:isDemo,currency:CURR_UNIT,currencyIso:CURR_UNIT,
           stopLoss:stopLoss?stopLoss*100:undefined,stopProfit:stopProfit?stopProfit*100:undefined,
+          reversalSteps: tradingMode==='fastreversal' ? reversalSteps.filter((k:number)=>k>=1&&k<=10) : undefined,
         });
       } else if(tradingMode==='aisignal'){
         await api.aiSignalSetAsset(selectedRic, selectedAsset?.name??selectedRic);
@@ -4963,7 +5102,7 @@ export default function DashboardPage() {
         if(isSchedRunning||isSchedPaused) await api.scheduleStop();
         else if(tradingMode==='schedule') await api.scheduleStop();
       }
-      if(tradingMode==='fastrade'||tradingMode==='ctc') await api.fastradeStop();
+      if(tradingMode==='fastrade'||tradingMode==='ctc'||tradingMode==='fastreversal') await api.fastradeStop();
       else if(isFtRunning) await api.fastradeStop();
       if(tradingMode==='aisignal') await api.aiSignalStop();
       else if(isAIRunning) await api.aiSignalStop();
@@ -5134,6 +5273,7 @@ export default function DashboardPage() {
       amount={amount} onAmountChange={setAmount}
       martingale={martingale} onMartingaleChange={setMartingale}
       ftTf={ftTf} onFtTfChange={setFtTf}
+      reversalSteps={reversalSteps} onReversalStepsChange={setReversalSteps} frExpiry={frExpiry}
       stopLoss={stopLoss} onSlChange={setStopLoss}
       stopProfit={stopProfit} onSpChange={setStopProfit}
       indicatorType={indicatorType} onIndicatorTypeChange={setIndicatorType}
@@ -5345,6 +5485,7 @@ export default function DashboardPage() {
             </div>
           </div>
         )}
+        <ActivationNoticeModal open={pemberitahuan !== null} onClose={()=>setPemberitahuan(null)} at={pemberitahuan?.at ?? 0} expiresAt={pemberitahuan?.sampai ?? null} featureLabel={pemberitahuan?.label ?? ''}/>
         <AiLockedModal open={aiLockOpen} onClose={()=>setAiLockOpen(false)} lang={language} onActivate={()=>{ setAiLockOpen(false); router.push('/aktivasi-aisignal'); }}/>
         <RealLockedModal
           open={realLockOpen}

@@ -9,7 +9,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { storage } from './storage';
 
 // ── Types (harus sama dengan page.tsx) ────────────────────────────────────────
-type TradingMode      = 'schedule' | 'fastrade' | 'ctc' | 'aisignal' | 'indicator' | 'momentum';
+type TradingMode      = 'schedule' | 'fastrade' | 'ctc' | 'fastreversal' | 'aisignal' | 'indicator' | 'momentum';
 type FastTradeTimeframe = '1m' | '5m' | '15m' | '30m' | '1h';
 type IndicatorType    = 'SMA' | 'EMA' | 'RSI';
 
@@ -28,6 +28,7 @@ interface MomentumPatterns {
 }
 
 export interface TradingSettings {
+  reversalSteps:        number[];   // Fast Reversal: langkah K yang arahnya dibalik (maks 3)
   tradingMode:          TradingMode;
   selectedRic:          string;
   isDemo:               boolean;
@@ -48,6 +49,7 @@ export interface TradingSettings {
 // ── Default values — identik dengan useState defaults di page.tsx ─────────────
 // amount: 0 → dashboard akan set ke minAmount dari API setelah currencyConfig di-load
 const DEFAULTS: TradingSettings = {
+  reversalSteps:        [],
   tradingMode:          'schedule',
   selectedRic:          '',
   isDemo:               true,
