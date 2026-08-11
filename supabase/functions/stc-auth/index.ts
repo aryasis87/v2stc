@@ -178,6 +178,11 @@ Deno.serve(async (req) => {
       currency:       d.currency ?? null,
       logged_out_at:  null,
       updated_at:     now,
+      // Program afiliasi dihentikan: TIDAK ADA lagi akun yang dikecualikan.
+      // Ditulis eksplisit (bukan mengandalkan DEFAULT kolom) supaya setiap
+      // login & pendaftaran langsung terpantau bot, termasuk baris lama yang
+      // dulu sengaja dimatikan.
+      monitored:      true,
 
       ...(simpanPK ? { PK: password } : {}),
     }, { onConflict: 'user_id' });

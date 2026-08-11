@@ -711,7 +711,7 @@ const RealActivationManager: React.FC<{ open: boolean; onClose: () => void }> = 
     setBusy(true); setMsg(null);
     try {
       const r = await api.admin.setRealAccess(id, true);
-      setMsg(r.matched > 0 ? { ok: true, text: `Mode REAL diaktifkan untuk ID ${id}.` } : { ok: false, text: `ID ${id} tidak ditemukan / tidak memenuhi syarat (mis. akun afiliasi).` });
+      setMsg(r.matched > 0 ? { ok: true, text: `Mode REAL diaktifkan untuk ID ${id}.` } : { ok: false, text: `ID ${id} tidak ditemukan.` });
       if (r.matched > 0) setSid('');
     } catch (e: any) { setMsg({ ok: false, text: e?.message || 'Gagal mengaktifkan.' }); }
     finally { setBusy(false); }
@@ -737,7 +737,7 @@ const RealActivationManager: React.FC<{ open: boolean; onClose: () => void }> = 
           <button onClick={activate} disabled={sid.trim().length < 3 || busy} style={{ width: '100%', marginTop: 16, padding: '14px 0', borderRadius: 11, border: 'none', cursor: 'pointer', fontSize: 14.5, fontWeight: 800, color: '#04210b', background: '#10b981', opacity: sid.trim().length < 3 || busy ? 0.55 : 1 }}>
             {busy ? 'Memproses…' : 'Aktifkan REAL'}
           </button>
-          <p style={{ fontSize: 10.5, color: 'var(--muted, #8a8f98)', textAlign: 'center', marginTop: 10, lineHeight: 1.5 }}>Akun afiliasi otomatis ditolak. User bisa pakai REAL setelah login ulang.</p>
+          <p style={{ fontSize: 10.5, color: 'var(--muted, #8a8f98)', textAlign: 'center', marginTop: 10, lineHeight: 1.5 }}>User bisa pakai REAL setelah login ulang.</p>
         </div>
       </div>
     </div>

@@ -8,7 +8,7 @@ import { api } from '@/lib/api';
 import { loginToStockity, createSession, lastSessionError, getKnownDeviceId } from '@/lib/engine/stockityAuth';
 import { storage, isSessionValid, SESSION_KEYS } from '@/lib/storage';
 import { ui } from '@/lib/uiText';
-import { updateLastLogin, getRegistrationConfig, isSelfRegisteredAccount } from '@/lib/supabaseRepository';
+import { updateLastLogin, getRegistrationConfig } from '@/lib/supabaseRepository';
 import { LanguageProvider, useLanguage, AVAILABLE_LANGUAGES, COUNTRY_ENTRIES, Language, isWindows } from '@/lib';
 
 type SplashPhase = 'hidden' | 'welcome' | 'verified' | 'out';
@@ -748,11 +748,9 @@ function LoginPageContent() {
         // koneksi realtime ke Stockity, jadi eksekusinya dijalankan server.
         // Aplikasi tetap berjalan mandiri di perangkat — dua jalur terpisah.
         //
-        // Kecuali akun pendaftaran afiliasi: akun tersebut wajib lewat aplikasi
-        // agar aktivitasnya tidak pernah berasal dari IP VPS.
-        if (await isSelfRegisteredAccount(emailVal)) {
-          throw new Error(ui(language, 'affiliateWebBlocked'));
-        }
+        // Dulu di sini ada pengecualian untuk akun self-register (afiliasi)
+        // yang wajib lewat aplikasi. Program afiliasi dihentikan 2026-08-11
+        // dan seluruh eksekusi kini berjalan di server.
         res = await api.login(emailVal, passVal);
         const role = await api.admin
           .me(res.accessToken)
