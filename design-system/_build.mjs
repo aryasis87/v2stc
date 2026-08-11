@@ -605,3 +605,13 @@ for (const [p, c] of Object.entries(files)) {
   console.log(' ', p);
 }
 console.log(`\n  ${Object.keys(files).length} berkas dihasilkan`);
+
+// Salin token & komponen ke aplikasi supaya sumbernya satu: generator ini.
+// Tanpa langkah ini, CSS di src/app/ds/ menyimpang diam-diam dari pratinjaunya
+// dan design system berhenti menggambarkan aplikasi yang sebenarnya.
+const APP_DS = path.join(OUT, '..', 'src', 'app', 'ds');
+fs.mkdirSync(APP_DS, { recursive: true });
+for (const f of ['tokens.css', 'components.css']) {
+  fs.copyFileSync(path.join(OUT, f), path.join(APP_DS, f));
+  console.log('  -> src/app/ds/' + f);
+}

@@ -1,6 +1,11 @@
 import type { Metadata, Viewport } from 'next'
 import Image from 'next/image'
 import { ClientLayout } from '@/components/ClientLayout'
+// Design system DIIMPOR SEBELUM globals.css supaya aturan yang sudah ada tetap
+// menang saat bentrok. Fase ini hanya menambah lapisan token — tampilan yang
+// berjalan sekarang tidak berubah sampai komponennya benar-benar dipakai.
+import './ds/tokens.css'
+import './ds/components.css'
 import './globals.css'
 
 export const metadata: Metadata = {

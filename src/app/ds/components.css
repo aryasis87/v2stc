@@ -1,0 +1,124 @@
+/* ─────────────────────────────────────────────
+   components.css — DIHASILKAN oleh design-system/_build.mjs
+   ───────────────────────────────────────────── */
+
+/* ── Kartu ───────────────────────────────────────────────── */
+.s-card{background:var(--s-card);border:1px solid var(--s-line);border-radius:var(--s-r-card);
+  padding:var(--s-s4);box-shadow:var(--s-shadow-card)}
+.s-card--hero{position:relative;overflow:hidden;
+  background:
+    radial-gradient(130% 120% at 100% 0%, var(--s-hero-tint, transparent) 0%, transparent 58%),
+    linear-gradient(180deg, var(--s-card-hi) 0%, var(--s-card-lo) 100%);
+  box-shadow:var(--s-shadow-card), inset 0 1px 0 var(--s-card-edge)}
+.s-card--flat{box-shadow:none;background:var(--s-card-2)}
+
+/* ── Tipografi ───────────────────────────────────────────── */
+.s-h1{font-size:26px;font-weight:750;letter-spacing:-.03em;color:var(--s-text);margin:0}
+.s-h2{font-size:17px;font-weight:700;letter-spacing:-.02em;color:var(--s-text);margin:0}
+.s-label{font-size:10.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--s-muted);margin:0}
+.s-body{font-size:13px;line-height:1.6;color:var(--s-sub);margin:0}
+.s-num{font-size:32px;font-weight:800;letter-spacing:-.035em;font-variant-numeric:tabular-nums;
+  line-height:1.05;margin:0}
+.s-num--gain{color:var(--s-gain)} .s-num--loss{color:var(--s-loss)}
+
+/* ── Tombol ──────────────────────────────────────────────── */
+.s-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  height:48px;padding:0 20px;border-radius:var(--s-r-ctl);border:0;cursor:pointer;
+  font:inherit;font-size:14.5px;font-weight:700;letter-spacing:-.01em;
+  background:var(--s-acc);color:var(--s-on-acc);transition:transform .12s var(--s-ease)}
+.s-btn:active{transform:scale(.985)}
+.s-btn--ghost{background:var(--s-card-2);color:var(--s-text);border:1px solid var(--s-line)}
+.s-btn--danger{background:var(--s-loss);color:#fff}
+.s-btn--block{width:100%}
+
+/* ── Segmen (Real / Demo) ────────────────────────────────── */
+.s-seg{display:inline-flex;padding:3px;border-radius:var(--s-r-pill);
+  background:var(--s-card-2);border:1px solid var(--s-line)}
+.s-seg button{border:0;background:transparent;font:inherit;font-size:12px;font-weight:700;
+  padding:6px 14px;border-radius:var(--s-r-pill);color:var(--s-muted);cursor:pointer}
+.s-seg button[aria-selected="true"]{background:var(--s-bg-el);color:var(--s-text);
+  box-shadow:0 1px 3px rgba(0,0,0,.12)}
+
+/* ── Petak status ────────────────────────────────────────── */
+.s-tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--s-s2)}
+.s-tile{background:var(--s-card);border:1px solid var(--s-line);border-radius:var(--s-r-ctl);
+  padding:10px 8px;text-align:center}
+.s-tile b{display:block;font-size:12.5px;font-weight:700;color:var(--s-text);letter-spacing:-.01em}
+.s-tile span{display:block;font-size:9px;font-weight:700;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--s-muted);margin-top:3px}
+.s-tile.is-on b{color:var(--s-acc)}
+.s-tile.is-warn b{color:var(--s-warn)}
+
+/* ── Baris daftar ────────────────────────────────────────── */
+.s-row{display:flex;align-items:center;gap:12px;padding:13px 14px;width:100%;
+  background:transparent;border:0;font:inherit;color:inherit;text-align:left;cursor:pointer}
+.s-row + .s-row{border-top:1px solid var(--s-hair)}
+.s-row-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.s-row-main b{font-size:13.5px;font-weight:650;letter-spacing:-.01em;color:var(--s-text)}
+.s-row-main span{font-size:11px;color:var(--s-muted)}
+.s-row-val{font-size:12.5px;font-weight:700;color:var(--s-sub);flex:none}
+.s-list{background:var(--s-card);border:1px solid var(--s-line);border-radius:var(--s-r-card);
+  overflow:hidden}
+
+/* ── Ikon kotak ──────────────────────────────────────────── */
+.s-sq{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;flex:none;
+  background:var(--s-card-2);color:var(--s-sub)}
+.s-sq.is-acc{background:var(--s-acc-tint);color:var(--s-acc)}
+
+/* ── Lencana ─────────────────────────────────────────────── */
+.s-badge{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;
+  padding:3px 9px;border-radius:var(--s-r-pill);background:var(--s-card-2);color:var(--s-muted);
+  border:1px solid var(--s-line)}
+.s-badge--acc{background:var(--s-acc-tint);color:var(--s-acc);border-color:transparent}
+.s-badge--warn{background:var(--s-warn-tint);color:var(--s-warn);border-color:transparent}
+.s-badge--loss{background:var(--s-loss-tint);color:var(--s-loss);border-color:transparent}
+
+/* ── Timeline riwayat ────────────────────────────────────── */
+.s-tl{position:relative;padding-left:26px}
+.s-tl::before{content:"";position:absolute;left:9px;top:6px;bottom:6px;width:2px;
+  background:var(--s-hair);border-radius:2px}
+.s-tl-item{position:relative;padding:11px 0}
+.s-tl-item::before{content:"";position:absolute;left:-21px;top:16px;width:10px;height:10px;
+  border-radius:50%;background:var(--s-card);border:2px solid var(--s-muted)}
+.s-tl-item.is-win::before{border-color:var(--s-gain);background:var(--s-gain)}
+.s-tl-item.is-lose::before{border-color:var(--s-loss);background:var(--s-loss)}
+.s-tl-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.s-tl-time{font-size:11px;color:var(--s-muted);font-variant-numeric:tabular-nums}
+.s-tl-amt{font-size:13px;font-weight:750;font-variant-numeric:tabular-nums}
+
+/* ── Dok navigasi ────────────────────────────────────────── */
+.s-dock{display:flex;background:var(--s-bg-el);border-top:1px solid var(--s-line);
+  padding:6px 4px calc(6px + env(safe-area-inset-bottom))}
+.s-dock a{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 0;
+  text-decoration:none;color:var(--s-muted);font-size:10px;font-weight:650}
+.s-dock a[aria-current="page"]{color:var(--s-acc)}
+
+/* ── Pil sesi ────────────────────────────────────────────── */
+.s-pill{display:flex;align-items:center;gap:10px;padding:9px 13px;border-radius:var(--s-r-pill);
+  background:var(--s-bg-el);border:1px solid var(--s-line);box-shadow:var(--s-shadow-card)}
+.s-pill-dot{width:8px;height:8px;border-radius:50%;background:var(--s-acc);flex:none;
+  box-shadow:0 0 0 4px var(--s-acc-tint)}
+
+/* ── Akordeon panduan ────────────────────────────────────── */
+.s-acc{background:var(--s-card);border:1px solid var(--s-line);border-radius:var(--s-r-card);
+  overflow:hidden}
+.s-acc-head{display:flex;align-items:center;gap:11px;padding:14px;cursor:pointer}
+.s-acc-head b{flex:1;font-size:13.5px;font-weight:650;color:var(--s-text)}
+.s-acc-body{padding:0 14px 14px 59px;font-size:12.5px;line-height:1.65;color:var(--s-sub)}
+.s-acc + .s-acc{margin-top:10px}
+
+/* ── Profil ──────────────────────────────────────────────── */
+.s-ava{width:56px;height:56px;border-radius:18px;display:grid;place-items:center;
+  background:var(--s-acc-tint);color:var(--s-acc);font-size:20px;font-weight:800;flex:none}
+.s-bal{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.s-bal-card{background:var(--s-card);border:1px solid var(--s-line);border-radius:var(--s-r-ctl);
+  padding:13px 14px}
+/* Saldo demo bisa mencapai ratusan juta dan membungkus jadi dua baris,
+   membuat kedua kartu tidak sejajar. Ukurannya diperkecil dan dikunci satu
+   baris; kalau tetap tak muat, dipotong dengan elipsis daripada merusak baris. */
+.s-bal-card b{display:block;font-size:15px;font-weight:800;letter-spacing:-.025em;
+  font-variant-numeric:tabular-nums;color:var(--s-text);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.s-bal-card span{display:block;font-size:10px;font-weight:700;letter-spacing:.07em;
+  text-transform:uppercase;color:var(--s-muted);margin-bottom:5px}

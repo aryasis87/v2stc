@@ -1,0 +1,68 @@
+/* ─────────────────────────────────────────────
+   tokens.css — DIHASILKAN oleh design-system/_build.mjs
+   Jangan disunting langsung.
+
+   Tiga keadaan tema: pilihan tegas menempel data-theme pada <html>;
+   bawaan "system" tidak menempel apa pun, sehingga hanya
+   prefers-color-scheme yang membedakan. Karena itu palet TERANG
+   didefinisikan di :root polos, lalu gelap ditimpa dua kali —
+   lewat media query dan lewat [data-theme="dark"] — supaya tombol
+   tema menang di kedua arah.
+   ───────────────────────────────────────────── */
+:root{
+  --s-bg:#F7F8F9;        --s-bg-el:#FFFFFF;
+  --s-card:#FFFFFF;      --s-card-2:#F2F4F5;   --s-faint:#F7F8F9;
+  --s-text:#14161A;      --s-sub:#4A5058;      --s-muted:#7A828C;
+  --s-line:#E6E8EB;      --s-hair:rgba(20,22,26,0.07);
+  --s-acc:#059669;       --s-acc-tint:rgba(5,150,105,0.09);  --s-on-acc:#FFFFFF;
+  --s-gain:#0F7A4E;      --s-loss:#E11D48;     --s-loss-tint:rgba(225,29,72,0.08);
+  --s-warn:#B45309;      --s-warn-tint:rgba(180,83,9,0.09);  --s-on-warn:#FFFFFF;
+  --s-violet:#7C3AED;    --s-violet-tint:rgba(124,58,237,0.08);
+  --s-shadow-card:0 1px 2px rgba(20,22,26,0.05), 0 8px 24px -16px rgba(20,22,26,0.18);
+  --s-shadow-sheet:0 -8px 40px -12px rgba(20,22,26,0.22);
+  --s-card-hi:#FFFFFF;   --s-card-lo:#FBFCFC;  --s-card-edge:rgba(255,255,255,0.9);
+
+  --s-r-card:18px;  --s-r-ctl:14px;  --s-r-pill:999px;
+  --s-s1:4px; --s-s2:8px; --s-s3:12px; --s-s4:16px; --s-s5:24px; --s-s6:32px;
+  --s-dur:.22s;  --s-ease:cubic-bezier(.32,.72,0,1);
+  --s-font:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --s-bg:#0B0D10;        --s-bg-el:#121519;
+  --s-card:#141821;      --s-card-2:#1B2029;   --s-faint:#10141A;
+  --s-text:#F2F4F6;      --s-sub:#A8B0BA;      --s-muted:#6E7784;
+  --s-line:rgba(255,255,255,0.11);             --s-hair:rgba(255,255,255,0.07);
+  --s-acc:#2DD4A7;       --s-acc-tint:rgba(45,212,167,0.14); --s-on-acc:#08201A;
+  --s-gain:#3FD08C;      --s-loss:#FB7185;     --s-loss-tint:rgba(251,113,133,0.14);
+  --s-warn:#FBBF24;      --s-warn-tint:rgba(251,191,36,0.14); --s-on-warn:#1A1612;
+  --s-violet:#C084FC;    --s-violet-tint:rgba(192,132,252,0.14);
+  --s-shadow-card:0 1px 2px rgba(0,0,0,0.4), 0 10px 30px -18px rgba(0,0,0,0.8);
+  --s-shadow-sheet:0 -10px 44px -12px rgba(0,0,0,0.7);
+  --s-card-hi:#171C25;   --s-card-lo:#12161D;  --s-card-edge:rgba(255,255,255,0.05);
+}}
+:root[data-theme="dark"]{
+  --s-bg:#0B0D10;        --s-bg-el:#121519;
+  --s-card:#141821;      --s-card-2:#1B2029;   --s-faint:#10141A;
+  --s-text:#F2F4F6;      --s-sub:#A8B0BA;      --s-muted:#6E7784;
+  --s-line:rgba(255,255,255,0.11);             --s-hair:rgba(255,255,255,0.07);
+  --s-acc:#2DD4A7;       --s-acc-tint:rgba(45,212,167,0.14); --s-on-acc:#08201A;
+  --s-gain:#3FD08C;      --s-loss:#FB7185;     --s-loss-tint:rgba(251,113,133,0.14);
+  --s-warn:#FBBF24;      --s-warn-tint:rgba(251,191,36,0.14); --s-on-warn:#1A1612;
+  --s-violet:#C084FC;    --s-violet-tint:rgba(192,132,252,0.14);
+  --s-shadow-card:0 1px 2px rgba(0,0,0,0.4), 0 10px 30px -18px rgba(0,0,0,0.8);
+  --s-shadow-sheet:0 -10px 44px -12px rgba(0,0,0,0.7);
+  --s-card-hi:#171C25;   --s-card-lo:#12161D;  --s-card-edge:rgba(255,255,255,0.05);
+}
+:root[data-theme="light"]{
+  --s-bg:#F7F8F9;        --s-bg-el:#FFFFFF;
+  --s-card:#FFFFFF;      --s-card-2:#F2F4F5;   --s-faint:#F7F8F9;
+  --s-text:#14161A;      --s-sub:#4A5058;      --s-muted:#7A828C;
+  --s-line:#E6E8EB;      --s-hair:rgba(20,22,26,0.07);
+  --s-acc:#059669;       --s-acc-tint:rgba(5,150,105,0.09);  --s-on-acc:#FFFFFF;
+  --s-gain:#0F7A4E;      --s-loss:#E11D48;     --s-loss-tint:rgba(225,29,72,0.08);
+  --s-warn:#B45309;      --s-warn-tint:rgba(180,83,9,0.09);  --s-on-warn:#FFFFFF;
+  --s-violet:#7C3AED;    --s-violet-tint:rgba(124,58,237,0.08);
+  --s-shadow-card:0 1px 2px rgba(20,22,26,0.05), 0 8px 24px -16px rgba(20,22,26,0.18);
+  --s-shadow-sheet:0 -8px 40px -12px rgba(20,22,26,0.22);
+  --s-card-hi:#FFFFFF;   --s-card-lo:#FBFCFC;  --s-card-edge:rgba(255,255,255,0.9);
+}
