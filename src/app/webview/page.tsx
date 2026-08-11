@@ -17,7 +17,12 @@ const IKON: Record<string, typeof BookOpen> = {
 };
 
 // Aksen TUNGGAL & konsisten (emerald) — bersih & premium, bukan pelangi dekoratif.
-const ACCENT = '#10b981';
+//
+// Dulu nilainya dipatok mati '#10b981' — emerald KETIGA yang bukan token terang
+// (#059669) maupun gelap (#2DD4A7), sehingga halaman ini memakai hijau yang
+// sedikit berbeda dari seluruh aplikasi DAN tidak ikut berubah saat tema
+// diganti. Sekarang membaca token design system, jadi satu sumber warna.
+const ACCENT = 'var(--s-acc)';
 
 const TRADE_URL = 'https://stockity1.id';
 
