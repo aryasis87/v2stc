@@ -18,6 +18,13 @@
   --s-gain:#0F7A4E;      --s-loss:#E11D48;     --s-loss-tint:rgba(225,29,72,0.08);
   --s-warn:#B45309;      --s-warn-tint:rgba(180,83,9,0.09);  --s-on-warn:#FFFFFF;
   --s-violet:#7C3AED;    --s-violet-tint:rgba(124,58,237,0.08);
+  /* Palet kategori — dipakai menandai jenis/aset di riwayat, BUKAN status.
+     Untung/rugi tetap memakai --s-gain/--s-loss supaya artinya tak kabur. */
+  --s-blue:#2563EB;      --s-pink:#BE185D;     --s-orange:#EA580C;   --s-grey:#8E8E93;
+  --s-press:rgba(2,6,23,0.045);                --s-skel:rgba(2,6,23,0.06);
+  /* Bilah atas tembus pandang. Ditulis tegas, bukan color-mix() dari --s-bg,
+     karena color-mix butuh WebView Chrome 111+ dan APK berjalan di perangkat lama. */
+  --s-header:rgba(247,248,249,0.90);
   --s-shadow-card:0 1px 2px rgba(20,22,26,0.05), 0 8px 24px -16px rgba(20,22,26,0.18);
   --s-shadow-sheet:0 -8px 40px -12px rgba(20,22,26,0.22);
   --s-card-hi:#FFFFFF;   --s-card-lo:#FBFCFC;  --s-card-edge:rgba(255,255,255,0.9);
@@ -36,6 +43,9 @@
   --s-gain:#3FD08C;      --s-loss:#FB7185;     --s-loss-tint:rgba(251,113,133,0.14);
   --s-warn:#FBBF24;      --s-warn-tint:rgba(251,191,36,0.14); --s-on-warn:#1A1612;
   --s-violet:#C084FC;    --s-violet-tint:rgba(192,132,252,0.14);
+  --s-blue:#60A5FA;      --s-pink:#F472B6;     --s-orange:#FB923C;   --s-grey:#98989F;
+  --s-press:rgba(255,255,255,0.06);            --s-skel:rgba(255,255,255,0.07);
+  --s-header:rgba(11,13,16,0.88);
   --s-shadow-card:0 1px 2px rgba(0,0,0,0.4), 0 10px 30px -18px rgba(0,0,0,0.8);
   --s-shadow-sheet:0 -10px 44px -12px rgba(0,0,0,0.7);
   --s-card-hi:#171C25;   --s-card-lo:#12161D;  --s-card-edge:rgba(255,255,255,0.05);
@@ -49,6 +59,9 @@
   --s-gain:#3FD08C;      --s-loss:#FB7185;     --s-loss-tint:rgba(251,113,133,0.14);
   --s-warn:#FBBF24;      --s-warn-tint:rgba(251,191,36,0.14); --s-on-warn:#1A1612;
   --s-violet:#C084FC;    --s-violet-tint:rgba(192,132,252,0.14);
+  --s-blue:#60A5FA;      --s-pink:#F472B6;     --s-orange:#FB923C;   --s-grey:#98989F;
+  --s-press:rgba(255,255,255,0.06);            --s-skel:rgba(255,255,255,0.07);
+  --s-header:rgba(11,13,16,0.88);
   --s-shadow-card:0 1px 2px rgba(0,0,0,0.4), 0 10px 30px -18px rgba(0,0,0,0.8);
   --s-shadow-sheet:0 -10px 44px -12px rgba(0,0,0,0.7);
   --s-card-hi:#171C25;   --s-card-lo:#12161D;  --s-card-edge:rgba(255,255,255,0.05);
@@ -62,6 +75,13 @@
   --s-gain:#0F7A4E;      --s-loss:#E11D48;     --s-loss-tint:rgba(225,29,72,0.08);
   --s-warn:#B45309;      --s-warn-tint:rgba(180,83,9,0.09);  --s-on-warn:#FFFFFF;
   --s-violet:#7C3AED;    --s-violet-tint:rgba(124,58,237,0.08);
+  /* Palet kategori — dipakai menandai jenis/aset di riwayat, BUKAN status.
+     Untung/rugi tetap memakai --s-gain/--s-loss supaya artinya tak kabur. */
+  --s-blue:#2563EB;      --s-pink:#BE185D;     --s-orange:#EA580C;   --s-grey:#8E8E93;
+  --s-press:rgba(2,6,23,0.045);                --s-skel:rgba(2,6,23,0.06);
+  /* Bilah atas tembus pandang. Ditulis tegas, bukan color-mix() dari --s-bg,
+     karena color-mix butuh WebView Chrome 111+ dan APK berjalan di perangkat lama. */
+  --s-header:rgba(247,248,249,0.90);
   --s-shadow-card:0 1px 2px rgba(20,22,26,0.05), 0 8px 24px -16px rgba(20,22,26,0.18);
   --s-shadow-sheet:0 -8px 40px -12px rgba(20,22,26,0.22);
   --s-card-hi:#FFFFFF;   --s-card-lo:#FBFCFC;  --s-card-edge:rgba(255,255,255,0.9);

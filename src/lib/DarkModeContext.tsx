@@ -52,6 +52,18 @@ export function DarkModeProvider({ children }: { children: ReactNode }) {
     //    Mengikuti sistem HP menyebabkan konflik saat HP user di light mode.
   }, []);
 
+  // ── Jembatan ke token CSS ─────────────────────────────────────────────────
+  // Token di src/app/ds/tokens.css berpindah lewat [data-theme] pada <html>.
+  // Tanpa efek ini, tema hanya hidup sebagai state React: palet berbasis
+  // JavaScript ikut berganti, sedangkan apa pun yang memakai var(--s-*) tidak —
+  // halaman jadi setengah terang setengah gelap. Ditulis tegas (bukan
+  // mengandalkan prefers-color-scheme) karena aplikasi memang SENGAJA tidak
+  // mengikuti preferensi sistem; lihat APP_DEFAULT_DARK di atas.
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    document.documentElement.setAttribute('data-theme', isDarkMode ? 'dark' : 'light');
+  }, [isDarkMode]);
+
   // ── Splash transisi ganti tema ────────────────────────────────────────────
   // Hanya muncul saat pengguna MENGGANTI tema (bukan saat preferensi dimuat
   // pertama kali), lalu hilang sendiri setelah animasinya selesai.

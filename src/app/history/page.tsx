@@ -35,48 +35,41 @@ interface CombinedLog {
 }
 
 // ─────────────────────────────────────────────
-// THEME PALETTE — selaras palet dashboard (getColors, emerald minimalis-modern).
-// Full sinkron dark/light via useDarkMode.
+// THEME PALETTE — menunjuk ke token design system (src/app/ds/tokens.css).
+//
+// Dulu berkas ini menyimpan DUA salinan warna (terang & gelap) dan memilih
+// salah satunya lewat `dark`. Itu berarti setiap penyesuaian warna harus
+// dikerjakan dua kali di sini, lalu sekali lagi di setiap halaman lain yang
+// punya salinannya sendiri — dan bila satu terlewat, halamannya diam-diam
+// menyimpang. Sekarang nilainya diambil dari token, jadi tema berpindah di
+// CSS dan tidak ada lagi salinan yang bisa ketinggalan.
+//
+// `dark` sengaja DIPERTAHANKAN sebagai parameter meski tak lagi dipakai untuk
+// memilih warna: pemanggilnya masih meneruskannya, dan komponen di bawah masih
+// memakainya untuk hal non-warna. Menghapusnya menyentuh banyak tempat
+// sekaligus — dikerjakan terpisah supaya perubahan ini tetap bisa ditelusuri.
 // ─────────────────────────────────────────────
-function getP(dark: boolean) {
-  return dark
-    ? {
-        bg:     '#0B0C0E',
-        header: 'rgba(11,12,14,0.88)',
-        card:   '#141518',
-        card2:  '#1B1D21',
-        hair:   'rgba(255,255,255,0.06)',
-        bdr:    'rgba(255,255,255,0.10)',
-        text:   '#F4F5F7',
-        sub:    '#C6CBD3',
-        muted:  '#A1A8B3',
-        faint:  'rgba(161,168,179,0.55)',
-        press:  'rgba(255,255,255,0.06)',
-        skel:   'rgba(255,255,255,0.07)',
-        shadow: 'inset 0 1px 0 rgba(255,255,255,0.03), 0 8px 24px -16px rgba(0,0,0,0.6)',
-        // Accent — emerald, selaras dashboard & bottom nav
-        accent: '#2DD4A7',
-        green:  '#2DD4A7', red: '#FB7185', amber: '#FBBF24',
-        blue:   '#60A5FA', purple: '#C084FC', pink: '#F472B6', grey: '#98989F', orange: '#FB923C',
-      }
-    : {
-        bg:     '#F6F7F9',
-        header: 'rgba(246,247,249,0.90)',
-        card:   '#FFFFFF',
-        card2:  '#F1F3F5',
-        hair:   'rgba(2,6,23,0.06)',
-        bdr:    '#E6E8EB',
-        text:   '#0F172A',
-        sub:    '#334155',
-        muted:  '#64748B',
-        faint:  '#94A3B8',
-        press:  'rgba(2,6,23,0.045)',
-        skel:   'rgba(2,6,23,0.06)',
-        shadow: '0 1px 0 rgba(2,6,23,0.03), 0 2px 12px rgba(2,6,23,0.04)',
-        accent: '#059669',
-        green:  '#059669', red: '#E11D48', amber: '#B45309',
-        blue:   '#2563EB', purple: '#7C3AED', pink: '#BE185D', grey: '#8E8E93', orange: '#EA580C',
-      };
+function getP(_dark: boolean) {
+  return {
+    bg:     'var(--s-bg)',
+    header: 'var(--s-header)',
+    card:   'var(--s-card)',
+    card2:  'var(--s-card-2)',
+    hair:   'var(--s-hair)',
+    bdr:    'var(--s-line)',
+    text:   'var(--s-text)',
+    sub:    'var(--s-sub)',
+    muted:  'var(--s-muted)',
+    faint:  'var(--s-muted)',
+    press:  'var(--s-press)',
+    skel:   'var(--s-skel)',
+    shadow: 'var(--s-shadow-card)',
+    accent: 'var(--s-acc)',
+    // Untung/rugi memakai token maknanya sendiri, bukan warna kategori.
+    green:  'var(--s-gain)', red: 'var(--s-loss)', amber: 'var(--s-warn)',
+    blue:   'var(--s-blue)', purple: 'var(--s-violet)', pink: 'var(--s-pink)',
+    grey:   'var(--s-grey)', orange: 'var(--s-orange)',
+  };
 }
 type Palette = ReturnType<typeof getP>;
 
@@ -93,13 +86,17 @@ const WinRing: React.FC<{ pct: number; P: Palette; size?: number; stroke?: numbe
   return (
     <div style={{ position: 'relative', width: size, height: size, flexShrink: 0 }}>
       <svg width={size} height={size} style={{ transform: 'rotate(-90deg)', display: 'block' }}>
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={P.press} strokeWidth={stroke} />
+        {/* Warna lewat `style`, BUKAN atribut stroke=. Palet kini berisi
+            var(--s-*), dan var() di atribut presentasi SVG tidak dijamin
+            berjalan di WebView Android lama — cincin bisa hilang tanpa suara. */}
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" strokeWidth={stroke}
+          style={{ stroke: P.press }} />
         <circle
           cx={size / 2} cy={size / 2} r={r} fill="none"
-          stroke={col} strokeWidth={stroke} strokeLinecap="round"
+          strokeWidth={stroke} strokeLinecap="round"
           strokeDasharray={c}
           strokeDashoffset={c - (c * Math.min(100, Math.max(0, pct))) / 100}
-          style={{ transition: 'stroke-dashoffset 0.9s cubic-bezier(0.22,1,0.36,1), stroke 0.3s' }}
+          style={{ stroke: col, transition: 'stroke-dashoffset 0.9s cubic-bezier(0.22,1,0.36,1), stroke 0.3s' }}
         />
       </svg>
       <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
