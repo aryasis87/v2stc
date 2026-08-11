@@ -6,7 +6,7 @@
 import { useState, useRef } from 'react';
 import { Upload, Check, Loader2, ShieldCheck, X, Lock, BadgeCheck, Download } from 'lucide-react';
 
-const PRICE = 'Rp 180.000';
+const PRICE = 'Rp 150.000';
 const API = process.env.NEXT_PUBLIC_API_URL ?? '';
 const AC = '#10b981';
 

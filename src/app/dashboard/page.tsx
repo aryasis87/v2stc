@@ -2339,11 +2339,11 @@ function buildActivationMailto(to: string, feature: string, userId?: string, ema
 }
 
 const AI_LOCK_STR: Record<string, { title: string; body: string; hint: string; mail: string; close: string }> = {
-  id: { title: 'Mode AI Signal Terkunci',  body: 'Fitur AI Signal belum aktif di akun Anda.', hint: 'Aktifkan dengan langganan Rp 85.000 / bulan. Verifikasi rata-rata ~10 menit, admin online 24 jam.', mail: 'Aktivasi Mode AI Signal', close: 'Tutup' },
+  id: { title: 'Mode AI Signal Terkunci',  body: 'Fitur AI Signal belum aktif di akun Anda.', hint: 'Aktifkan dengan langganan Rp 50.000 / bulan. Verifikasi rata-rata ~10 menit, admin online 24 jam.', mail: 'Aktivasi Mode AI Signal', close: 'Tutup' },
   en: { title: 'AI Signal Mode Locked',    body: 'The AI Signal feature is not active on your account yet.', hint: 'Activate with a Rp 85,000 / month subscription. Verification ~10 minutes on average, admin online 24 hours.', mail: 'Activate AI Signal', close: 'Close' },
-  ru: { title: 'Режим AI Signal заблокирован', body: 'Функция AI Signal ещё не активна на вашем аккаунте.', hint: 'Активируйте по подписке Rp 85.000 / месяц. Проверка в среднем ~10 минут.', mail: 'Активировать AI Signal', close: 'Закрыть' },
-  es: { title: 'Modo AI Signal bloqueado', body: 'La función AI Signal aún no está activa en tu cuenta.', hint: 'Actívalo con una suscripción de Rp 85.000 / mes. Verificación ~10 minutos en promedio.', mail: 'Activar AI Signal', close: 'Cerrar' },
-  ms: { title: 'Mod AI Signal Dikunci',    body: 'Ciri AI Signal belum aktif pada akaun anda.', hint: 'Aktifkan dengan langganan Rp 85.000 / bulan. Pengesahan purata ~10 minit.', mail: 'Aktifkan AI Signal', close: 'Tutup' },
+  ru: { title: 'Режим AI Signal заблокирован', body: 'Функция AI Signal ещё не активна на вашем аккаунте.', hint: 'Активируйте по подписке Rp 50.000 / месяц. Проверка в среднем ~10 минут.', mail: 'Активировать AI Signal', close: 'Закрыть' },
+  es: { title: 'Modo AI Signal bloqueado', body: 'La función AI Signal aún no está activa en tu cuenta.', hint: 'Actívalo con una suscripción de Rp 50.000 / mes. Verificación ~10 minutos en promedio.', mail: 'Activar AI Signal', close: 'Cerrar' },
+  ms: { title: 'Mod AI Signal Dikunci',    body: 'Ciri AI Signal belum aktif pada akaun anda.', hint: 'Aktifkan dengan langganan Rp 50.000 / bulan. Pengesahan purata ~10 minit.', mail: 'Aktifkan AI Signal', close: 'Tutup' },
 };
 
 const AiLockedModal: React.FC<{ open: boolean; onClose: () => void; lang: string; onActivate: () => void }> = ({ open, onClose, lang, onActivate }) => {
@@ -2375,10 +2375,10 @@ const AiLockedModal: React.FC<{ open: boolean; onClose: () => void; lang: string
 // REAL LOCKED MODAL — v4: mode REAL hanya utk akun baru via selfregister
 // ═══════════════════════════════════════════
 const REAL_LOCK_STR: Record<string, { title: string; body: string; hint: string; cta: string; close: string }> = {
-  id: { title: 'Mode REAL Terkunci',   body: 'Akun Anda saat ini hanya dapat menggunakan mode DEMO.', hint: 'Buka mode REAL dengan aktivasi sekali bayar Rp 180.000. Isi data & bukti pembayaran di portal, admin akan mengaktifkannya.', cta: 'Aktivasi Mode REAL', close: 'Tutup' },
+  id: { title: 'Mode REAL Terkunci',   body: 'Akun Anda saat ini hanya dapat menggunakan mode DEMO.', hint: 'Buka mode REAL dengan aktivasi sekali bayar Rp 150.000. Isi data & bukti pembayaran di portal, admin akan mengaktifkannya.', cta: 'Aktivasi Mode REAL', close: 'Tutup' },
   en: { title: 'REAL Mode Locked',     body: 'Your account can currently use DEMO mode only.', hint: 'Unlock REAL mode with a one-time Rp 180,000 activation. Fill in your details & payment proof on the portal and an admin will activate it.', cta: 'Activate REAL Mode', close: 'Close' },
   ru: { title: 'Режим REAL заблокирован', body: 'Ваш аккаунт сейчас может использовать только режим ДЕМО.', hint: 'Откройте режим REAL разовой активацией за Rp 180 000. Заполните данные и чек оплаты на портале — админ активирует.', cta: 'Активировать REAL', close: 'Закрыть' },
-  es: { title: 'Modo REAL bloqueado',  body: 'Tu cuenta actualmente solo puede usar el modo DEMO.', hint: 'Desbloquea el modo REAL con una activación única de Rp 180.000. Completa tus datos y comprobante en el portal y un admin lo activará.', cta: 'Activar Modo REAL', close: 'Cerrar' },
+  es: { title: 'Modo REAL bloqueado',  body: 'Tu cuenta actualmente solo puede usar el modo DEMO.', hint: 'Desbloquea el modo REAL con una activación única de Rp 150.000. Completa tus datos y comprobante en el portal y un admin lo activará.', cta: 'Activar Modo REAL', close: 'Cerrar' },
   ms: { title: 'Mod REAL Dikunci',     body: 'Akaun anda buat masa ini hanya boleh menggunakan mod DEMO.', hint: 'Buka mod REAL dengan pengaktifan sekali bayar Rp 180,000. Isi maklumat & bukti pembayaran di portal, admin akan mengaktifkannya.', cta: 'Aktifkan Mod REAL', close: 'Tutup' },
 };
 
@@ -2388,7 +2388,7 @@ const REAL_LOCK_STR: Record<string, { title: string; body: string; hint: string;
 type RealLockReason = 'account' | 'platform';
 
 const APK_LOCK_STR: Record<string, { title: string; body: string; hint: string; cta: string; close: string }> = {
-  id: { title: 'Aktifkan Mode REAL', body: 'Akun Anda saat ini masih DEMO. Buka mode REAL dengan aktivasi sekali bayar Rp 180.000.', hint: 'Aktivasi bisa dilakukan langsung di sini — TANPA perlu mengunduh atau memakai aplikasi Android. Setelah aktif, mode REAL bisa dipakai di versi web maupun aplikasi.', cta: 'Download Aplikasi', close: 'Tutup' },
+  id: { title: 'Aktifkan Mode REAL', body: 'Akun Anda saat ini masih DEMO. Buka mode REAL dengan aktivasi sekali bayar Rp 150.000.', hint: 'Aktivasi bisa dilakukan langsung di sini — TANPA perlu mengunduh atau memakai aplikasi Android. Setelah aktif, mode REAL bisa dipakai di versi web maupun aplikasi.', cta: 'Download Aplikasi', close: 'Tutup' },
   en: { title: 'Activate REAL Mode', body: 'Your account is currently on DEMO. Unlock REAL mode with a one-time Rp 180,000 activation.', hint: 'You can activate right here — with NO need to download or use the Android app. Once active, REAL mode works on both the web and the app.', cta: 'Download App', close: 'Close' },
   ru: { title: 'Откройте в приложении Android', body: 'Режим REAL работает только в приложении STC AutoTrade для Android.', hint: 'В приложении сделки исполняются напрямую с вашего устройства — безопаснее и соответствует правилам платформы. Веб-версия остаётся для режима ДЕМО и мониторинга.', cta: 'Скачать приложение', close: 'Закрыть' },
   es: { title: 'Ábrelo en la app de Android', body: 'El modo REAL solo funciona en la app STC AutoTrade para Android.', hint: 'En la app, las órdenes se ejecutan desde la conexión de tu propio dispositivo: más seguro y conforme a las reglas de la plataforma. La versión web sigue disponible para el modo DEMO y seguimiento.', cta: 'Descargar app', close: 'Cerrar' },
