@@ -11,7 +11,7 @@ import { deviceSession } from '@/lib/engine/deviceSession';
 const NAV_ITEMS = [
   { href: '/dashboard', labelKey: 'navDashboard', icon: LayoutDashboard },
   { href: '/history',   labelKey: 'navHistory',   icon: History },
-  { href: '/webview',   labelKey: 'navGuide',     icon: BookOpen },
+  { href: '/panduan',   labelKey: 'navGuide',     icon: BookOpen },
   { href: '/profile',   labelKey: 'navProfile',   icon: User },
 ];
 
