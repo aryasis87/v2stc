@@ -301,10 +301,17 @@ function RegisterContent() {
           deviceId:    devId,
         };
       } else {
-        // Pendaftaran WAJIB lewat aplikasi. Bila dijalankan dari browser,
-        // pembuatan akun akan berasal dari IP VPS — persis yang ingin
-        // dihindari agar akun afiliasi tidak terlihat memakai satu IP bersama.
-        throw new Error(ui(language, 'registerAppOnly'));
+        // WEB: didaftarkan lewat backend, yang memproksi sign_up ke Stockity.
+        //
+        // Dulu jalur ini dimatikan karena permintaan sign_up berasal dari IP
+        // VPS — banyak akun rujukan berbagi satu IP, pola yang dicurigai aturan
+        // Affiliate TOP. Program afiliasi dihentikan 2026-08-11, jadi alasannya
+        // tidak berlaku lagi dan pendaftaran web dibuka kembali.
+        //
+        // Backend-nya memang sudah terbuka sejak itu; yang tertinggal hanya
+        // klien ini, sehingga pendaftaran dari peramban SELALU gagal apa pun
+        // yang diisi — bukan karena Stockity menolak.
+        res = await api.register(email.trim(), password, "IDR");
       }
       setSuccess(true);
       await finishRegister(res);
