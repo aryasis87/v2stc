@@ -652,3 +652,52 @@ for (const f of ['tokens.css', 'components.css']) {
   fs.copyFileSync(path.join(OUT, f), path.join(APP_DS, f));
   console.log('  -> src/app/ds/' + f);
 }
+
+// ─────────────────────────────────────────────────────────────────────────
+// Palet dashboard dalam bentuk TypeScript.
+//
+// Dashboard TIDAK bisa memakai var(--s-*) langsung: ia menyisipkan alfa
+// dengan menyambung hex (`${C.cyan}12`) di ratusan tempat, dan sebagian
+// memakai variabel dinamis sehingga token mana yang dipegang tak bisa
+// diketahui secara statis. Dua percobaan memaksakannya sudah gagal.
+//
+// Jadi arahnya dibalik: nilai tetap hex, tapi DIHASILKAN dari token di
+// berkas ini. Dengan begitu tetap ada satu sumber warna — hanya saja
+// jembatannya waktu build, bukan waktu jalan. Menyunting theme.colors.ts
+// dengan tangan akan tertimpa build berikutnya; sunting generator ini.
+// ─────────────────────────────────────────────────────────────────────────
+const PETA = {
+  bg:'bg', card:'card', card2:'card-2', bdr:'line', bdrAct:'acc-bdr-act',
+  cyan:'acc', cyand:'acc-tint', coral:'loss', cord:'loss-tint',
+  amber:'warn', ambd:'warn-tint', onAmber:'on-warn',
+  violet:'violet', vltd:'violet-tint', sky:'sky', skyd:'sky-tint',
+  orange:'orange', orgd:'orange-tint', pink:'pink', pinkd:'pink-tint',
+  text:'text', sub:'sub', muted:'muted', faint:'hair',
+};
+// Komentar DIBUANG lebih dulu. Tanpa itu, teks seperti "--s-acc: dipakai
+// menandai kategori" di dalam /* */ dianggap definisi, lalu [^;]+ melahap
+// sampai titik koma berikutnya — menelan definisi asli sesudahnya. Jebakan
+// ini nyata: --s-sky hilang dari palet terang tanpa jejak.
+const bacaTok = (blok) => Object.fromEntries(
+  [...blok.replace(/\/\*[\s\S]*?\*\//g, '')
+          .matchAll(/--s-([a-z0-9-]+)\s*:\s*([^;]+);/g)].map(m => [m[1], m[2].trim()]));
+const tokTerang = bacaTok(LIGHT), tokGelap = bacaTok(DARK);
+const baris = (tok) => Object.entries(PETA).map(([k, t]) => {
+  const v = tok[t];
+  if (!v) throw new Error(`Token --s-${t} tidak ada (untuk C.${k})`);
+  return `    ${k}: ${JSON.stringify(v)},`;
+}).join('\n');
+
+fs.writeFileSync(path.join(OUT, '..', 'src', 'app', 'dashboard', 'theme.colors.ts'),
+`// DIHASILKAN oleh design-system/_build.mjs — JANGAN DISUNTING LANGSUNG.
+// Sumbernya token di berkas itu; suntingan tangan akan tertimpa build berikutnya.
+
+export const PALET_GELAP = {
+${baris(tokGelap)}
+} as const;
+
+export const PALET_TERANG = {
+${baris(tokTerang)}
+} as const;
+`);
+console.log('  -> src/app/dashboard/theme.colors.ts');
