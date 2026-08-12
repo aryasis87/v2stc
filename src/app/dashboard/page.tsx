@@ -20,7 +20,7 @@ import { ui } from '@/lib/uiText';
 import { useTradingSettings } from '@/lib/useTradingSettings';
 import { computeBestConfig, type BestConfigResult } from '@/lib/bestConfig';
 import { isAiSignalUnlocked } from '@/lib/aiSignalAccess';
-import { isFastReversalUnlocked, getFastReversalExpiry, FAST_REVERSAL_CONTACT_EMAIL } from '@/lib/fastReversalAccess';
+import { isFastReversalUnlocked, getFastReversalExpiry, getFastReversalEntry, FAST_REVERSAL_CONTACT_EMAIL } from '@/lib/fastReversalAccess';
 import { getAiSignalEntry } from '@/lib/aiSignalAccess';
 import { sessionBeacon } from '@/lib/sessionBeacon';
 import { getRealAccessAt } from '@/lib/realAccess';
@@ -1749,6 +1749,9 @@ export default function DashboardPage() {
         if (realAt) kandidat.push({ at: realAt, sampai: null, label: 'Mode REAL' });
         const ai = await getAiSignalEntry(uid);
         if (ai?.sejak) kandidat.push({ at: ai.sejak, sampai: ai.sampai, label: 'AI Signal' });
+
+        const fr = await getFastReversalEntry(uid);
+        if (fr?.sejak) kandidat.push({ at: fr.sejak, sampai: fr.sampai, label: 'Fast Reversal' });
         for (const k of kandidat) {
           if (batal) return;
           const kunci = `stc_notice_${k.label.replace(/\s+/g,'')}_${uid}_${k.at}`;
@@ -2373,7 +2376,14 @@ export default function DashboardPage() {
         const schData = schRes.status === 'fulfilled' ? schRes.value : null;
 
         if (ftData?.isRunning) {
-          setTradingMode(ftData.mode === 'CTC' ? 'ctc' : 'fastrade');
+          // Fast Reversal juga berjalan lewat engine FTT, jadi `mode` dari backend
+          // SELALU 'FTT'. Pembedanya reversalSteps yang ikut dikirim status.
+          // Tanpa pemeriksaan ini, sesi Fast Reversal yang sedang jalan dipulihkan
+          // sebagai 'fastrade' — panel dan setelan yang salah yang tampil, mis.
+          // saat halaman baru dibuka di PC dan state lokal belum termuat.
+          const ftIsReversal =
+            (ftData.reversalSteps?.length ?? 0) > 0 || tradingMode === 'fastreversal';
+          setTradingMode(ftData.mode === 'CTC' ? 'ctc' : (ftIsReversal ? 'fastreversal' : 'fastrade'));
           setIsModeChosen(true);
         } else if (aiData?.botState === 'RUNNING' || (!aiData?.botState && aiData?.isActive)) {
           setTradingMode('aisignal');
