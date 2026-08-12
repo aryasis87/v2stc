@@ -1383,53 +1383,7 @@ const CapitalAdviceModal: React.FC<{ open: boolean; onClose: () => void; lang: s
   );
 };
 
-// ─── Modal KODE PROMO pengguna baru (muncul setelah saran manajemen modal) ───
-// ═══════════════════════════════════════════════════════════════════════════
-// FORMULA TRADING (Best Config) — saran setting terbaik dari saldo.
-// Gaya STC: "spec-sheet / struk" — baris rincian bergaris, meter risiko
-// tersegmen, tangga step vertikal, angka tabular. SENGAJA beda dari koala.
-// ═══════════════════════════════════════════════════════════════════════════
-// FormulaTradingModal dipindah ke ./SettingsCard.
-const PROMO_CODE = 'MERDEKATRADING';
-const PROMO_STR: Record<string, { title: string; body: string; bonus: string; valid: string; note: string; cta: string; ok: string }> = {
-  id: { title: 'Kode Promo Deposit Pertama', body: 'Masukkan kode ini saat deposit pertama untuk klaim bonus.', bonus: 'Bonus hingga +100% dari nominal deposit pertama.', valid: 'Berlaku hingga 8 September 2026', note: 'Tekan "Dapatkan Bonus" — kamu akan keluar & diarahkan ke pendaftaran akun baru untuk mulai klaim.', cta: 'Dapatkan Bonus', ok: 'Tutup' },
-  en: { title: 'First-Deposit Promo Code', body: 'Enter this code on your first deposit to claim the bonus.', bonus: 'Up to +100% bonus on your first deposit.', valid: 'Valid until 8 September 2026', note: 'Tap "Get Bonus" — you will be signed out and taken to new-account registration to start claiming.', cta: 'Get Bonus', ok: 'Close' },
-  ru: { title: 'Промокод на первый депозит', body: 'Введите этот код при первом депозите, чтобы получить бонус.', bonus: 'Бонус до +100% на первый депозит.', valid: 'Действует до 8 сентября 2026', note: 'Нажмите «Получить бонус» — вы выйдете и перейдёте к регистрации аккаунта.', cta: 'Получить бонус', ok: 'Закрыть' },
-  es: { title: 'Código Promo Primer Depósito', body: 'Ingresa este código en tu primer depósito para reclamar el bono.', bonus: 'Bono de hasta +100% en tu primer depósito.', valid: 'Válido hasta el 8 de septiembre de 2026', note: 'Pulsa "Obtener bono" — se cerrará tu sesión y pasarás al registro de cuenta.', cta: 'Obtener bono', ok: 'Cerrar' },
-  ms: { title: 'Kod Promo Deposit Pertama', body: 'Masukkan kod ini semasa deposit pertama untuk tuntut bonus.', bonus: 'Bonus sehingga +100% daripada deposit pertama.', valid: 'Sah sehingga 8 September 2026', note: 'Tekan "Dapatkan Bonus" — anda akan log keluar & dibawa ke pendaftaran akaun.', cta: 'Dapatkan Bonus', ok: 'Tutup' },
-};
-
-const PromoModal: React.FC<{ open: boolean; onClose: () => void; onRegister: () => void; lang: string }> = ({ open, onClose, onRegister, lang }) => {
-  if (!open) return null;
-  const S = PROMO_STR[lang] ?? PROMO_STR.en;
-  return (
-    <div style={{position:'fixed',inset:0,zIndex:80,display:'flex',alignItems:'center',justifyContent:'center',padding:'16px',animation:'fade-in 0.15s ease'}}>
-      <div onClick={onClose} style={{position:'absolute',inset:0,background:'rgba(0,0,0,0.72)',backdropFilter:'blur(10px)',WebkitBackdropFilter:'blur(10px)'}}/>
-      <div style={{position:'relative',width:'100%',maxWidth:400,background:C.bg,borderRadius:20,border:`1px solid ${C.bdr}`,padding:'24px 22px',animation:'slide-up 0.28s cubic-bezier(0.32,0.72,0,1)'}}>
-        <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:14}}>
-          <div style={{width:44,height:44,borderRadius:14,display:'flex',alignItems:'center',justifyContent:'center',background:`${C.amber}14`,border:`1px solid ${C.amber}30`,flexShrink:0,fontSize:22}}>🎁</div>
-          <p style={{fontSize:16,fontWeight:700,color:C.text}}>{S.title}</p>
-        </div>
-        <p style={{fontSize:13,color:C.sub,lineHeight:1.6,marginBottom:12}}>{S.body}</p>
-        <div style={{display:'flex',alignItems:'center',gap:8,padding:'10px 12px',borderRadius:12,background:`${C.amber}12`,border:`1px solid ${C.amber}30`,marginBottom:12}}>
-          <span style={{fontSize:15,flexShrink:0}}>🎉</span>
-          <span style={{fontSize:12.5,fontWeight:700,color:C.amber,lineHeight:1.4}}>{S.bonus}</span>
-        </div>
-        {/* Kode promo — ditampilkan penuh & bisa disalin */}
-        <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:6,padding:'14px',borderRadius:14,background:C.card2,border:`1.5px dashed ${C.amber}80`,marginBottom:10}}>
-          <span style={{fontSize:10.5,fontWeight:700,letterSpacing:'0.12em',color:C.muted,textTransform:'uppercase'}}>Kode Promo</span>
-          <span style={{fontSize:21,fontWeight:800,letterSpacing:'0.14em',color:C.amber,fontFamily:"'SF Mono','Fira Mono',monospace",userSelect:'all',textAlign:'center'}}>{PROMO_CODE}</span>
-        </div>
-        <p style={{fontSize:11.5,fontWeight:600,color:C.muted,textAlign:'center',marginBottom:14}}>{S.valid}</p>
-        <p style={{fontSize:11.5,color:C.muted,lineHeight:1.5,marginBottom:16}}>{S.note}</p>
-        <div style={{display:'flex',gap:10}}>
-          <button onClick={onClose} style={{flex:1,padding:'12px 0',borderRadius:12,background:C.card2,border:`1px solid ${C.bdr}`,cursor:'pointer',fontSize:14,fontWeight:700,color:C.text}}>{S.ok}</button>
-          <button onClick={onRegister} style={{flex:1.4,padding:'12px 0',borderRadius:12,background:C.cyan,border:'none',cursor:'pointer',fontSize:14,fontWeight:800,color:'#06251b'}}>{S.cta}</button>
-        </div>
-      </div>
-    </div>
-  );
-};
+// Modal KODE PROMO dihapus 2026-08-13 — promonya sudah tidak berjalan.
 
 // ═══════════════════════════════════════════
 // MODE SESSION PANEL — FIXED
@@ -1770,7 +1724,6 @@ export default function DashboardPage() {
   const [aiLockOpen,  setAiLockOpen]  = useState(false);
   const [frLockOpen,  setFrLockOpen]  = useState(false);
   const [adviceOpen,  setAdviceOpen]  = useState(false);
-  const [promoOpen,   setPromoOpen]   = useState(false);
   // ── v4: akses mode REAL (user lama demo-only) ─────────────────────────────
   const [realAccess,    setRealAccess]    = useState(false);
   const [realCheckDone, setRealCheckDone] = useState(false);
@@ -3335,8 +3288,7 @@ export default function DashboardPage() {
           onActivate={()=>{ setRealLockOpen(false); router.push('/aktivasi-real'); }}
           lang={language}
         />
-        <CapitalAdviceModal open={adviceOpen} onClose={()=>{setAdviceOpen(false); setPromoOpen(true);}} lang={language} minAmount={currencyConfig.minAmount} currUnit={currencyConfig.currencyUnit}/>
-        <PromoModal open={promoOpen} onClose={()=>setPromoOpen(false)} onRegister={()=>{setPromoOpen(false); goRegister();}} lang={language}/>
+        <CapitalAdviceModal open={adviceOpen} onClose={()=>setAdviceOpen(false)} lang={language} minAmount={currencyConfig.minAmount} currUnit={currencyConfig.currencyUnit}/>
         {error&&(
           <div style={{display:'flex',alignItems:'flex-start',gap:9,padding:'10px 14px',borderRadius:8,marginBottom:g,background:C.cord,border:`1px solid rgba(255,69,58,0.2)`,borderLeft:`2px solid ${C.coral}`}}>
             <AlertCircle style={{width:13,height:13,flexShrink:0,marginTop:2,color:C.coral}}/>
