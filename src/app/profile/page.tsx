@@ -1582,13 +1582,17 @@ function ProfilePageContent() {
           <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 10 }}>
             {isAdminUser && (
               <Card>
-                <TappableRow
-                  icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>}
-                  iconBg="linear-gradient(135deg,#F59E0B,#D97706)"
-                  label={t('profile.adminPanel')}
-                  value={isSuperAdminUser ? 'Super Admin' : 'Admin'}
-                  onClick={() => router.push('/admin')}
-                />
+                {/* Panel admin (whitelist, kelola admin, chat, reaktivasi, periode)
+                    KHUSUS super admin. Admin biasa tetap punya SELURUH fitur lain. */}
+                {isSuperAdminUser && (
+                  <TappableRow
+                    icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>}
+                    iconBg="linear-gradient(135deg,#F59E0B,#D97706)"
+                    label={t('profile.adminPanel')}
+                    value={isSuperAdminUser ? 'Super Admin' : 'Admin'}
+                    onClick={() => router.push('/admin')}
+                  />
+                )}
                 <TappableRow
                   icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"/><path d="M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5"/><circle cx="12" cy="12" r="2"/><path d="M16.2 7.8c2.3 2.3 2.3 6.1 0 8.5"/><path d="M19.1 4.9C23 8.8 23 15.2 19.1 19.1"/></svg>}
                   iconBg="linear-gradient(135deg,#38BDF8,#0284C7)"
@@ -1603,24 +1607,20 @@ function ProfilePageContent() {
                   onClick={() => setFrMgrOpen(true)}
                   last={!isSuperAdminUser}
                 />
-                {isSuperAdminUser && (
-                  <TappableRow
-                    icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>}
-                    iconBg="linear-gradient(135deg,#10b981,#059669)"
-                    label="Aktivasi Mode REAL"
-                    onClick={() => setRealMgrOpen(true)}
-                  />
-                )}
+                <TappableRow
+                  icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>}
+                  iconBg="linear-gradient(135deg,#10b981,#059669)"
+                  label="Aktivasi Mode REAL"
+                  onClick={() => setRealMgrOpen(true)}
+                />
                 {/* Mode pemeliharaan — KHUSUS super admin */}
-                {isSuperAdminUser && (
-                  <TappableRow
-                    icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>}
-                    iconBg="linear-gradient(135deg,#FBBF24,#D97706)"
-                    label="Mode Pemeliharaan"
-                    onClick={() => setMaintMgrOpen(true)}
-                    last
-                  />
-                )}
+                <TappableRow
+                  icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>}
+                  iconBg="linear-gradient(135deg,#FBBF24,#D97706)"
+                  label="Mode Pemeliharaan"
+                  onClick={() => setMaintMgrOpen(true)}
+                  last
+                />
                 {/* v4: broadcast email dihapus (layanan email ada di VPS yang dimatikan) */}
               </Card>
             )}
@@ -1759,13 +1759,17 @@ function ProfilePageContent() {
             <div className="pf-mob-only">
               <SectionLabel>{t('profile.adminPanel')}</SectionLabel>
               <Card>
-                <TappableRow
-                  icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>}
-                  iconBg="linear-gradient(135deg,#F59E0B,#D97706)"
-                  label={t('profile.adminPanel')}
-                  value={isSuperAdminUser ? 'Super Admin' : 'Admin'}
-                  onClick={() => router.push('/admin')}
-                />
+                {/* Panel admin (whitelist, kelola admin, chat, reaktivasi, periode)
+                    KHUSUS super admin. Admin biasa tetap punya SELURUH fitur lain. */}
+                {isSuperAdminUser && (
+                  <TappableRow
+                    icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>}
+                    iconBg="linear-gradient(135deg,#F59E0B,#D97706)"
+                    label={t('profile.adminPanel')}
+                    value={isSuperAdminUser ? 'Super Admin' : 'Admin'}
+                    onClick={() => router.push('/admin')}
+                  />
+                )}
                 <TappableRow
                   icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"/><path d="M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5"/><circle cx="12" cy="12" r="2"/><path d="M16.2 7.8c2.3 2.3 2.3 6.1 0 8.5"/><path d="M19.1 4.9C23 8.8 23 15.2 19.1 19.1"/></svg>}
                   iconBg="linear-gradient(135deg,#38BDF8,#0284C7)"
@@ -1780,24 +1784,20 @@ function ProfilePageContent() {
                   onClick={() => setFrMgrOpen(true)}
                   last={!isSuperAdminUser}
                 />
-                {isSuperAdminUser && (
-                  <TappableRow
-                    icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>}
-                    iconBg="linear-gradient(135deg,#10b981,#059669)"
-                    label="Aktivasi Mode REAL"
-                    onClick={() => setRealMgrOpen(true)}
-                  />
-                )}
+                <TappableRow
+                  icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>}
+                  iconBg="linear-gradient(135deg,#10b981,#059669)"
+                  label="Aktivasi Mode REAL"
+                  onClick={() => setRealMgrOpen(true)}
+                />
                 {/* Mode pemeliharaan — KHUSUS super admin */}
-                {isSuperAdminUser && (
-                  <TappableRow
-                    icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>}
-                    iconBg="linear-gradient(135deg,#FBBF24,#D97706)"
-                    label="Mode Pemeliharaan"
-                    onClick={() => setMaintMgrOpen(true)}
-                    last
-                  />
-                )}
+                <TappableRow
+                  icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>}
+                  iconBg="linear-gradient(135deg,#FBBF24,#D97706)"
+                  label="Mode Pemeliharaan"
+                  onClick={() => setMaintMgrOpen(true)}
+                  last
+                />
                 {/* v4: broadcast email dihapus (layanan email ada di VPS yang dimatikan) */}
               </Card>
             </div>

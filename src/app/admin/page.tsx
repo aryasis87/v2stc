@@ -1302,7 +1302,11 @@ export default function AdminPage() {
       const email = await storage.get('stc_email') ?? '';
       setCurrentEmail(email);
       const [isAdm, isSup] = await Promise.all([checkIsAdmin(email), checkIsSuperAdmin(email)]);
-      if (!isAdm) { router.replace('/profile'); return; }
+      // Panel ini KHUSUS super admin (whitelist, kelola admin, chat, reaktivasi,
+      // periode). Admin biasa punya SELURUH fitur lain, tetapi backend kini
+      // menolak endpoint panel ini untuk mereka — tanpa penjaga di sini
+      // halamannya terbuka lalu gagal memuat data tanpa penjelasan.
+      if (!isAdm || !isSup) { router.replace('/profile'); return; }
       setIsSuperAdmin(isSup);
       setAuthReady(true);
       await loadData(email, isSup);
