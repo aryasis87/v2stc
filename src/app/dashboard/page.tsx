@@ -46,7 +46,8 @@ import {
   ClipboardPaste, Check, Lock, Smartphone, Repeat, BadgeCheck } from 'lucide-react';
 
 // Palet dipindah ke ./theme.ts — langkah pertama memecah berkas ini.
-import { getColors, type Colors } from './theme';
+import { getColors, type Colors, type TradingMode } from './theme';
+import { rt, modeAccent } from './runtime';
 
 // Module-level colors — updated each render by DashboardPage via C = colors
 // Must be `let` so sub-components always get the current theme on re-render
@@ -57,7 +58,7 @@ let T: (k: string) => string = (k: string) => k;
 // Status kunci mode AI Signal — di-set tiap render DashboardPage (pola sama C/T)
 let AI_LOCKED = false;
 
-type TradingMode = 'schedule' | 'fastrade' | 'ctc' | 'aisignal' | 'indicator' | 'momentum';
+// TradingMode kini dari ./theme (dipakai bersama berkas hasil pemecahan).
 type FastTradeTimeframe = '1m' | '5m' | '15m' | '30m' | '1h';
 
 interface MartingaleConfig { enabled:boolean; maxStep:number; multiplier:number; alwaysSignal?:boolean; }
@@ -75,13 +76,7 @@ let CURR_UNIT  = 'Rp';
 let MIN_AMOUNT = 14_000;
 let QUICK_AMOUNTS_DYN: number[] = [14_000, 70_000, 140_000, 280_000, 700_000, 1_400_000, 2_800_000];
 
-function modeAccent(mode: TradingMode): string {
-  if (mode === 'ctc') return C.violet;
-  if (mode === 'aisignal') return C.sky;
-  if (mode === 'indicator') return C.orange;
-  if (mode === 'momentum') return C.pink;
-  return C.cyan;
-}
+// modeAccent dipindah ke ./runtime — ia membaca palet yang SEDANG berlaku.
 
 // ═══════════════════════════════════════════
 // PRIMITIVES
@@ -3807,6 +3802,10 @@ export default function DashboardPage() {
   // ✅ FIX: Update module-level C so all sub-components use the correct theme
   C = colors;
   T = t;
+  // Wadah runtime diisi berbarengan supaya komponen yang sudah dipecah
+  // keluar dari berkas ini melihat palet & terjemahan yang sama.
+  rt.C = colors;
+  rt.T = t;
   T_LANG = language;
 
   // ── Currency config dari Stockity API (amounts, unit, min, max per negara) ──

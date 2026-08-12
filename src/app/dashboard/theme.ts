@@ -84,3 +84,15 @@ export function getColors(isDark: boolean) {
  * sama sekali. Diturunkan dari fungsinya, jadi tak bisa menyimpang.
  */
 export type Colors = ReturnType<typeof getColors>;
+
+/**
+ * Mode trading. Ditaruh di sini supaya berkas yang dipecah keluar dari
+ * page.tsx punya satu tempat mengambilnya.
+ *
+ * CATATAN: tipe dengan isi yang sama juga ada di src/lib/useTradingSettings.ts.
+ * Duplikasi itu pernah menggigit — saat mode dicabut, TypeScript hanya
+ * mengeluh di salah satunya sehingga yang lain diam-diam ketinggalan.
+ * Menyatukan keduanya menyentuh berkas lain; dikerjakan terpisah.
+ */
+export type TradingMode =
+  | 'schedule' | 'fastrade' | 'ctc' | 'aisignal' | 'indicator' | 'momentum';
