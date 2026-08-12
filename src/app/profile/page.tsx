@@ -2,7 +2,7 @@
 'use client';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { api, type ProfileBalance } from '@/lib/api';
+import { api, type ProfileBalance, type SystemStatus, type LayananStatus } from '@/lib/api';
 import { resolveAvatarUrl } from '@/lib/userProfileApi';
 import { storage, isSessionValid, sessionLogout, getAuthToken, saveCurrencyWithIso } from '@/lib/storage';
 import { checkIsAdmin, checkIsSuperAdmin } from '@/lib/supabaseRepository';
@@ -1247,6 +1247,10 @@ function ProfilePageContent() {
   const [error, setError]                     = useState<string | null>(null);
   const [profileCurrencyUnit, setProfileCurrencyUnit] = useState<string>('');
   const [refreshing, setRefreshing]           = useState(false);
+  // Status layanan penopang — hanya super admin yang memuatnya.
+  const [sysStatus, setSysStatus]             = useState<SystemStatus | null>(null);
+  const [sysLoading, setSysLoading]           = useState(false);
+  const [sysErr, setSysErr]                   = useState<string | null>(null);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -1276,6 +1280,22 @@ function ProfilePageContent() {
     };
     init();
   }, []); // eslint-disable-line
+
+  const muatStatusSistem = useCallback(async () => {
+    setSysLoading(true); setSysErr(null);
+    try {
+      setSysStatus(await api.admin.systemStatus());
+    } catch (e: any) {
+      // Gagal memanggilnya SENDIRI adalah informasi: berarti backend tak
+      // menjawab. Itu justru yang paling ingin diketahui.
+      setSysStatus(null);
+      setSysErr(String(e?.message ?? e));
+    } finally {
+      setSysLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { if (isSuperAdminUser) muatStatusSistem(); }, [isSuperAdminUser, muatStatusSistem]);
 
   const loadProfile = useCallback(async (silent = false) => {
     if (!silent) setIsLoading(true); else setRefreshing(true);
@@ -1424,6 +1444,61 @@ function ProfilePageContent() {
       {chevron && <svg width="6" height="11" viewBox="0 0 7 12" fill="none" style={{ flexShrink: 0, opacity: 0.6 }}><path d="M1 1l5 5-5 5" stroke={danger ? 'var(--error)' : 'var(--text-3)'} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>}
     </button>
   );
+
+  // ── Kartu status sistem (KHUSUS super admin) ────────────────────────────
+  // Murni penyaji: seluruh state dipegang komponen halaman. Kalau state-nya
+  // ditaruh di sini, komponen ini akan dibuat ulang setiap kali halaman
+  // render (ia didefinisikan di dalam badan komponen), dan efek pemuatnya
+  // akan menembak berulang tanpa henti.
+  const BarisLayanan = ({ s, last }: { s: LayananStatus; last?: boolean }) => {
+    // Hidup tapi lambat tetap perlu terlihat — itu gejala awal sebelum mati.
+    const lambat = s.ok && s.ms >= 3000;
+    const warna = !s.ok ? 'var(--error)' : lambat ? 'var(--warn)' : 'var(--success)';
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 16px', borderBottom: last ? 'none' : '1px solid var(--hairline)' }}>
+        <span style={{ width: 8, height: 8, borderRadius: '50%', background: warna, flexShrink: 0 }} />
+        <span style={{ flex: 1, fontSize: 13.5, color: 'var(--text-1)', fontWeight: 500 }}>{s.nama}</span>
+        <span style={{ fontSize: 11.5, color: 'var(--text-2)', maxWidth: '48%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.info}</span>
+        <span style={{ fontSize: 10.5, color: lambat ? 'var(--warn)' : 'var(--text-3)', flexShrink: 0, fontVariantNumeric: 'tabular-nums' }}>{s.ms}ms</span>
+      </div>
+    );
+  };
+
+  const StatusSistemCard = () => {
+    const daftar = sysStatus ? [sysStatus.backend, ...sysStatus.layanan] : [];
+    const adaMasalah = daftar.some(s => !s.ok);
+    return (
+      <Card>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', borderBottom: '1px solid var(--hairline)' }}>
+          <div style={{ width: 26, height: 26, borderRadius: 8, background: (adaMasalah || sysErr) ? 'linear-gradient(135deg,#F87171,#DC2626)' : 'linear-gradient(135deg,#34D399,#059669)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="8" rx="2"/><rect x="2" y="13" width="20" height="8" rx="2"/><line x1="6" y1="7" x2="6.01" y2="7"/><line x1="6" y1="17" x2="6.01" y2="17"/></svg>
+          </div>
+          <span style={{ flex: 1, fontSize: 14, fontWeight: 600, color: 'var(--text-1)' }}>Status Sistem</span>
+          <button onClick={muatStatusSistem} disabled={sysLoading} title="Periksa ulang"
+            style={{ width: 28, height: 28, borderRadius: 8, background: 'var(--press)', border: '1px solid var(--hairline)', cursor: sysLoading ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-2)', opacity: sysLoading ? 0.4 : 1, WebkitTapHighlightColor: 'transparent' }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" style={{ animation: sysLoading ? 'pf-spin 0.8s linear infinite' : 'none' }}>
+              <path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+            </svg>
+          </button>
+        </div>
+
+        {sysErr ? (
+          <div style={{ padding: '13px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--error)', flexShrink: 0 }} />
+            <span style={{ fontSize: 12.5, color: 'var(--error)' }}>Backend tidak menjawab — {sysErr}</span>
+          </div>
+        ) : !sysStatus ? (
+          <div style={{ padding: '13px 16px', fontSize: 12.5, color: 'var(--text-3)' }}>
+            {sysLoading ? 'Memeriksa layanan…' : 'Belum diperiksa.'}
+          </div>
+        ) : (
+          <>
+            {daftar.map((s, i) => <BarisLayanan key={s.nama} s={s} last={i === daftar.length - 1} />)}
+          </>
+        )}
+      </Card>
+    );
+  };
 
   // Hero Card — banner gradient + avatar ring overlap
   const AvatarHero = () => (
@@ -1624,6 +1699,7 @@ function ProfilePageContent() {
                 {/* v4: broadcast email dihapus (layanan email ada di VPS yang dimatikan) */}
               </Card>
             )}
+            {isSuperAdminUser && <StatusSistemCard />}
             <Card>
               <TappableRow
                 icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>}
@@ -1800,6 +1876,15 @@ function ProfilePageContent() {
                 />
                 {/* v4: broadcast email dihapus (layanan email ada di VPS yang dimatikan) */}
               </Card>
+            </div>
+          )}
+
+          {/* Status sistem (mobile-only; desktop memakai sidebar).
+              Tanpa SectionLabel — judulnya sudah dibawa kepala kartu, supaya
+              sama persis dengan tampilan di sidebar desktop. */}
+          {isSuperAdminUser && (
+            <div className="pf-mob-only">
+              <StatusSistemCard />
             </div>
           )}
 

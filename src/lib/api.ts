@@ -722,6 +722,21 @@ export interface AdminStanding {
   pendingRequest: ReactivationRequest | null;
 }
 
+/** Satu baris pada kartu status sistem. `info` singkat, sudah siap tampil. */
+export interface LayananStatus {
+  nama: string;
+  ok: boolean;
+  /** Lama pemeriksaan, dipakai untuk menandai layanan yang hidup tapi lambat. */
+  ms: number;
+  info: string;
+}
+
+export interface SystemStatus {
+  waktu: string;
+  backend: LayananStatus;
+  layanan: LayananStatus[];
+}
+
 
 // ── v4: pemanggil Edge Function stc-admin (pengganti /admin/* di VPS) ───────
 // Autentikasi memakai authtoken Stockity dari cache perangkat; Edge Function
@@ -1303,6 +1318,15 @@ export const api = {
     // Aktivasi Mode REAL per akun (super admin) → backend NestJS (service_role).
     setRealAccess:   (stockityId: string, enabled: boolean) =>
       req<{ matched: number }>('POST', '/admin/real-access', { stockityId, enabled }),
+    /**
+     * Status hidup/mati layanan penopang (super admin).
+     *
+     * Sengaja memakai `req` langsung, BUKAN `adminEdge`: yang ditanyakan di
+     * sini justru keadaan VPS — backend, basis data, API Stockity, dan proxy
+     * login. Edge Function tidak bisa menjawabnya, dan di APK pun jawaban
+     * yang berguna hanya datang dari server.
+     */
+    systemStatus:    () => req<SystemStatus>('GET', '/admin/system-status'),
     // v4: broadcast email DIHAPUS — layanan email hidup di VPS yang dimatikan.
     sendEmail:       (_b?: unknown): Promise<{ sent: number; failed: number; total: number; errors: string[] }> => Promise.reject(new Error('Fitur kirim email sudah dihapus.')),
     // ── Chat DM antar admin/super-admin ──
