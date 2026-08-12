@@ -552,7 +552,16 @@ function HistoryPageContent() {
       WebkitFontSmoothing: 'antialiased',
       transition: 'background 0.3s ease',
     }}>
-      <style>{`
+      {/* suppressHydrationWarning WAJIB di sini, bukan kosmetik.
+          CSS di bawah menyisipkan nilai palet (${P.accent}, dst) yang dipilih
+          dari tema — dan tema dibaca dari localStorage, yang tidak ada saat
+          ekspor statis. Jadi isi <style> hasil build SELALU berbeda dari yang
+          dihitung klien untuk pengguna bertema terang.
+          Tanpa ini React menganggapnya kegagalan hidrasi, MEMBUANG seluruh HTML
+          server, lalu merender ulang seluruh halaman di klien — biaya nyata,
+          bukan sekadar pesan konsol. Ketidakcocokannya di sini memang
+          diharapkan dan tidak berbahaya. */}
+      <style suppressHydrationWarning>{`
         @keyframes skel-pulse { 0%,100%{opacity:.5} 50%{opacity:1} }
         @keyframes spin        { to{transform:rotate(360deg)} }
         @keyframes fade-up     { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
