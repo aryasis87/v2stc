@@ -36,6 +36,8 @@ export const rt: {
   CURR_UNIT: string;
   /** Taruhan minimum akun, dalam satuan di atas. */
   MIN_AMOUNT: number;
+  /** Kode bahasa aktif — dipakai helper ui(). */
+  LANG: string;
 } = {
   // Nilai awal dipakai sampai DashboardPage render pertama kali mengisinya.
   C: getColors(true),
@@ -43,6 +45,7 @@ export const rt: {
   FMT: (n: number) => Math.round(n).toLocaleString('en-US', { maximumFractionDigits: 0 }),
   CURR_UNIT: 'Rp',
   MIN_AMOUNT: 14_000,
+  LANG: 'id',
 };
 
 /**
