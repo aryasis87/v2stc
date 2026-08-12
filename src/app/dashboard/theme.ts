@@ -96,3 +96,11 @@ export type Colors = ReturnType<typeof getColors>;
  */
 export type TradingMode =
   | 'schedule' | 'fastrade' | 'ctc' | 'aisignal' | 'indicator' | 'momentum';
+
+/** Konfigurasi kompensasi (martingale). Dipakai page.tsx dan ControlCard. */
+export interface MartingaleConfig {
+  enabled: boolean;
+  maxStep: number;
+  multiplier: number;
+  alwaysSignal?: boolean;
+}

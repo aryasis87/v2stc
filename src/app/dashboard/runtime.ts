@@ -30,10 +30,19 @@ import { getColors, type Colors, type TradingMode } from './theme';
 export const rt: {
   C: Colors;
   T: (k: string) => string;
+  /** Format angka mengikuti locale akun. */
+  FMT: (n: number) => string;
+  /** Satuan mata uang akun (mis. "Rp", "$"). */
+  CURR_UNIT: string;
+  /** Taruhan minimum akun, dalam satuan di atas. */
+  MIN_AMOUNT: number;
 } = {
   // Nilai awal dipakai sampai DashboardPage render pertama kali mengisinya.
   C: getColors(true),
   T: (k: string) => k,
+  FMT: (n: number) => Math.round(n).toLocaleString('en-US', { maximumFractionDigits: 0 }),
+  CURR_UNIT: 'Rp',
+  MIN_AMOUNT: 14_000,
 };
 
 /**
