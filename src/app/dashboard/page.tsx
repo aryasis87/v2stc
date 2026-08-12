@@ -45,66 +45,8 @@ import {
   Wallet, Clock, CreditCard, Eye, EyeOff,
   ClipboardPaste, Check, Lock, Smartphone, Repeat, BadgeCheck } from 'lucide-react';
 
-// ═══════════════════════════════════════════
-// DESIGN TOKENS - Emerald Theme (Dark/Light)
-// ═══════════════════════════════════════════
-function getColors(isDark: boolean) {
-  // ── Dark: matched to Kotlin DarkColors ──────────────────────────────────
-  // background=#161616  surface=#1F1F1F  cardBackground=#323232
-  // textPrimary=#EBEBEB textSecondary=#BAC1CB textMuted=rgba(126,126,126,.73)
-  // successColor=#10B981  errorColor=#EF4444  warningColor=#FBBF24
-  // borderColor=#494949   chartLine=Cyan(#00FFFF)
-  //
-  // ── Light: matched to Kotlin LightColors ────────────────────────────────
-  // background=#F8F9FA  surface=#FFFFFF  surface3=#EBEBEB
-  // textPrimary=#1F2937  textSecondary=#6B7280  textMuted=#9CA3AF
-  // successColor=#059669  errorColor=#DC2626  warningColor=#D97706
-  // borderColor=#D6DADF
-  // ── Redesign 2026: palet minimalis-modern (Linear/Vercel-style) ───────────
-  // Border hairline netral (bukan hijau tebal), surface berlapis halus,
-  // aksen emerald yang lebih kalem, hierarki teks lebih jelas.
-  return {
-    // Penanda tema. Sebelumnya mode gelap dideteksi dengan membandingkan
-    // C.bg terhadap hex tertentu — cara itu diam-diam rusak begitu warna
-    // latarnya disetel ulang, jadi statusnya dibawa langsung di sini.
-    dark:  isDark,
-    // Surfaces — gelap berlapis (dark) / abu sangat terang (light).
-    // Jarak antartingkat sengaja sekitar enam belas: versi lama menumpuk
-    // #0B0C0E/#141518/#1B1D21 yang selisihnya hanya sembilan, sehingga
-    // kartu nyaris menyatu dengan latar dan halaman terlihat rata.
-    bg:    isDark ? '#0F1114' : '#F6F7F9',
-    card:  isDark ? '#1A1C20' : '#FFFFFF',
-    card2: isDark ? '#24262B' : '#F1F3F5',
-    // Borders — hairline netral tipis; aktif = emerald halus
-    bdr:   isDark ? 'rgba(255,255,255,0.11)' : '#E6E8EB',
-    bdrAct:isDark ? 'rgba(45,212,167,0.55)'  : 'rgba(5,150,105,0.45)',
-    // Primary accent — emerald bersih
-    cyan:  isDark ? '#2DD4A7' : '#059669',
-    cyand: isDark ? 'rgba(45,212,167,0.14)' : 'rgba(5,150,105,0.09)',
-    // Error / loss
-    coral: isDark ? '#FB7185' : '#E11D48',
-    cord:  isDark ? 'rgba(251,113,133,0.14)' : 'rgba(225,29,72,0.08)',
-    // Warning / martingale
-    amber: isDark ? '#FBBF24' : '#B45309',
-    ambd:  isDark ? 'rgba(251,191,36,0.14)'  : 'rgba(180,83,9,0.09)',
-    // Teks di atas amber solid — adaptif agar selalu terbaca (lihat catatan koalaColors)
-    onAmber: isDark ? '#1a1612' : '#ffffff',
-    // Misc accent colors
-    violet: isDark ? '#C084FC' : '#7C3AED',
-    vltd:  isDark ? 'rgba(192,132,252,0.14)' : 'rgba(124,58,237,0.08)',
-    sky:   isDark ? '#4ADE80' : '#16A34A',
-    skyd:  isDark ? 'rgba(74,222,128,0.14)'  : 'rgba(22,163,74,0.09)',
-    orange: isDark ? '#FB923C' : '#EA580C',
-    orgd:  isDark ? 'rgba(251,146,60,0.14)'  : 'rgba(234,88,12,0.09)',
-    pink:  isDark ? '#F472B6' : '#BE185D',
-    pinkd: isDark ? 'rgba(244,114,182,0.14)' : 'rgba(190,24,93,0.08)',
-    // Text — hierarki lebih jelas, netral (bukan kebiruan)
-    text:  isDark ? '#F4F5F7' : '#0F172A',
-    sub:   isDark ? '#AEB5BF' : '#475569',
-    muted: isDark ? 'rgba(174,181,191,0.66)' : '#94A3B8',
-    faint: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(2,6,23,0.035)',
-  };
-}
+// Palet dipindah ke ./theme.ts — langkah pertama memecah berkas ini.
+import { getColors, type Colors } from './theme';
 
 // Module-level colors — updated each render by DashboardPage via C = colors
 // Must be `let` so sub-components always get the current theme on re-render
@@ -3763,7 +3705,7 @@ const ControlCard: React.FC<{
 const DarkModeToggleStrip: React.FC<{
   isDarkMode: boolean;
   onToggle: () => void;
-  C: ReturnType<typeof getColors>;
+  C: Colors;
 }> = ({ isDarkMode, onToggle, C }) => (
   <button
     onClick={onToggle}
