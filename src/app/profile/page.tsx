@@ -1676,8 +1676,12 @@ const HelpButton: React.FC<{ lang: string }> = ({ lang }) => {
         style={{
           display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
           width: '100%', padding: '13px 18px', borderRadius: 14,
-          background: 'var(--s2)', border: '1px solid var(--bdr)',
-          color: 'var(--text)', fontSize: 14, fontWeight: 600, textDecoration: 'none',
+          // Dulu memakai --s2/--bdr/--text: nama itu milik globals.css (palet
+          // bergaya iOS), bukan palet halaman ini. Keduanya terdefinisi, jadi
+          // tak ada galat — tombolnya hanya diam-diam berwarna beda dari kartu
+          // di sekelilingnya. Sekarang memakai variabel halaman ini sendiri.
+          background: 'var(--surface-2)', border: '1px solid var(--border)',
+          color: 'var(--text-1)', fontSize: 14, fontWeight: 600, textDecoration: 'none',
         }}
       >
         {ui(lang, 'helpButton')}
