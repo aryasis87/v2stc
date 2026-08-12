@@ -1,5 +1,6 @@
 'use client';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { RIWAYAT_GELAP, RIWAYAT_TERANG } from './palette';
 import { useRouter } from 'next/navigation';
 import { api, type ExecutionLog, type FastradeLog, type IndicatorLog, type MomentumLog, type AISignalLog } from '@/lib/api';
 import { storage } from '@/lib/storage';
@@ -35,69 +36,20 @@ interface CombinedLog {
 }
 
 // ─────────────────────────────────────────────
-// THEME PALETTE — menunjuk ke token design system (src/app/ds/tokens.css).
-//
-// Dulu berkas ini menyimpan DUA salinan warna (terang & gelap) dan memilih
-// salah satunya lewat `dark`. Itu berarti setiap penyesuaian warna harus
-// dikerjakan dua kali di sini, lalu sekali lagi di setiap halaman lain yang
-// punya salinannya sendiri — dan bila satu terlewat, halamannya diam-diam
-// menyimpang. Sekarang nilainya diambil dari token, jadi tema berpindah di
-// CSS dan tidak ada lagi salinan yang bisa ketinggalan.
-//
-// `dark` sengaja DIPERTAHANKAN sebagai parameter meski tak lagi dipakai untuk
-// memilih warna: pemanggilnya masih meneruskannya, dan komponen di bawah masih
-// memakainya untuk hal non-warna. Menghapusnya menyentuh banyak tempat
-// sekaligus — dikerjakan terpisah supaya perubahan ini tetap bisa ditelusuri.
+// THEME PALETTE
 // ─────────────────────────────────────────────
-// ⚠ BELUM BISA MEMAKAI var(--s-*) DI SINI. Berkas ini menyisipkan alfa dengan
-// MENYAMBUNG hex — `${P.red}1A` menjadi #E11D481A (22 tempat). Pola itu hanya
-// bekerja pada hex; `var(--s-loss)1A` bukan CSS yang sah, propertinya dibuang
-// diam-diam, dan latar/tint-nya hilang tanpa galat apa pun.
+// Palet DIHASILKAN dari token — lihat ./palette.ts, yang ditulis oleh
+// design-system/_build.mjs. Nilainya tetap hex karena berkas ini menyisipkan
+// alfa dengan menyambung hex (`${P.red}1A`) di 22 tempat; `var(--s-loss)1A`
+// bukan CSS yang sah dan propertinya dibuang diam-diam — sudah dicoba dan
+// gagal. Yang hilang sekarang adalah PENYALINAN TANGAN: dulu dua daftar warna
+// ditulis ulang di sini dan sudah menyimpang dari token tanpa ada yang sadar.
 //
-// Prasyaratnya: token kanal RGB (mis. --s-loss-rgb:225,29,72) supaya bisa
-// ditulis rgba(var(--s-loss-rgb),.10). color-mix() TIDAK dipakai — butuh
-// WebView Chrome 111+, sedangkan APK berjalan di perangkat lama.
-// Sampai itu ada, nilainya tetap hex dan tetap disalin dua kali di sini.
+// Untuk mengubah warna: sunting generator, jalankan `node design-system/_build.mjs`.
 function getP(dark: boolean) {
-  return dark
-    ? {
-        bg:     '#0F1114',
-        header: 'rgba(15,17,20,0.88)',
-        card:   '#1A1C20',
-        card2:  '#24262B',
-        hair:   'rgba(255,255,255,0.06)',
-        bdr:    'rgba(255,255,255,0.11)',
-        text:   '#F4F5F7',
-        sub:    '#AEB5BF',
-        muted:  '#A1A8B3',
-        faint:  'rgba(161,168,179,0.55)',
-        press:  'rgba(255,255,255,0.06)',
-        skel:   'rgba(255,255,255,0.07)',
-        shadow: 'inset 0 1px 0 rgba(255,255,255,0.03), 0 8px 24px -16px rgba(0,0,0,0.6)',
-        accent: '#2DD4A7',
-        green:  '#2DD4A7', red: '#FB7185', amber: '#FBBF24',
-        blue:   '#60A5FA', purple: '#C084FC', pink: '#F472B6', grey: '#98989F', orange: '#FB923C',
-      }
-    : {
-        bg:     '#F6F7F9',
-        header: 'rgba(246,247,249,0.90)',
-        card:   '#FFFFFF',
-        card2:  '#F1F3F5',
-        hair:   'rgba(2,6,23,0.06)',
-        bdr:    '#E6E8EB',
-        text:   '#0F172A',
-        sub:    '#334155',
-        muted:  '#64748B',
-        faint:  '#94A3B8',
-        press:  'rgba(2,6,23,0.045)',
-        skel:   'rgba(2,6,23,0.06)',
-        shadow: '0 1px 0 rgba(2,6,23,0.03), 0 2px 12px rgba(2,6,23,0.04)',
-        accent: '#059669',
-        green:  '#059669', red: '#E11D48', amber: '#B45309',
-        blue:   '#2563EB', purple: '#7C3AED', pink: '#BE185D', grey: '#8E8E93', orange: '#EA580C',
-      };
+  return dark ? RIWAYAT_GELAP : RIWAYAT_TERANG;
 }
-type Palette = ReturnType<typeof getP>;
+type Palette = typeof RIWAYAT_GELAP | typeof RIWAYAT_TERANG;
 
 // ─────────────────────────────────────────────
 // WIN-RATE RING (SVG donut)
@@ -112,9 +64,11 @@ const WinRing: React.FC<{ pct: number; P: Palette; size?: number; stroke?: numbe
   return (
     <div style={{ position: 'relative', width: size, height: size, flexShrink: 0 }}>
       <svg width={size} height={size} style={{ transform: 'rotate(-90deg)', display: 'block' }}>
-        {/* Warna lewat `style`, BUKAN atribut stroke=. Palet kini berisi
-            var(--s-*), dan var() di atribut presentasi SVG tidak dijamin
-            berjalan di WebView Android lama — cincin bisa hilang tanpa suara. */}
+        {/* Warna lewat `style`, bukan atribut stroke=. Nilainya hex sehingga
+            atribut pun sebenarnya jalan, tapi `style` tetap dipertahankan:
+            kalau suatu saat palet ini berisi var(), atribut presentasi SVG
+            tidak dijamin bekerja di WebView Android lama dan cincinnya hilang
+            tanpa suara. */}
         <circle cx={size / 2} cy={size / 2} r={r} fill="none" strokeWidth={stroke}
           style={{ stroke: P.press }} />
         <circle

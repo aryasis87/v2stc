@@ -701,3 +701,31 @@ ${baris(tokTerang)}
 } as const;
 `);
 console.log('  -> src/app/dashboard/theme.colors.ts');
+
+// Palet halaman RIWAYAT — masalahnya sama persis dengan dashboard (menyambung
+// alfa ke hex di 22 tempat), jadi penyelesaiannya juga sama: dihasilkan.
+const PETA_RIWAYAT = {
+  bg:'bg', header:'header', card:'card', card2:'card-2', hair:'hair', bdr:'line',
+  text:'text', sub:'sub', muted:'muted', faint:'muted',
+  press:'press', skel:'skel', shadow:'shadow-card',
+  accent:'acc', green:'acc', red:'loss', amber:'warn',
+  blue:'blue', purple:'violet', pink:'pink', grey:'grey', orange:'orange',
+};
+const barisRiwayat = (tok) => Object.entries(PETA_RIWAYAT).map(([k, t]) => {
+  const v = tok[t];
+  if (!v) throw new Error(`Token --s-${t} tidak ada (untuk riwayat.${k})`);
+  return `    ${k}: ${JSON.stringify(v)},`;
+}).join('\n');
+
+fs.writeFileSync(path.join(OUT, '..', 'src', 'app', 'history', 'palette.ts'),
+`// DIHASILKAN oleh design-system/_build.mjs — JANGAN DISUNTING LANGSUNG.
+
+export const RIWAYAT_GELAP = {
+${barisRiwayat(tokGelap)}
+} as const;
+
+export const RIWAYAT_TERANG = {
+${barisRiwayat(tokTerang)}
+} as const;
+`);
+console.log('  -> src/app/history/palette.ts');
