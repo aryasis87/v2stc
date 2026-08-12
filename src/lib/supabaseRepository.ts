@@ -92,27 +92,6 @@ export interface ImportResult {
 // WHITELIST USERS
 // ─────────────────────────────────────────────
 
-
-/**
- * Benar bila akun ini didaftarkan lewat halaman daftar aplikasi (afiliasi).
- *
- * Akun seperti itu sengaja dijauhkan dari eksekusi lewat VPS: seluruh
- * aktivitasnya harus berasal dari perangkat pengguna sendiri, agar tidak
- * terlihat beraktivitas dari satu IP yang sama dengan akun lain.
- */
-export async function isSelfRegisteredAccount(email: string): Promise<boolean> {
-  try {
-    const { data } = await supabase
-      .from('whitelist_users')
-      .select('added_by')
-      .eq('email', email.toLowerCase().trim())
-      .maybeSingle();
-    return data?.added_by === 'selfregister';
-  } catch {
-    return false; // gagal memeriksa → jangan menghalangi login
-  }
-}
-
 export async function getAllWhitelistUsers(
   _email?: string,
   _superAdmin?: boolean,
@@ -266,94 +245,10 @@ export function exportWhitelistAsCsv(users: WhitelistUser[]): void {
   );
 }
 
-export async function getWhitelistUserByEmail(email: string): Promise<WhitelistUser | null> {
-  const { data, error } = await supabase
-    .from('whitelist_users')
-    .select('*')
-    .eq('email', email.toLowerCase().trim())
-    .maybeSingle();
-
-  if (error) {
-    console.error('[Supabase] getWhitelistUserByEmail error:', error);
-    return null;
-  }
-  return data ? normalizeWhitelistUser(data) : null;
-}
-
-export async function getWhitelistUserByUserId(userId: string): Promise<WhitelistUser | null> {
-  const { data, error } = await supabase
-    .from('whitelist_users')
-    .select('*')
-    .eq('id', userId)
-    .maybeSingle();
-
-  if (error) {
-    const { data: byEmail, error: emailErr } = await supabase
-      .from('whitelist_users')
-      .select('*')
-      .eq('email', userId.toLowerCase().trim())
-      .maybeSingle();
-    if (emailErr) return null;
-    return byEmail ? normalizeWhitelistUser(byEmail) : null;
-  }
-  return data ? normalizeWhitelistUser(data) : null;
-}
-
 export async function updateLastLogin(_email: string): Promise<void> {
   // C2: no-op. last_login kini di-update server-side saat /auth/login (manual)
   // dan saat /auth/register-whitelist (registrasi). Penulisan whitelist_users
   // dari browser diblokir RLS (anon). Dipertahankan demi kompatibilitas signature.
-}
-
-export async function isWhitelisted(email: string): Promise<boolean> {
-  const { data, error } = await supabase
-    .from('whitelist_users')
-    .select('email')
-    .eq('email', email.toLowerCase().trim())
-    .eq('is_active', true)
-    .maybeSingle();
-
-  if (error) {
-    console.error('[Supabase] isWhitelisted error:', error);
-    return false;
-  }
-  return !!data;
-}
-
-/**
- * Cek whitelist berdasarkan Stockity user_id (lebih andal daripada email,
- * karena email akun Stockity bisa berbeda dari yang didaftarkan).
- * Memakai limit(1) (bukan maybeSingle) karena user_id tidak di-constraint unik.
- */
-export async function isWhitelistedByUserId(userId: string | number): Promise<boolean> {
-  const uid = String(userId ?? '').trim();
-  if (!uid) return false;
-  const { data, error } = await supabase
-    .from('whitelist_users')
-    .select('user_id')
-    .eq('user_id', uid)
-    .eq('is_active', true)
-    .limit(1);
-
-  if (error) {
-    console.error('[Supabase] isWhitelistedByUserId error:', error);
-    return false;
-  }
-  return Array.isArray(data) && data.length > 0;
-}
-
-export async function checkWhitelist(email: string): Promise<boolean> {
-  const { data, error } = await supabase
-    .from('whitelist_users')
-    .select('email')
-    .eq('email', email.toLowerCase().trim())
-    .maybeSingle();
-
-  if (error) {
-    console.error('[Supabase] checkWhitelist error:', error);
-    return false;
-  }
-  return !!data;
 }
 
 // ─────────────────────────────────────────────
@@ -514,38 +409,12 @@ export async function updateRegistrationConfig(
   await api.admin.upsertConfig('registration', JSON.stringify(merged));
 }
 
-
 export async function getUserStatistics(
   _email?: string,
   _superAdmin?: boolean,
 ): Promise<{ total: number; active: number; inactive: number; recent: number; recentAdded: number }> {
   // C2: dihitung backend (admin-guarded, scope super/non-super ditentukan server)
   return api.admin.stats();
-}
-
-export async function getAllUsersForStats(
-  _email?: string,
-  _superAdmin?: boolean,
-): Promise<
-  { uid: string; email: string; firstLogin: string | null; lastLogin: string | null; totalTrades: number }[]
-> {
-  const { data, error } = await supabase
-    .from('whitelist_users')
-    .select('*')
-    .order('added_at', { ascending: false });
-
-  if (error) {
-    console.error('[Supabase] getAllUsersForStats error:', error);
-    return [];
-  }
-
-  return (data ?? []).map((u: any) => ({
-    uid:         u.id    ?? u.email,
-    email:       u.email,
-    firstLogin:  u.added_at   ?? null,
-    lastLogin:   u.last_login ?? u.added_at ?? null,
-    totalTrades: 0,
-  }));
 }
 
 // ─────────────────────────────────────────────
@@ -651,3 +520,26 @@ function triggerDownload(blob: Blob, filename: string): void {
   // Revoke setelah delay kecil agar browser sempat mulai download
   setTimeout(() => URL.revokeObjectURL(url), 500);
 }
+
+// ─────────────────────────────────────────────
+// CATATAN KEAMANAN — pembacaan whitelist_users dari peramban
+//
+// Tujuh fungsi pembaca whitelist DIHAPUS 2026-08-13: isWhitelisted,
+// checkWhitelist, getWhitelistUserByEmail, getWhitelistUserByUserId,
+// isWhitelistedByUserId, isSelfRegisteredAccount, getAllUsersForStats.
+// Ketujuhnya sudah TIDAK DIPANGGIL dari mana pun — penjagaan whitelist
+// pindah ke backend saat login — tetapi mereka meminta kolom `email` dan
+// `added_by` memakai kunci anon, dan kunci itu ikut terkirim di dalam
+// bundel aplikasi. Siapa pun yang membukanya bisa menyedot seluruh alamat
+// surel pelanggan dengan satu permintaan HTTP.
+//
+// Sesudah ini satu-satunya kolom whitelist_users yang dibaca peramban
+// adalah user_id, real_access, dan real_access_at (lihat lib/realAccess.ts),
+// sehingga hak SELECT anon dipersempit ke tiga kolom itu lewat
+// SECURITY-FIX-whitelist-email.sql.
+//
+// JANGAN menambah pembacaan whitelist_users dari peramban. Kalau butuh
+// data whitelist, lewatkan backend — di sana ada identitas JWT dan
+// service_role. Menambah satu `.select('email')` saja akan membuat
+// pencabutan hak di atas menggagalkan permintaannya.
+// ─────────────────────────────────────────────
