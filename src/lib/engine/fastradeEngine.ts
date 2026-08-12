@@ -32,6 +32,14 @@ export interface FastradeConfig {
   currencyIso: string;
   stopLoss?: number;
   stopProfit?: number;
+  /**
+   * FAST REVERSAL — daftar langkah martingale (K) yang arah sinyalnya DIBALIK.
+   * Mis. [3,5,8]: pada step 3/5/8 order dieksekusi kebalikan arah; step lain
+   * mengikuti normal. Kompensasi/amount tetap berjalan normal — hanya ARAH
+   * yang dibalik.
+   * Kosong/undefined → perilaku Fastrade biasa (tanpa reversal).
+   */
+  reversalSteps?: number[];
 }
 
 export interface FastradeLog {
@@ -98,6 +106,10 @@ export class FastradeEngine {
   private martingaleActive = false;
   private alwaysLoss?: { hasOutstandingLoss: boolean; currentMartingaleStep: number; totalLoss: number };
 
+  // Fast Reversal: nominal terbesar yang DITERIMA Stockity + plafon setelah amount_max.
+  private lastAcceptedAmount = 0;
+  private amountCeiling = 0;
+
   private cycleTimer?: ReturnType<typeof setTimeout>;
   private resultTimer?: ReturnType<typeof setTimeout>;
   private stopGeneration = 0; // membatalkan callback tertunda saat stop()
@@ -111,6 +123,46 @@ export class FastradeEngine {
     private readonly callbacks: FastradeCallbacks,
   ) {}
 
+  /** Fast Reversal = mode FTT dengan daftar langkah reversal terisi. */
+  private get isFastReversal(): boolean {
+    return this.config.mode === 'FTT' && !!this.config.reversalSteps?.length;
+  }
+
+  // Simpan/pulihkan kompensasi Fast Reversal antar restart (mis. app ditutup di
+  // tengah martingale). Dipulihkan HANYA bila < 5 menit & aset/akun sama, agar
+  // tak membuka nominal besar dari sesi lama yang sudah basi.
+  private static readonly RESUME_KEY = 'stc_fastreversal_resume';
+  private static readonly RESUME_MAX_AGE_MS = 5 * 60_000;
+
+  private saveResume() {
+    if (!this.isFastReversal) return;
+    try {
+      localStorage.setItem(FastradeEngine.RESUME_KEY, JSON.stringify({
+        step: this.martingaleStep, trend: this.currentTrend ?? null,
+        pnl: this.sessionPnL, ceiling: this.amountCeiling,
+        ric: this.config.asset.ric, demo: this.config.isDemoAccount, ts: Date.now(),
+      }));
+    } catch { /* storage tak tersedia */ }
+  }
+  private loadResume() {
+    if (!this.isFastReversal) return;
+    try {
+      const raw = localStorage.getItem(FastradeEngine.RESUME_KEY);
+      if (!raw) return;
+      const s = JSON.parse(raw);
+      if (!s || Date.now() - (s.ts ?? 0) > FastradeEngine.RESUME_MAX_AGE_MS) return;
+      if (s.ric !== this.config.asset.ric || s.demo !== this.config.isDemoAccount) return;
+      if (typeof s.step === 'number' && s.step > 0 && (s.trend === 'call' || s.trend === 'put')) {
+        this.martingaleStep = s.step;
+        this.martingaleActive = true;
+        this.currentTrend = s.trend;
+        this.sessionPnL = typeof s.pnl === 'number' ? s.pnl : 0;
+        this.amountCeiling = typeof s.ceiling === 'number' ? s.ceiling : 0;
+      }
+    } catch { /* abaikan */ }
+  }
+  private clearResume() { try { localStorage.removeItem(FastradeEngine.RESUME_KEY); } catch { /* */ } }
+
   // ── Kontrol ────────────────────────────────────
 
   start() {
@@ -119,8 +171,16 @@ export class FastradeEngine {
     this.sessionPnL = 0;
     this.totalWins = this.totalLosses = this.totalTrades = 0;
     this.resetMartingale();
+    this.amountCeiling = 0;
+    this.lastAcceptedAmount = 0;
+    this.loadResume(); // Fast Reversal: lanjutkan kompensasi bila ada & masih segar
     this.callbacks.onStatusChange(`${this.config.mode}: bot berjalan`);
-    this.startNewCycle();
+    if (this.isFastReversal && this.martingaleStep > 0 && this.currentTrend) {
+      this.callbacks.onStatusChange(`${this.config.mode}: melanjutkan kompensasi step ${this.martingaleStep}`);
+      this.afterDelay(NEXT_ORDER_DELAY_MS, () => this.executeWithTrend(this.currentTrend!, this.martingaleStep));
+    } else {
+      this.startNewCycle();
+    }
   }
 
   stop() {
@@ -305,14 +365,23 @@ export class FastradeEngine {
       ? this.alwaysLoss.currentMartingaleStep
       : step;
 
-    const amount = this.calcAmount(effectiveStep);
+    let amount = this.calcAmount(effectiveStep);
+    // Fast Reversal: setelah amount_max, tahan nominal di plafon terakhir yang
+    // diterima Stockity (kompensasi jalan terus di plafon itu).
+    if (this.isFastReversal && this.amountCeiling > 0 && amount > this.amountCeiling) amount = this.amountCeiling;
     this.phase = 'EXECUTING';
+
+    // Fast Reversal: hanya ORDER INI yang dibalik arahnya bila step-nya terdaftar;
+    // trend dasar (this.currentTrend) tak diubah, sehingga langkah berikutnya
+    // tetap dihitung dari arah semula.
+    const isReversalStep = !!this.config.reversalSteps?.includes(effectiveStep);
+    const execTrend: TrendType = isReversalStep ? this.reverseTrend(trend) : trend;
 
     let tradeData: TradeOrderData;
     try {
-      tradeData = this.buildInstantTrade(trend, amount);
+      tradeData = this.buildInstantTrade(execTrend, amount);
     } catch (err: any) {
-      this.emitLog({ orderId: uid(), trend, amount, martingaleStep: effectiveStep, result: 'FAILED',
+      this.emitLog({ orderId: uid(), trend: execTrend, amount, martingaleStep: effectiveStep, result: 'FAILED',
         note: `Build error: ${err?.message}` });
       if (this.isRunning) this.scheduleNewCycle(CYCLE_RESTART_DELAY_MS);
       return;
@@ -322,8 +391,20 @@ export class FastradeEngine {
     const result = await this.ws.placeTrade(tradeData);
 
     if (result.error === 'amount_max') {
+      if (this.isFastReversal) {
+        // Kompensasi tanpa batas: nominal mentok maksimum Stockity → tahan di
+        // plafon terbesar yang pernah diterima, lalu LANJUT kompensasi di step
+        // yang sama (tanpa reset, tanpa berhenti, tanpa jeda baca candle).
+        this.amountCeiling = this.lastAcceptedAmount > 0 ? this.lastAcceptedAmount : this.config.martingale.baseAmount;
+        this.emitLog({ orderId, trend: execTrend, amount, martingaleStep: effectiveStep, result: 'FAILED',
+          note: `Amount > maks Stockity — tahan di plafon ${this.amountCeiling}` });
+        this.callbacks.onStatusChange(`${this.config.mode}: nominal mentok maksimum — tahan plafon, lanjut kompensasi`);
+        this.phase = 'IDLE';
+        if (this.isRunning) this.afterDelay(NEXT_ORDER_DELAY_MS, () => this.executeWithTrend(trend, effectiveStep));
+        return;
+      }
       // Martingale melebihi maksimum → reset & siklus baru, jangan hentikan bot.
-      this.emitLog({ orderId, trend, amount, martingaleStep: effectiveStep, result: 'FAILED',
+      this.emitLog({ orderId, trend: execTrend, amount, martingaleStep: effectiveStep, result: 'FAILED',
         note: 'Amount melebihi maksimum Stockity — siklus baru' });
       this.callbacks.onStatusChange(`${this.config.mode}: amount melebihi maksimum — reset & siklus baru`);
       this.resetMartingale();
@@ -331,7 +412,7 @@ export class FastradeEngine {
       return;
     }
     if (result.error === 'amount_min') {
-      this.emitLog({ orderId, trend, amount, martingaleStep: effectiveStep, result: 'FAILED',
+      this.emitLog({ orderId, trend: execTrend, amount, martingaleStep: effectiveStep, result: 'FAILED',
         note: 'Amount di bawah minimum Stockity' });
       this.callbacks.onStatusChange(`${this.config.mode}: amount di bawah minimum Stockity — naikkan nominal`);
       setTimeout(() => this.stop(), 300);
@@ -339,18 +420,20 @@ export class FastradeEngine {
     }
 
     if (!result.dealId && result.error !== 'duplicate') {
-      // gagal transient → coba lagi
+      // gagal transient → coba lagi (arah asli; reversal dihitung ulang sama)
       await this.sleep(500);
       return this.executeWithTrend(trend, step, retryCount + 1);
     }
 
     this.totalTrades++;
+    this.lastAcceptedAmount = amount; // Fast Reversal: plafon nominal yang diterima Stockity
     this.activeOrder = {
-      id: orderId, dealId: result.dealId ?? undefined, trend,
+      id: orderId, dealId: result.dealId ?? undefined, trend: execTrend,
       amount, step: effectiveStep, executedAt: Date.now(),
     };
     this.phase = 'WAITING_RESULT';
-    this.emitLog({ orderId, trend, amount, martingaleStep: effectiveStep, dealId: result.dealId ?? undefined });
+    this.emitLog({ orderId, trend: execTrend, amount, martingaleStep: effectiveStep, dealId: result.dealId ?? undefined,
+      note: isReversalStep ? `Fast Reversal K${effectiveStep} — arah dibalik` : undefined });
     this.startResultTimeout(orderId);
   }
 
@@ -431,6 +514,18 @@ export class FastradeEngine {
     this.alwaysLoss = undefined;
     this.resetMartingale();
 
+    // Fast Reversal: menang = siklus selesai. Plafon & sisa kompensasi dibuang,
+    // arah siklus lama TIDAK dibawa — kalau dibawa, order berikutnya melawan
+    // candle terbaru dan pengguna melihat "sudah profit tapi arahnya masih lama".
+    if (this.isFastReversal) {
+      this.amountCeiling = 0;
+      this.currentTrend = undefined;
+      this.clearResume();
+      this.callbacks.onStatusChange('Fast Reversal WIN — siklus selesai, baca candle lagi');
+      this.scheduleNewCycle(NEXT_ORDER_DELAY_MS);
+      return;
+    }
+
     // FTT: satu siklus SELESAI saat hasil akhirnya keluar → bandingkan candle
     // LAGI untuk siklus berikutnya. Dulu langsung order ulang dengan arah yang
     // sama tanpa membaca candle, sehingga arahnya "nyangkut" satu arah terus.
@@ -473,7 +568,21 @@ export class FastradeEngine {
       return;
     }
 
-    // Martingale reguler
+    // Fast Reversal: kompensasi SELALU lanjut, tanpa memandang setelan martingale
+    // dan tanpa batas step. Langsung ke order berikutnya — bukan lewat siklus
+    // baru — supaya tidak muncul "jeda 2 candle setelah loss": kompensasi tak
+    // boleh tertunda satu siklus penuh sementara peluang baliknya sudah lewat.
+    if (this.isFastReversal) {
+      const nextStep = this.martingaleStep + 1;
+      this.martingaleStep = nextStep;
+      this.martingaleActive = true;
+      this.saveResume();
+      this.callbacks.onStatusChange(`Fast Reversal LOSE — kompensasi step ${nextStep}`);
+      this.afterDelay(NEXT_ORDER_DELAY_MS, () => this.executeWithTrend(trend, nextStep));
+      return;
+    }
+
+    // Martingale reguler (Fast Reversal sudah ditangani & return di atas)
     if (m.isEnabled && m.maxSteps > 0) {
       const nextStep = this.martingaleStep + 1;
       if (nextStep <= m.maxSteps) {

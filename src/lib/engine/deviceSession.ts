@@ -41,7 +41,7 @@ async function getStockityToken(): Promise<{ token: string; deviceId: string }> 
 }
 
 /** Mode yang dieksekusi di perangkat */
-export type DeviceMode = 'schedule' | 'fastrade' | 'ctc' | 'aisignal' | 'indicator' | 'momentum';
+export type DeviceMode = 'schedule' | 'fastrade' | 'ctc' | 'fastreversal' | 'aisignal' | 'indicator' | 'momentum';
 
 export interface StartModeArgs {
   mode: Exclude<DeviceMode, 'schedule'>;
@@ -172,7 +172,9 @@ class DeviceSession {
     // Penanda mode wajib ikut: tanpa itu log jatuh ke 'schedule' dan tidak
     // pernah muncul di tab modenya sendiri pada halaman Riwayat.
     const LOG_MODE: Record<string, string> = {
-      fastrade: 'FTT', ctc: 'CTC', aisignal: 'AISIGNAL',
+      // Fast Reversal berbasis FTT → riwayat dicatat sbg 'FTT' agar tampil di tab
+      // Fastrade yang sudah ada (belum ada tab khusus Fast Reversal di halaman Riwayat).
+      fastrade: 'FTT', ctc: 'CTC', fastreversal: 'FTT', aisignal: 'AISIGNAL',
       indicator: 'INDICATOR', momentum: 'MOMENTUM',
     };
     const logMode = LOG_MODE[mode] ?? String(mode).toUpperCase();
@@ -190,6 +192,10 @@ class DeviceSession {
     let engine: any;
     if (mode === 'fastrade' || mode === 'ctc') {
       engine = new FastradeEngine(ws, rest, { ...config, mode: mode === 'ctc' ? 'CTC' : 'FTT' }, cb);
+    } else if (mode === 'fastreversal') {
+      // Fast Reversal = Fastrade FTT + reversalSteps (arah dibalik di K terpilih).
+      // reversalSteps ikut di dalam `config` dari dashboard.
+      engine = new FastradeEngine(ws, rest, { ...config, mode: 'FTT' }, cb);
     } else if (mode === 'aisignal') {
       engine = new AiSignalEngine(ws, config, cb);
     } else if (mode === 'indicator') {
