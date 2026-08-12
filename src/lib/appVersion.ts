@@ -5,10 +5,12 @@
 //
 // Cara kerja update:
 //   1. Naikkan versionCode dan versionName di sini sebelum build
-//   2. Upload APK ke storage (Google Drive, S3, dll)
-//   3. Update row app_config di Supabase:
-//        key = 'app_version'
-//        value = { "versionCode": <baru>, "versionName": "...", "downloadUrl": "...", ... }
+//   2. Bangun APK, lalu salin ke public/ repo landing (StcAutoTrade.apk /
+//      KoalaSPro.apk) — di situlah pengguna mengunduhnya.
+//
+// TIDAK ADA pembaruan dalam aplikasi. Fitur itu (AppUpdateCard + appUpdateApi)
+// DIHAPUS 2026-08-12 atas keputusan pemilik: komponennya tidak pernah dirender
+// dan bucket Supabase-nya tidak pernah dibuat, jadi ia hanya kode mati.
 
 export const APP_VERSION_CODE = 13;  // integer — naikan setiap rilis
 export const APP_VERSION_NAME = '4.3'; // string display
