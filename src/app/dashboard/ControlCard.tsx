@@ -18,43 +18,10 @@ import { useDarkMode } from '@/lib/DarkModeContext';
 import type { ScheduleStatus, ScheduleOrder, FastradeStatus, AISignalStatus,
               IndicatorStatus, MomentumStatus } from '@/lib/api';
 import type { TradingMode, MartingaleConfig } from './theme';
-import { Card } from './primitives';
+import { Card, AlwaysSignalBadge } from './primitives';
 import { rt, modeAccent } from './runtime';
 
-export const AlwaysSignalBadge: React.FC<{
-  isActive: boolean;
-  step: number;
-  maxSteps: number;
-  totalLoss?: number;
-  accent?: string;
-}> = ({ isActive, step, maxSteps, totalLoss, accent = rt.C.amber }) => {
-  // Dibaca DI SINI, tiap render — jangan dipindah ke tingkat modul.
-  const C = rt.C;
-  const T = rt.T;
-  const FMT = rt.FMT;
-  const CURR_UNIT = rt.CURR_UNIT;
-  const MIN_AMOUNT = rt.MIN_AMOUNT;
-  if (!isActive) return null;
-  const lossDisplay = totalLoss ? `  −${FMT(Math.abs(totalLoss) / 100)}` : '';
-  return (
-    <div style={{
-      display: 'flex', alignItems: 'center', gap: 6,
-      padding: '5px 10px', borderRadius: 99,
-      background: `${accent}12`, border: `1px solid ${accent}35`,
-    }}>
-      <span style={{ width: 5, height: 5, borderRadius: '50%', background: accent, animation: 'ping 1.4s ease-in-out infinite' }} />
-      <span style={{ fontSize: 10, fontWeight: 700, color: accent, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
-        Always Signal
-      </span>
-      <span style={{ fontSize: 10, fontWeight: 700, fontFamily: 'monospace', color: accent }}>
-        K{step}/{maxSteps}
-      </span>
-      {lossDisplay && (
-        <span style={{ fontSize: 9, color: C.coral, fontFamily: 'monospace' }}>{lossDisplay}</span>
-      )}
-    </div>
-  );
-};
+// AlwaysSignalBadge dipindah ke ./primitives (dipakai ControlCard & SettingsCard).
 
 export const ControlCard: React.FC<{
   mode:TradingMode;

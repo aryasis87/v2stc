@@ -38,6 +38,8 @@ export const rt: {
   MIN_AMOUNT: number;
   /** Kode bahasa aktif — dipakai helper ui(). */
   LANG: string;
+  /** Nominal cepat, ikut mata uang akun. */
+  QUICK_AMOUNTS: number[];
 } = {
   // Nilai awal dipakai sampai DashboardPage render pertama kali mengisinya.
   C: getColors(true),
@@ -46,6 +48,7 @@ export const rt: {
   CURR_UNIT: 'Rp',
   MIN_AMOUNT: 14_000,
   LANG: 'id',
+  QUICK_AMOUNTS: [14_000, 70_000, 140_000, 280_000, 700_000, 1_400_000, 2_800_000],
 };
 
 /**

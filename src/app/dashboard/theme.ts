@@ -104,3 +104,12 @@ export interface MartingaleConfig {
   multiplier: number;
   alwaysSignal?: boolean;
 }
+
+/** Rentang waktu Fastrade. Dipakai page.tsx dan SettingsCard. */
+export type FastTradeTimeframe = '1m' | '5m' | '15m' | '30m' | '1h';
+
+/** Pilihan rentang waktu Fastrade, untuk dropdown. */
+export const FT_TF: {value:FastTradeTimeframe; label:string}[] = [
+  {value:'1m',label:'1 Menit'},{value:'5m',label:'5 Menit'},
+  {value:'15m',label:'15 Menit'},{value:'30m',label:'30 Menit'},{value:'1h',label:'1 Jam'},
+];
