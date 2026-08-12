@@ -312,6 +312,7 @@ export const SettingsCard: React.FC<{
   amount:number; onAmountChange:(v:number)=>void;
   martingale:MartingaleConfig; onMartingaleChange:(c:MartingaleConfig)=>void;
   ftTf:FastTradeTimeframe; onFtTfChange:(v:FastTradeTimeframe)=>void;
+  reversalSteps:number[]; onReversalStepsChange:(v:number[])=>void; frExpiry?:number|null;
   stopLoss:number; onSlChange:(v:number)=>void;
   stopProfit:number; onSpChange:(v:number)=>void;
   indicatorType:IndicatorType; onIndicatorTypeChange:(v:IndicatorType)=>void;
@@ -322,7 +323,7 @@ export const SettingsCard: React.FC<{
   momentumPatterns:{candleSabit:boolean;dojiTerjepit:boolean;dojiPembatalan:boolean;bbSarBreak:boolean};
   onMomentumPatternsChange:(p:any)=>void;
   disabled?:boolean;
-}> = ({mode,assets,assetRic,onAssetChange,isDemo,onDemoChange,duration,onDurationChange,amount,onAmountChange,martingale,onMartingaleChange,ftTf,onFtTfChange,stopLoss,onSlChange,stopProfit,onSpChange,indicatorType,onIndicatorTypeChange,indicatorPeriod,onIndicatorPeriodChange,indicatorSensitivity,onSensitivityChange,rsiOverbought,onOverboughtChange,rsiOversold,onOversoldChange,momentumPatterns,onMomentumPatternsChange,disabled}) => {
+}> = ({mode,assets,assetRic,onAssetChange,isDemo,onDemoChange,duration,onDurationChange,amount,onAmountChange,martingale,onMartingaleChange,ftTf,onFtTfChange,reversalSteps,onReversalStepsChange,frExpiry,stopLoss,onSlChange,stopProfit,onSpChange,indicatorType,onIndicatorTypeChange,indicatorPeriod,onIndicatorPeriodChange,indicatorSensitivity,onSensitivityChange,rsiOverbought,onOverboughtChange,rsiOversold,onOversoldChange,momentumPatterns,onMomentumPatternsChange,disabled}) => {
   // Dibaca DI SINI, tiap render — jangan dipindah ke tingkat modul.
   const C = rt.C;
   const T = rt.T;
@@ -721,6 +722,50 @@ export const SettingsCard: React.FC<{
                 <div>
                   <p style={{ fontSize:11,fontWeight:600,color:C.sky,marginBottom:4 }}>Mode AI Signal</p>
                   <p style={{ fontSize:10,color:C.muted,lineHeight:1.5 }}>System sedang mengkonfigurasi sinyal AI</p>
+                </div>
+              </div>
+            )}
+
+            {/* ── FAST REVERSAL: langkah K yang arahnya dibalik ── */}
+            {mode==='fastreversal'&&(
+              <div style={{ marginBottom:18 }}>
+                <div style={{ display:'flex',alignItems:'center',justifyContent:'space-between',margin:'0 4px 7px' }}>
+                  <p style={{ fontSize:11,fontWeight:600,letterSpacing:'0.06em',textTransform:'uppercase',color:C.muted,margin:0 }}>Langkah Pembalikan</p>
+                  {frExpiry&&(()=>{ const d=Math.max(0,Math.ceil((frExpiry-Date.now())/86_400_000)); return (
+                    <span style={{ fontSize:10,fontWeight:700,color:C.coral,background:`${C.coral}14`,border:`1px solid ${C.coral}33`,borderRadius:99,padding:'3px 9px' }}>
+                      Aktif · {d} hari lagi
+                    </span>
+                  ); })()}
+                </div>
+                <div style={{ borderRadius:14,background:C.card2,border:`1px solid ${C.bdr}`,padding:'14px 16px' }}>
+                  <p style={{ fontSize:11.5,color:C.muted,lineHeight:1.55,margin:'0 0 12px' }}>
+                    Isi hingga 3 langkah martingale (K) yang arah sinyalnya <b style={{color:C.coral}}>dibalik</b>. Kosongkan untuk berjalan seperti Fastrade biasa.
+                  </p>
+                  <div style={{ display:'flex',gap:8 }}>
+                    {[0,1,2].map(i=>(
+                      <div key={i} style={{ flex:1,position:'relative' }}>
+                        <span style={{ position:'absolute',left:12,top:'50%',transform:'translateY(-50%)',fontSize:13,fontWeight:700,color:C.muted,pointerEvents:'none' }}>K</span>
+                        <input className="ds-input" type="number" inputMode="numeric" placeholder="—"
+                          disabled={disabled}
+                          value={reversalSteps[i]??''}
+                          onChange={e=>{
+                            const raw=e.target.value.replace(/\D/g,'').slice(0,2);
+                            const slots:(number|undefined)[]=[reversalSteps[0],reversalSteps[1],reversalSteps[2]];
+                            slots[i]=raw?parseInt(raw,10):undefined;
+                            // Dibersihkan: buang duplikat & di luar 1..10, lalu urutkan —
+                            // mesin memakai daftar ini apa adanya untuk mencocokkan step.
+                            const clean=Array.from(new Set(
+                              slots.filter((n):n is number=>typeof n==='number'&&n>=1&&n<=10)
+                            )).sort((a,b)=>a-b);
+                            onReversalStepsChange(clean);
+                          }}
+                          style={{ textAlign:'center',paddingLeft:24 }}/>
+                      </div>
+                    ))}
+                  </div>
+                  <p style={{ fontSize:11,color:reversalSteps.length?C.coral:C.muted,marginTop:9 }}>
+                    {reversalSteps.length?`Sinyal dibalik pada: ${reversalSteps.map(k=>`K${k}`).join(' · ')}`:'Belum ada K yang dibalik (jalan seperti Fastrade biasa).'}
+                  </p>
                 </div>
               </div>
             )}

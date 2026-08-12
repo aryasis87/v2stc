@@ -948,6 +948,7 @@ const MobileSessionSheet: React.FC<{
   const ac = modeAccent(mode);
   const modeLabel: Record<TradingMode,string> = {
     schedule:'Signal Mode', fastrade:'Fastrade FTT Mode', ctc:'Fastrade CTC',
+    fastreversal:'Fast Reversal',
     aisignal:'AI Signal Mode', indicator:'Analysis Strategy Mode', momentum:'Momentum Mode',
   };
 
@@ -1042,6 +1043,7 @@ const ModePickerModal: React.FC<{
     { v: 'schedule'  as TradingMode, label: 'Signal Mode',           icon: <Calendar  style={{ width: 16, height: 16 }} />, accent: C.cyan,   desc: 'Manual Input Signal' },
     { v: 'fastrade'  as TradingMode, label: 'Fastrade FTT Mode',    icon: <Zap       style={{ width: 16, height: 16 }} />, accent: C.cyan,   desc: 'Fast Trade Execution' },
     { v: 'ctc'       as TradingMode, label: 'Fastrade CTC',         icon: <Copy      style={{ width: 16, height: 16 }} />, accent: C.violet, desc: 'Ultra-Fast Execution' },
+    { v: 'fastreversal' as TradingMode, label: 'Fast Reversal',    icon: <Repeat    style={{ width: 16, height: 16 }} />, accent: C.coral,  desc: 'FTT + Balik Arah di K Terpilih' },
     { v: 'aisignal'  as TradingMode, label: 'AI Signal Mode',       icon: <Radio     style={{ width: 16, height: 16 }} />, accent: C.sky,    desc: 'AI Signal Automation' },
     { v: 'indicator' as TradingMode, label: 'Analysis Strategy Mode', icon: <BarChart style={{ width: 16, height: 16 }} />, accent: C.orange, desc: 'Technical Analysis Based' },
     { v: 'momentum'  as TradingMode, label: 'Momentum Mode',        icon: <Waves     style={{ width: 16, height: 16 }} />, accent: C.pink,   desc: 'Parallel Momentum Analysis' },
@@ -1451,6 +1453,7 @@ const ModeSessionPanel: React.FC<{
     { v: 'schedule'  as TradingMode, label: 'Signal Mode',           icon: <Calendar  style={{ width: 12, height: 12 }} />, accent: C.cyan,   desc: 'Manual Input Signal' },
     { v: 'fastrade'  as TradingMode, label: 'Fastrade FTT Mode',    icon: <Zap       style={{ width: 12, height: 12 }} />, accent: C.cyan,   desc: 'Fast Trade Execution' },
     { v: 'ctc'       as TradingMode, label: 'Fastrade CTC',         icon: <Copy      style={{ width: 12, height: 12 }} />, accent: C.violet, desc: 'Ultra-Fast Execution' },
+    { v: 'fastreversal' as TradingMode, label: 'Fast Reversal',    icon: <Repeat    style={{ width: 16, height: 16 }} />, accent: C.coral,  desc: 'FTT + Balik Arah di K Terpilih' },
     { v: 'aisignal'  as TradingMode, label: 'AI Signal Mode',       icon: <Radio     style={{ width: 12, height: 12 }} />, accent: C.sky,    desc: 'AI Signal Automation' },
     { v: 'indicator' as TradingMode, label: 'Analysis Strategy Mode', icon: <BarChart style={{ width: 12, height: 12 }} />, accent: C.orange, desc: 'Technical Analysis Based' },
     { v: 'momentum'  as TradingMode, label: 'Momentum Mode',        icon: <Waves     style={{ width: 12, height: 12 }} />, accent: C.pink,   desc: 'Parallel Momentum Analysis' },
@@ -1974,6 +1977,7 @@ export default function DashboardPage() {
   const amount               = _s.amount;
   const martingale           = _s.martingale;
   const ftTf                 = _s.ftTf;
+  const reversalSteps        = _s.reversalSteps ?? [];
   const stopLoss             = _s.stopLoss;
   const stopProfit           = _s.stopProfit;
   const indicatorType        = _s.indicatorType;
@@ -1990,6 +1994,7 @@ export default function DashboardPage() {
   const setAmount               = (v: number)                                    => _upd('amount', v);
   const setMartingale           = (v: MartingaleConfig)                          => _upd('martingale', v);
   const setFtTf                 = (v: FastTradeTimeframe)                        => _upd('ftTf', v);
+  const setReversalSteps        = (v: number[])                                  => _upd('reversalSteps', v);
   const setStopLoss             = (v: number)                                    => _upd('stopLoss', v);
   const setStopProfit           = (v: number)                                    => _upd('stopProfit', v);
   const setIndicatorType        = (v: IndicatorType)                              => _upd('indicatorType', v);
@@ -2718,10 +2723,17 @@ export default function DashboardPage() {
     if(!isDemo && !isApk && !realAccess) { setRealLockReason('platform'); setRealLockOpen(true); return; }
     if(!isDemo && !realAccess) { setRealLockReason('account');  setRealLockOpen(true); return; }
     if(isBelowMin&&tradingMode!=='indicator'){setError(`Amount di bawah minimum ${CURR_UNIT} ${FMT(MIN_AMOUNT)}.`);return;}
+    // Fast Reversal TANPA satu pun K = Fastrade FTT biasa. Kalau dibiarkan,
+    // sesinya berjalan sebagai FTT dan pengguna mengira pembalikan aktif
+    // padahal tidak. Ditolak terang-terangan.
+    if(tradingMode==='fastreversal' && reversalSteps.filter(k=>k>=1&&k<=10).length===0){
+      setError('Fast Reversal butuh minimal satu langkah K yang dibalik. Isi K di pengaturan sebelum memulai.');
+      return;
+    }
     // Cegah start jika ada mode LAIN yang sedang berjalan (hanya 1 mode boleh aktif)
     const otherRunning = (
       (tradingMode!=='schedule'&&(isSchedRunning||isSchedPaused))||
-      ((tradingMode!=='fastrade'&&tradingMode!=='ctc')&&isFtRunning)||
+      ((tradingMode!=='fastrade'&&tradingMode!=='ctc'&&tradingMode!=='fastreversal')&&isFtRunning)||
       (tradingMode!=='aisignal'&&isAIRunning)||
       (tradingMode!=='indicator'&&isIndRunning)||
       (tradingMode!=='momentum'&&isMomRunning)
@@ -2765,9 +2777,13 @@ export default function DashboardPage() {
             ? { ...baseCfg, settings:{ type:indicatorType, period:indicatorPeriod, sensitivity:indicatorSensitivity, rsiOverbought, rsiOversold } }
           : tradingMode==='momentum'
             ? { ...baseCfg, patterns:{ candleSabit:momentumPatterns.candleSabit, dojiTerjepit:momentumPatterns.dojiTerjepit, dojiPembatalan:momentumPatterns.dojiPembatalan, bbSarBreak:momentumPatterns.bbSarBreak } }
+          : tradingMode==='fastreversal'
+            // Fast Reversal = FTT + daftar K yang dibalik. Disaring 1..10 di sini
+            // juga, bukan hanya di UI: nilai tersimpan bisa berasal dari versi lama.
+            ? { ...baseCfg, reversalSteps: reversalSteps.filter(k=>k>=1&&k<=10) }
           : baseCfg;
         await deviceSession.startMode({
-          mode: tradingMode as 'fastrade'|'ctc'|'aisignal'|'indicator'|'momentum',
+          mode: tradingMode as 'fastrade'|'ctc'|'fastreversal'|'aisignal'|'indicator'|'momentum',
           config: cfg,
           callbacks: {
             onLog: (log:any)=>{
@@ -2780,9 +2796,12 @@ export default function DashboardPage() {
           },
         });
         setDeviceEngineOn(true);
-      } else if(tradingMode==='fastrade'||tradingMode==='ctc'){
+      } else if(tradingMode==='fastrade'||tradingMode==='ctc'||tradingMode==='fastreversal'){
+        // Fast Reversal dieksekusi server-side sebagai FTT + reversalSteps —
+        // backend memakai mode 'FTT'; pembedanya HANYA daftar langkah itu.
         await api.fastradeStart({
           mode:tradingMode==='ctc'?'CTC':'FTT',
+          reversalSteps: tradingMode==='fastreversal' ? reversalSteps.filter(k=>k>=1&&k<=10) : undefined,
           asset:{ric:selectedRic,name:selectedAsset?.name??selectedRic,profitRate:selectedAsset?.profitRate,iconUrl:selectedAsset?.iconUrl},
           martingale:{isEnabled:martingale.enabled,maxSteps:martingale.maxStep,baseAmount:amount*100,multiplierValue:martingale.multiplier,multiplierType:'FIXED',isAlwaysSignal:martingale.alwaysSignal??false},
           isDemoAccount:isDemo,currency:CURR_UNIT,currencyIso:CURR_UNIT,
@@ -3020,6 +3039,7 @@ export default function DashboardPage() {
       amount={amount} onAmountChange={setAmount}
       martingale={martingale} onMartingaleChange={setMartingale}
       ftTf={ftTf} onFtTfChange={setFtTf}
+      reversalSteps={reversalSteps} onReversalStepsChange={setReversalSteps}
       stopLoss={stopLoss} onSlChange={setStopLoss}
       stopProfit={stopProfit} onSpChange={setStopProfit}
       indicatorType={indicatorType} onIndicatorTypeChange={setIndicatorType}

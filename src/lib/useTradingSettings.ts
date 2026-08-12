@@ -19,7 +19,7 @@ import { storage } from './storage';
  * Rumahnya di sini, bukan di app/dashboard/theme.ts: src/lib TIDAK BOLEH
  * bergantung pada src/app. Dashboard yang mengimpor ke sini.
  */
-export type TradingMode = 'schedule' | 'fastrade' | 'ctc' | 'aisignal' | 'indicator' | 'momentum';
+export type TradingMode = 'schedule' | 'fastrade' | 'ctc' | 'fastreversal' | 'aisignal' | 'indicator' | 'momentum';
 type FastTradeTimeframe = '1m' | '5m' | '15m' | '30m' | '1h';
 type IndicatorType    = 'SMA' | 'EMA' | 'RSI';
 
@@ -45,6 +45,7 @@ export interface TradingSettings {
   amount:               number;
   martingale:           MartingaleConfig;
   ftTf:                 FastTradeTimeframe;
+  reversalSteps:        number[];   // Fast Reversal: langkah K yang arahnya dibalik (maks 3)
   stopLoss:             number;
   stopProfit:           number;
   indicatorType:        IndicatorType;
@@ -65,6 +66,7 @@ const DEFAULTS: TradingSettings = {
   amount:               0,
   martingale:           { enabled: false, maxStep: 3, multiplier: 2.5, alwaysSignal: false },
   ftTf:                 '1m',
+  reversalSteps:        [],
   stopLoss:             0,
   stopProfit:           0,
   indicatorType:        'SMA',

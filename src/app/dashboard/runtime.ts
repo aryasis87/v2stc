@@ -58,6 +58,9 @@ export const rt: {
 export function modeAccent(mode: TradingMode): string {
   const C = rt.C;
   if (mode === 'ctc')       return C.violet;
+  // Fast Reversal memakai coral: ia varian FTT yang membalik arah, jadi
+  // sengaja DIBEDAKAN dari fastrade agar tak tertukar sekilas pandang.
+  if (mode === 'fastreversal') return C.coral;
   if (mode === 'aisignal')  return C.sky;
   if (mode === 'indicator') return C.orange;
   if (mode === 'momentum')  return C.pink;
