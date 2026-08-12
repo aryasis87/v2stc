@@ -186,11 +186,20 @@ function RegisterContent() {
   const [showPass, setShowPass] = useState(false);
   const [showConf, setShowConf] = useState(false);
   const [loading, setLoading]   = useState(false);
-  // Program afiliasi dihentikan 2026-08-11, jadi pendaftaran lewat browser
-  // dibuka kembali: aturan Affiliate TOP yang dulu melarangnya tidak lagi
-  // berlaku. Tetapan ini dipertahankan supaya jalurnya bisa ditutup lagi
-  // dengan satu baris bila diperlukan.
-  const WAJIB_LEWAT_APLIKASI = false;
+  // Pendaftaran WAJIB lewat aplikasi.
+  //
+  // ALASANNYA TEKNIS, BUKAN ATURAN AFILIASI. Diuji 2026-08-12: Stockity memakai
+  // daftar-putih asal pada CORS —
+  //     Origin: https://stockity1.id      -> access-control-allow-origin dikirim
+  //     Origin: domain kita               -> TIDAK dikirim
+  // Tanpa header itu peramban menolak responsnya sendiri, jadi mendaftar
+  // langsung dari perangkat pengguna MUSTAHIL di web, apa pun kodenya.
+  //
+  // Lewat backend (VPS) sebenarnya bisa dan sempat dibuka, tetapi seluruh
+  // pendaftaran lalu berbagi satu IP dan Stockity membalas HTTP 429
+  // "too_much_requests". APK tidak kena keduanya: ia memakai CapacitorHttp
+  // (permintaan native, bebas CORS) dari koneksi ponsel pengguna sendiri.
+  const WAJIB_LEWAT_APLIKASI = true;
   const [webOnly, setWebOnly] = useState(false);
   useEffect(() => { setWebOnly(WAJIB_LEWAT_APLIKASI && !isNativeApp()); }, []);
   const [error, setError]       = useState('');
@@ -301,17 +310,9 @@ function RegisterContent() {
           deviceId:    devId,
         };
       } else {
-        // WEB: didaftarkan lewat backend, yang memproksi sign_up ke Stockity.
-        //
-        // Dulu jalur ini dimatikan karena permintaan sign_up berasal dari IP
-        // VPS — banyak akun rujukan berbagi satu IP, pola yang dicurigai aturan
-        // Affiliate TOP. Program afiliasi dihentikan 2026-08-11, jadi alasannya
-        // tidak berlaku lagi dan pendaftaran web dibuka kembali.
-        //
-        // Backend-nya memang sudah terbuka sejak itu; yang tertinggal hanya
-        // klien ini, sehingga pendaftaran dari peramban SELALU gagal apa pun
-        // yang diisi — bukan karena Stockity menolak.
-        res = await api.register(email.trim(), password, "IDR");
+        // Tidak terjangkau dari web karena WAJIB_LEWAT_APLIKASI menutup
+        // formulirnya lebih dulu; dipertahankan sebagai pengaman terakhir.
+        throw new Error(ui(language, 'registerAppOnly'));
       }
       setSuccess(true);
       await finishRegister(res);
