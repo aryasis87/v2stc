@@ -20,6 +20,7 @@ import { ui } from '@/lib/uiText';
 import { useTradingSettings } from '@/lib/useTradingSettings';
 import { computeBestConfig, type BestConfigResult } from '@/lib/bestConfig';
 import { isAiSignalUnlocked } from '@/lib/aiSignalAccess';
+import { isFastReversalUnlocked, getFastReversalExpiry, FAST_REVERSAL_CONTACT_EMAIL } from '@/lib/fastReversalAccess';
 import { getAiSignalEntry } from '@/lib/aiSignalAccess';
 import { sessionBeacon } from '@/lib/sessionBeacon';
 import { getRealAccessAt } from '@/lib/realAccess';
@@ -65,6 +66,8 @@ let T_LANG = 'id';
 let T: (k: string) => string = (k: string) => k;
 // Status kunci mode AI Signal — di-set tiap render DashboardPage (pola sama C/T)
 let AI_LOCKED = false;
+// Fast Reversal juga terkunci per akun, dengan MASA BERLAKU 30 hari.
+let FR_LOCKED = false;
 
 // TradingMode kini dari ./theme (dipakai bersama berkas hasil pemecahan).
 // FastTradeTimeframe dipindah ke ./theme (dipakai bersama SettingsCard).
@@ -1090,6 +1093,7 @@ const ModePickerModal: React.FC<{
             const isAct = mode === v;
             const isOtherRunning = locked && !isAct; // mode lain sedang berjalan
             const isAiLockedRow = v === 'aisignal' && AI_LOCKED; // fitur terkunci per akun
+            const isFrLockedRow = v === 'fastreversal' && FR_LOCKED; // berbayar, 30 hari
             const infoShown = infoOpen === v;
             return (
               <div key={v} style={{display:'flex',flexDirection:'column',gap:0}}>
@@ -1105,7 +1109,7 @@ const ModePickerModal: React.FC<{
                   borderRadius:14,cursor:'pointer',
                   background:isAct?`${accent}14`:C.card2,
                   border:`1px solid ${isAct?`${accent}45`:C.bdr}`,
-                  opacity:(isOtherRunning||isAiLockedRow)?0.55:1,
+                  opacity:(isOtherRunning||isAiLockedRow||isFrLockedRow)?0.55:1,
                   transition:'background 0.15s,border-color 0.15s',
                 }}
               >
@@ -1129,7 +1133,7 @@ const ModePickerModal: React.FC<{
                   </div>
                   <span style={{display:'block',fontSize:11,color:C.muted,marginTop:1}}>{desc}</span>
                 </div>
-                {isAiLockedRow ? (
+                {(isAiLockedRow||isFrLockedRow) ? (
                   <Lock style={{width:14,height:14,color:C.amber,flexShrink:0}}/>
                 ) : isAct && (
                   <Check style={{width:16,height:16,color:accent,flexShrink:0}}/>
@@ -1202,6 +1206,47 @@ const AI_LOCK_STR: Record<string, { title: string; body: string; hint: string; m
   es: { title: 'Modo AI Signal bloqueado', body: 'La función AI Signal aún no está activa en tu cuenta.', hint: 'Actívalo con una suscripción de Rp 50.000 / mes. Verificación ~10 minutos en promedio.', mail: 'Activar AI Signal', close: 'Cerrar' },
   ms: { title: 'Mod AI Signal Dikunci',    body: 'Ciri AI Signal belum aktif pada akaun anda.', hint: 'Aktifkan dengan langganan Rp 50.000 / bulan. Pengesahan purata ~10 minit.', mail: 'Aktifkan AI Signal', close: 'Tutup' },
 };
+
+const FR_LOCK_STR: Record<string,{title:string;body:string;hint:string;cta:string;close:string;mail:string}> = {
+  id: { title:'Fast Reversal terkunci',
+        body:'Mode ini berbayar dan berlaku 30 hari sejak diaktifkan. Hubungi admin untuk mengaktifkannya di akun Anda.',
+        hint:'Setelah aktif, mode REAL ikut terbuka otomatis.',
+        cta:'Hubungi Admin', close:'Nanti saja', mail:FAST_REVERSAL_CONTACT_EMAIL },
+  en: { title:'Fast Reversal is locked',
+        body:'This mode is paid and stays active for 30 days from activation. Contact an admin to enable it on your account.',
+        hint:'Once active, REAL mode is unlocked automatically.',
+        cta:'Contact Admin', close:'Later', mail:FAST_REVERSAL_CONTACT_EMAIL },
+};
+
+const FrLockedModal: React.FC<{ open: boolean; onClose: () => void; lang: string; onActivate: () => void }> = ({ open, onClose, lang, onActivate }) => {
+  if (!open) return null;
+  const S = FR_LOCK_STR[lang] ?? FR_LOCK_STR.en;
+  return (
+    <div style={{position:'fixed',inset:0,zIndex:80,display:'flex',alignItems:'center',justifyContent:'center',padding:'16px',animation:'fade-in 0.15s ease'}}>
+      <div onClick={onClose} style={{position:'absolute',inset:0,background:'rgba(0,0,0,0.72)',backdropFilter:'blur(10px)',WebkitBackdropFilter:'blur(10px)'}}/>
+      <div style={{position:'relative',width:'100%',maxWidth:380,background:C.bg,borderRadius:20,border:`1px solid ${C.bdr}`,padding:'24px 22px',animation:'slide-up 0.28s cubic-bezier(0.32,0.72,0,1)',textAlign:'center'}}>
+        <div style={{width:52,height:52,margin:'0 auto 14px',borderRadius:16,display:'flex',alignItems:'center',justifyContent:'center',background:`${C.amber}14`,border:`1px solid ${C.amber}30`}}>
+          <Lock style={{width:22,height:22,color:C.coral}}/>
+        </div>
+        <p style={{fontSize:16,fontWeight:700,color:C.text,marginBottom:6}}>{S.title}</p>
+        <p style={{fontSize:13,color:C.sub,lineHeight:1.5,marginBottom:4}}>{S.body}</p>
+        <p style={{fontSize:12,color:C.muted,lineHeight:1.55,marginBottom:16}}>{S.hint}</p>
+        <div style={{display:'flex',gap:8}}>
+          <button onClick={onClose} style={{flex:1,padding:'11px 0',borderRadius:12,background:C.card2,border:`1px solid ${C.bdr}`,cursor:'pointer',fontSize:13,fontWeight:600,color:C.sub}}>{S.close}</button>
+          <button onClick={onActivate}
+             style={{flex:1.4,padding:'11px 0',borderRadius:12,background:C.amber,border:'none',cursor:'pointer',fontSize:13,fontWeight:700,color:C.onAmber,display:'flex',alignItems:'center',justifyContent:'center'}}>
+            {S.mail}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ═══════════════════════════════════════════
+// REAL LOCKED MODAL — v4: mode REAL hanya utk akun baru via selfregister
+// ═══════════════════════════════════════════
+
 
 const AiLockedModal: React.FC<{ open: boolean; onClose: () => void; lang: string; onActivate: () => void }> = ({ open, onClose, lang, onActivate }) => {
   if (!open) return null;
@@ -1685,6 +1730,8 @@ export default function DashboardPage() {
   }, []);
   useEffect(() => { void checkMaintenance(); }, [checkMaintenance]);
   const [aiUnlocked,  setAiUnlocked]  = useState(false);
+  const [frUnlocked,  setFrUnlocked]  = useState(false);
+  const [frExpiry,    setFrExpiry]    = useState<number|null>(null);
 
   // Pemberitahuan aktivasi fitur berbayar — muncul SEKALI per kejadian.
   // Kunci penanda memuat stempel waktu, jadi perpanjangan memunculkannya lagi.
@@ -1716,7 +1763,9 @@ export default function DashboardPage() {
   }, []);
 
   const [aiCheckDone, setAiCheckDone] = useState(false);
+  const [frCheckDone, setFrCheckDone] = useState(false);
   const [aiLockOpen,  setAiLockOpen]  = useState(false);
+  const [frLockOpen,  setFrLockOpen]  = useState(false);
   const [adviceOpen,  setAdviceOpen]  = useState(false);
   const [promoOpen,   setPromoOpen]   = useState(false);
   // ── v4: akses mode REAL (user lama demo-only) ─────────────────────────────
@@ -1761,6 +1810,7 @@ export default function DashboardPage() {
   // Badge kunci di pemilih mode baru tampil setelah status terverifikasi,
   // agar user yang punya akses tidak melihat kilatan ikon gembok.
   AI_LOCKED = aiCheckDone && !aiUnlocked;
+  FR_LOCKED = frCheckDone && !frUnlocked;
 
   useEffect(() => {
     let cancelled = false;
@@ -1772,13 +1822,17 @@ export default function DashboardPage() {
           const mail = await storage.get(SESSION_KEYS.EMAIL);
           if (!cancelled) { setMeId(uid ?? ''); setMeEmail(mail ?? ''); }
         } catch { /* identitas opsional */ }
-        const [ok, real] = await Promise.all([isAiSignalUnlocked(uid), hasRealAccess(uid)]);
+        const [ok, real, frOk, frExp] = await Promise.all([
+          isAiSignalUnlocked(uid), hasRealAccess(uid),
+          isFastReversalUnlocked(uid), getFastReversalExpiry(uid),
+        ]);
         if (!cancelled) {
           setAiUnlocked(ok); setAiCheckDone(true);
           setRealAccess(real); setRealCheckDone(true);
+          setFrUnlocked(frOk); setFrExpiry(frExp); setFrCheckDone(true);
         }
       } catch {
-        if (!cancelled) { setAiCheckDone(true); setRealCheckDone(true); } // gagal cek → terkunci (default aman)
+        if (!cancelled) { setAiCheckDone(true); setRealCheckDone(true); setFrCheckDone(true); } // gagal cek → terkunci (default aman)
       }
     })();
     // Flag 'stc_from_login' di-set halaman login/register tepat sebelum redirect —
@@ -2607,9 +2661,17 @@ export default function DashboardPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settingsLoaded, aiCheckDone, aiUnlocked]);
 
+  // Fast Reversal disembunyikan untuk yang belum aktivasi / sudah kedaluwarsa.
+  useEffect(()=>{
+    if (!settingsLoaded || !frCheckDone || frUnlocked) return;
+    if (tradingMode === 'fastreversal' && !isFtRunning) setTradingMode('schedule');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [settingsLoaded, frCheckDone, frUnlocked]);
+
   const handleModeChange = (m:TradingMode)=>{
     // Mode AI Signal terkunci per akun — aktivasi via support
     if (m === 'aisignal' && !aiUnlocked) { setAiLockOpen(true); return; }
+    if (m === 'fastreversal' && !frUnlocked) { setFrLockOpen(true); return; }
     // Izinkan ganti pilihan mode kapan saja (proteksi start ada di handleStart)
     if(m!==tradingMode) setTradingMode(m);
     setError(null);
@@ -2726,6 +2788,7 @@ export default function DashboardPage() {
     // Fast Reversal TANPA satu pun K = Fastrade FTT biasa. Kalau dibiarkan,
     // sesinya berjalan sebagai FTT dan pengguna mengira pembalikan aktif
     // padahal tidak. Ditolak terang-terangan.
+    if(tradingMode==='fastreversal' && !frUnlocked){ setFrLockOpen(true); return; }
     if(tradingMode==='fastreversal' && reversalSteps.filter(k=>k>=1&&k<=10).length===0){
       setError('Fast Reversal butuh minimal satu langkah K yang dibalik. Isi K di pengaturan sebelum memulai.');
       return;
@@ -3039,7 +3102,7 @@ export default function DashboardPage() {
       amount={amount} onAmountChange={setAmount}
       martingale={martingale} onMartingaleChange={setMartingale}
       ftTf={ftTf} onFtTfChange={setFtTf}
-      reversalSteps={reversalSteps} onReversalStepsChange={setReversalSteps}
+      reversalSteps={reversalSteps} onReversalStepsChange={setReversalSteps} frExpiry={frExpiry}
       stopLoss={stopLoss} onSlChange={setStopLoss}
       stopProfit={stopProfit} onSpChange={setStopProfit}
       indicatorType={indicatorType} onIndicatorTypeChange={setIndicatorType}
@@ -3253,6 +3316,7 @@ export default function DashboardPage() {
         )}
         <ActivationNoticeModal open={pemberitahuan !== null} onClose={()=>setPemberitahuan(null)} at={pemberitahuan?.at ?? 0} expiresAt={pemberitahuan?.sampai ?? null} featureLabel={pemberitahuan?.label ?? ''}/>
         <AiLockedModal open={aiLockOpen} onClose={()=>setAiLockOpen(false)} lang={language} onActivate={()=>{ setAiLockOpen(false); router.push('/aktivasi-aisignal'); }}/>
+        <FrLockedModal open={frLockOpen} onClose={()=>setFrLockOpen(false)} lang={language} onActivate={()=>{ setFrLockOpen(false); window.open(`https://wa.me/?text=${encodeURIComponent('Halo admin, saya ingin mengaktifkan mode Fast Reversal.')}`,'_blank','noopener,noreferrer'); }}/>
         <RealLockedModal
           open={realLockOpen}
           reason={realLockReason}
