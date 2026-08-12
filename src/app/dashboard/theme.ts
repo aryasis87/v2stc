@@ -58,17 +58,9 @@ export function getColors(isDark: boolean) {
  */
 export type Colors = ReturnType<typeof getColors>;
 
-/**
- * Mode trading. Ditaruh di sini supaya berkas yang dipecah keluar dari
- * page.tsx punya satu tempat mengambilnya.
- *
- * CATATAN: tipe dengan isi yang sama juga ada di src/lib/useTradingSettings.ts.
- * Duplikasi itu pernah menggigit — saat mode dicabut, TypeScript hanya
- * mengeluh di salah satunya sehingga yang lain diam-diam ketinggalan.
- * Menyatukan keduanya menyentuh berkas lain; dikerjakan terpisah.
- */
-export type TradingMode =
-  | 'schedule' | 'fastrade' | 'ctc' | 'aisignal' | 'indicator' | 'momentum';
+// TradingMode DITERUSKAN dari src/lib, tempat definisi kanoniknya. Diekspor
+// ulang di sini semata supaya berkas dashboard cukup mengimpor dari './theme'.
+export type { TradingMode } from '@/lib/useTradingSettings';
 
 /** Konfigurasi kompensasi (martingale). Dipakai page.tsx dan ControlCard. */
 export interface MartingaleConfig {

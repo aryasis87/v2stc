@@ -9,7 +9,17 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { storage } from './storage';
 
 // ── Types (harus sama dengan page.tsx) ────────────────────────────────────────
-type TradingMode      = 'schedule' | 'fastrade' | 'ctc' | 'aisignal' | 'indicator' | 'momentum';
+/**
+ * Mode trading — SATU definisi untuk seluruh aplikasi.
+ *
+ * Dulu tipe ini juga ditulis ulang di dashboard. Saat sebuah mode dicabut,
+ * TypeScript hanya mengeluh di salah satunya sehingga yang lain diam-diam
+ * ketinggalan — sudah pernah terjadi ketika Fast Reversal dibatalkan.
+ *
+ * Rumahnya di sini, bukan di app/dashboard/theme.ts: src/lib TIDAK BOLEH
+ * bergantung pada src/app. Dashboard yang mengimpor ke sini.
+ */
+export type TradingMode = 'schedule' | 'fastrade' | 'ctc' | 'aisignal' | 'indicator' | 'momentum';
 type FastTradeTimeframe = '1m' | '5m' | '15m' | '30m' | '1h';
 type IndicatorType    = 'SMA' | 'EMA' | 'RSI';
 
