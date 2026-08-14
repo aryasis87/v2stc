@@ -216,6 +216,8 @@ const TodayProfitCard: React.FC<{
   t: (k: string) => string;
   isMobile?: boolean;
 }> = ({ data, localProfit, currencyUnit, isLoading, isRefreshing, lastUpdatedAt, flash, onRefresh, t, isMobile }) => {
+  // Untuk melapis tint di atas dasar kartu yang berbeda per tema (lihat <Card> di bawah).
+  const { isDarkMode } = useDarkMode();
   // ✅ FIX FLICKER: lastKnownProfitRef — simpan nilai NON-ZERO terakhir yang valid.
   //    Aturan: ref hanya di-update jika data.totalPnL !== 0.
   //    Jika data.totalPnL === 0 sementara ref sudah non-zero → SKIP (transient 0 dari backend).
@@ -267,7 +269,17 @@ const TodayProfitCard: React.FC<{
     : secAgo < 60 ? `${secAgo}d` : `${Math.floor(secAgo/60)}m`;
 
   return (
-    <Card style={{ padding: isMobile ? '10px 14px' : '12px 16px', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, minHeight: isMobile ? 62 : 68 }} flash={flash}>
+    <Card style={{
+      padding: isMobile ? '10px 14px' : '12px 16px', height: '100%',
+      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+      gap: 6, minHeight: isMobile ? 62 : 68,
+      // Tint sudut mengikuti tanda untung/rugi — kartu profit jadi "hero" seperti
+      // k-card--hero koala. Gradasi tint DILAPIS DI ATAS dasar kartu, bukan
+      // menggantikannya: di mode gelap .ds-card memakai linear-gradient sebagai
+      // background-image, jadi backgroundImage tunggal akan menghapus dasar itu.
+      // Nilai dasar mencerminkan .ds-card di berkas ini (bukan token DS).
+      background: `radial-gradient(130% 120% at 100% 0%, ${col}22 0%, transparent 58%), ${isDarkMode ? 'linear-gradient(180deg, #17181C 0%, #131418 100%)' : '#ffffff'}`,
+    }} flash={flash}>
       {/* Baris 1: Label + age + eye toggle + refresh */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
         <span style={{ fontSize: 10.5, fontWeight: 500, color: C.muted, whiteSpace: 'nowrap' }}>
@@ -342,6 +354,7 @@ const AssetBalanceCombinedCard: React.FC<{
 }> = ({ asset, mode, isLoading, t, onOpenPicker, disabled, balance, accountType }) => {
   const [hidden, setHidden] = useState(false);
   const [imgErr, setImgErr] = useState(false);
+  const { isDarkMode } = useDarkMode();
   const modeCol = modeAccent(mode);
   const abbr = asset?.ric ? asset.ric.slice(0, 3).toUpperCase() : '+';
   const isDemo = accountType === 'demo';
@@ -353,7 +366,10 @@ const AssetBalanceCombinedCard: React.FC<{
   const balBg  = isDemo ? 'rgba(255,159,10,0.08)' : 'rgba(16,185,129,0.08)';
 
   return (
-    <Card style={{ padding: '10px 14px' }}>
+    // Tint sudut senada saldo (cyan REAL / amber DEMO) — sepasang dengan kartu
+    // profit agar deret kartu atas terasa satu set "hero" seperti koala.
+    // Dilapis di atas dasar .ds-card (lihat catatan di TodayProfitCard).
+    <Card style={{ padding: '10px 14px', background: `radial-gradient(130% 120% at 100% 0%, ${balCol}1E 0%, transparent 58%), ${isDarkMode ? 'linear-gradient(180deg, #17181C 0%, #131418 100%)' : '#ffffff'}` }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
 
         {/* Sisi Kiri: Aset */}
