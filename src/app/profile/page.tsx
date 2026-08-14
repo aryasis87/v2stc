@@ -890,23 +890,44 @@ const RealActivationManager: React.FC<{ open: boolean; onClose: () => void }> = 
   const [sid, setSid] = useState('');
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  // Catatan tindakan sesi ini. Admin memproses beberapa ID berturut-turut dari
+  // notifikasi Telegram; tanpa ini tak ada cara mengingat mana yang sudah
+  // dikerjakan selain menggulir Telegram lagi.
+  const [log, setLog] = useState<{ id: string; on: boolean; ok: boolean; at: number }[]>([]);
   useEffect(() => {
     if (!open) return;
-    setSid(''); setMsg(null);
+    setSid(''); setMsg(null); setLog([]);
     const prev = document.body.style.overflow; document.body.style.overflow = 'hidden';
     return () => { document.body.style.overflow = prev; };
   }, [open]);
   if (!open) return null;
-  const activate = async () => {
+  // Satu jalur untuk mengaktifkan DAN menonaktifkan. Sebelumnya panel ini hanya
+  // bisa mengaktifkan — salah ketik satu digit berarti akun asing mendapat
+  // akses REAL tanpa cara membatalkannya dari aplikasi.
+  const apply = async (on: boolean) => {
     const id = sid.trim();
     if (id.length < 3 || busy) return;
     setBusy(true); setMsg(null);
     try {
-      const r = await api.admin.setRealAccess(id, true);
-      setMsg(r.matched > 0 ? { ok: true, text: `Mode REAL diaktifkan untuk ID ${id}.` } : { ok: false, text: `ID ${id} tidak ditemukan.` });
-      if (r.matched > 0) setSid('');
-    } catch (e: any) { setMsg({ ok: false, text: e?.message || 'Gagal mengaktifkan.' }); }
-    finally { setBusy(false); }
+      const r = await api.admin.setRealAccess(id, on);
+      const ok = r.matched > 0;
+      setMsg(ok
+        ? { ok: true, text: on ? `Mode REAL diaktifkan untuk ID ${id}.` : `Mode REAL dinonaktifkan untuk ID ${id}.` }
+        : { ok: false, text: `ID ${id} tidak ditemukan.` });
+      setLog(prev => [{ id, on, ok, at: Date.now() }, ...prev].slice(0, 8));
+      if (ok) setSid('');
+    } catch (e: any) {
+      setMsg({ ok: false, text: e?.message || 'Gagal memproses.' });
+      setLog(prev => [{ id, on, ok: false, at: Date.now() }, ...prev].slice(0, 8));
+    } finally { setBusy(false); }
+  };
+  // ID datang dari notifikasi Telegram — hampir selalu lewat tempel.
+  const pasteId = async () => {
+    try {
+      const t = await navigator.clipboard.readText();
+      const digits = (t || '').replace(/\D/g, '');
+      if (digits) { setSid(digits); setMsg(null); }
+    } catch { /* papan klip ditolak — biarkan pengguna mengetik */ }
   };
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 90, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
@@ -925,10 +946,33 @@ const RealActivationManager: React.FC<{ open: boolean; onClose: () => void }> = 
           </div>
           <label style={{ display: 'block', fontSize: 11, color: 'var(--muted, #8a8f98)', letterSpacing: '0.04em', marginBottom: 7 }}>ID AKUN STOCKITY</label>
           <input value={sid} onChange={e => setSid(e.target.value.replace(/[^0-9]/g, ''))} inputMode="numeric" placeholder="mis. 183xxxxxx" style={{ width: '100%', padding: '13px 14px', borderRadius: 10, fontSize: 15, fontWeight: 600, background: 'var(--s1, rgba(255,255,255,0.04))', color: 'var(--text, #e8eaed)', border: '1px solid var(--bdr, rgba(255,255,255,0.12))', outline: 'none' }} />
+          <button onClick={pasteId} style={{ marginTop: 8, padding: '7px 12px', borderRadius: 99, fontSize: 12, fontWeight: 600, fontFamily: 'inherit', cursor: 'pointer', background: 'var(--s1, rgba(255,255,255,0.04))', color: 'var(--muted, #8a8f98)', border: '1px solid var(--bdr, rgba(255,255,255,0.12))' }}>Tempel dari papan klip</button>
           {msg && <p style={{ fontSize: 13, marginTop: 12, color: msg.ok ? '#10b981' : '#f87171' }}>{msg.text}</p>}
-          <button onClick={activate} disabled={sid.trim().length < 3 || busy} style={{ width: '100%', marginTop: 16, padding: '14px 0', borderRadius: 11, border: 'none', cursor: 'pointer', fontSize: 14.5, fontWeight: 800, color: '#04210b', background: '#10b981', opacity: sid.trim().length < 3 || busy ? 0.55 : 1 }}>
-            {busy ? 'Memproses…' : 'Aktifkan REAL'}
-          </button>
+          <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
+            <button onClick={() => apply(true)} disabled={sid.trim().length < 3 || busy} style={{ flex: 1.4, padding: '14px 0', borderRadius: 11, border: 'none', cursor: 'pointer', fontSize: 14.5, fontWeight: 800, color: '#04210b', background: '#10b981', opacity: sid.trim().length < 3 || busy ? 0.55 : 1 }}>
+              {busy ? 'Memproses…' : 'Aktifkan REAL'}
+            </button>
+            {/* Jalan keluar saat salah ketik ID — sebelumnya tidak ada sama sekali. */}
+            <button onClick={() => apply(false)} disabled={sid.trim().length < 3 || busy} style={{ flex: 1, padding: '14px 0', borderRadius: 11, border: '1px solid #f8717155', cursor: 'pointer', fontSize: 14, fontWeight: 700, color: '#f87171', background: 'rgba(248,113,113,0.10)', opacity: sid.trim().length < 3 || busy ? 0.55 : 1 }}>
+              Nonaktifkan
+            </button>
+          </div>
+          {log.length > 0 && (
+            <div style={{ marginTop: 14 }}>
+              <p style={{ fontSize: 11, color: 'var(--muted, #8a8f98)', letterSpacing: '0.04em', marginBottom: 7 }}>TINDAKAN DI SESI INI</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                {log.map((e, i) => (
+                  <div key={`${e.id}-${e.at}-${i}`} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 10px', borderRadius: 9, background: 'var(--s1, rgba(255,255,255,0.04))', border: '1px solid var(--bdr, rgba(255,255,255,0.08))' }}>
+                    <span style={{ fontSize: 10, fontWeight: 800, padding: '2px 6px', borderRadius: 6, color: e.ok ? (e.on ? '#04210b' : '#4a1010') : '#fff', background: e.ok ? (e.on ? '#10b981' : '#fbbf24') : '#f87171' }}>
+                      {e.ok ? (e.on ? 'ON' : 'OFF') : '!'}
+                    </span>
+                    <span style={{ flex: 1, fontSize: 12.5, fontWeight: 600, color: 'var(--text, #e8eaed)' }}>ID {e.id} · {e.ok ? (e.on ? 'Diaktifkan' : 'Dinonaktifkan') : 'Gagal / tidak cocok'}</span>
+                    <span style={{ fontSize: 11, color: 'var(--muted, #8a8f98)' }}>{new Date(e.at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
           <p style={{ fontSize: 10.5, color: 'var(--muted, #8a8f98)', textAlign: 'center', marginTop: 10, lineHeight: 1.5 }}>User bisa pakai REAL setelah login ulang.</p>
         </div>
       </div>
@@ -944,10 +988,13 @@ const AiSignalManager: React.FC<{ open: boolean; onClose: () => void }> = ({ ope
   const [saving, setSaving]       = useState(false);
   const [dirty, setDirty]         = useState(false);
   const [result, setResult]       = useState<{ ok: boolean; text: string } | null>(null);
+  // Filter tampilan: semua / hanya aktif / hanya belum. Dengan ratusan user
+  // whitelist, tanpa ini admin harus menggulir mencari mana yang sudah aktif.
+  const [view, setView]           = useState<'all' | 'on' | 'off'>('all');
 
   useEffect(() => {
     if (!open) return;
-    setResult(null); setDirty(false); setQuery('');
+    setResult(null); setDirty(false); setQuery(''); setView('all');
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     setLoading(true);
@@ -971,14 +1018,28 @@ const AiSignalManager: React.FC<{ open: boolean; onClose: () => void }> = ({ ope
   if (!open) return null;
 
   const q = query.trim().toLowerCase();
-  const filtered = q
+  const filtered = (q
     ? users.filter(u => u.userId.includes(q) || (u.name ?? '').toLowerCase().includes(q) || (u.email ?? '').includes(q))
-    : users;
+    : users)
+    .filter(u => view === 'all' ? true : view === 'on' ? allow.has(u.userId) : !allow.has(u.userId))
+    // Yang aktif dinaikkan ke atas supaya admin langsung melihat siapa yang punya akses.
+    .sort((a, b) => Number(allow.has(b.userId)) - Number(allow.has(a.userId)));
 
   const toggle = (uid: string) => {
     setAllow(prev => {
       const next = new Set(prev);
       if (next.has(uid)) next.delete(uid); else next.add(uid);
+      return next;
+    });
+    setDirty(true); setResult(null);
+  };
+
+  // Aktifkan / kosongkan SEMUA yang sedang tampil — menghormati pencarian &
+  // filter, jadi "Aktifkan" hanya menyentuh yang terlihat, bukan seluruh basis.
+  const bulk = (on: boolean) => {
+    setAllow(prev => {
+      const next = new Set(prev);
+      filtered.forEach(u => on ? next.add(u.userId) : next.delete(u.userId));
       return next;
     });
     setDirty(true); setResult(null);
@@ -1025,6 +1086,29 @@ const AiSignalManager: React.FC<{ open: boolean; onClose: () => void }> = ({ ope
               placeholder="Cari User ID / nama / email…"
               style={{ width: '100%', boxSizing: 'border-box', background: 'var(--input-bg)', border: '1px solid var(--border)', borderRadius: 12, padding: '11px 14px', fontSize: 14, color: 'var(--text-1)', fontFamily: 'inherit', outline: 'none' }}
             />
+
+            {/* Filter tampilan + aksi massal */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
+              {([['all', 'Semua', users.length], ['on', 'Aktif', allow.size], ['off', 'Belum', users.length - allow.size]] as const).map(([v, label, n]) => (
+                <button key={v} onClick={() => setView(v)} style={{
+                  padding: '6px 11px', borderRadius: 99, fontSize: 12, fontWeight: 600, fontFamily: 'inherit', cursor: 'pointer',
+                  border: `1px solid ${view === v ? 'var(--accent-bdr)' : 'var(--border)'}`,
+                  background: view === v ? 'var(--accent-dim)' : 'var(--input-bg)',
+                  color: view === v ? 'var(--accent)' : 'var(--text-2)',
+                }}>{label} · {n}</button>
+              ))}
+              <span style={{ flex: 1 }} />
+              <button onClick={() => bulk(true)} disabled={filtered.length === 0} title="Aktifkan semua yang tampil" style={{
+                padding: '6px 11px', borderRadius: 99, fontSize: 12, fontWeight: 600, fontFamily: 'inherit',
+                cursor: filtered.length === 0 ? 'default' : 'pointer', opacity: filtered.length === 0 ? 0.5 : 1,
+                border: '1px solid var(--border)', background: 'var(--input-bg)', color: 'var(--text-2)',
+              }}>Aktifkan {filtered.length}</button>
+              <button onClick={() => bulk(false)} disabled={filtered.length === 0} title="Kosongkan yang tampil" style={{
+                padding: '6px 11px', borderRadius: 99, fontSize: 12, fontWeight: 600, fontFamily: 'inherit',
+                cursor: filtered.length === 0 ? 'default' : 'pointer', opacity: filtered.length === 0 ? 0.5 : 1,
+                border: '1px solid var(--border)', background: 'var(--input-bg)', color: 'var(--text-2)',
+              }}>Kosongkan</button>
+            </div>
 
             {/* Daftar user + toggle */}
             <div style={{ maxHeight: '46vh', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6 }}>
