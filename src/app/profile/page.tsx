@@ -1588,11 +1588,13 @@ function ProfilePageContent() {
   const AvatarHero = () => (
     <div className="pf-card" style={{ padding: 18 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 15 }}>
-        {/* Avatar */}
-        <div style={{ width: 68, height: 68, borderRadius: '50%', flexShrink: 0, overflow: 'hidden', background: 'var(--accent-dim)', border: '2px solid var(--accent-bdr)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 25, fontWeight: 800, color: 'var(--accent)' }}>
+        {/* Avatar — persegi membulat, mengikuti bahasa ikon aplikasi (seperti koala).
+            Warna teks pakai --s-on-acc (bukan #fff): di mode gelap --s-acc terang,
+            teks putih akan nyaris tak terbaca. */}
+        <div style={{ width: 64, height: 64, borderRadius: 20, flexShrink: 0, overflow: 'hidden', background: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 23, fontWeight: 700, color: 'var(--s-on-acc)' }}>
           {isLoading ? '' : profile?.avatar ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={resolveAvatarUrl(profile.avatar) ?? profile.avatar} alt={getDisplayName()} width={68} height={68} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
+            <img src={resolveAvatarUrl(profile.avatar) ?? profile.avatar} alt={getDisplayName()} width={64} height={64} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
           ) : getInitials()}
         </div>
         {/* Nama / email / badge */}
@@ -1634,6 +1636,9 @@ function ProfilePageContent() {
           label: t('profile.balanceReal'),
           color: 'var(--success)',
           bgColor: 'var(--success-dim)',
+          // Tint sudut yang membedakan uang sungguhan dari saldo latihan tanpa
+          // perlu dibaca — sama seperti kartu hero koala.
+          tint: 'color-mix(in srgb, var(--success) 14%, transparent)',
           val: balance?.real_balance,
           sub: currencyUnit,
           icon: (
@@ -1644,23 +1649,27 @@ function ProfilePageContent() {
           label: t('profile.balanceDemo'),
           color: 'var(--warn)',
           bgColor: 'var(--warn-dim)',
+          tint: 'color-mix(in srgb, var(--warn) 14%, transparent)',
           val: balance?.demo_balance,
           sub: t('common.virtual'),
           icon: (
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--warn)" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
           ),
         },
-      ].map(({ label, color, bgColor, val, sub, icon }) => (
-        <div key={label} className="pf-card" style={{ borderRadius: 16, padding: '15px 14px' }}>
-          {/* Header: label left, icon right */}
+      ].map(({ label, color, bgColor, tint, val, sub, icon }) => (
+        <div key={label} className="pf-card" style={{ borderRadius: 16, padding: '15px 14px', backgroundImage: `radial-gradient(130% 120% at 100% 0%, ${tint} 0%, transparent 58%)` }}>
+          {/* Header: label (dengan dot) kiri, icon kanan */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-            <span style={{ fontSize: 10, fontWeight: 700, color, textTransform: 'uppercase' as const, letterSpacing: '0.07em' }}>{label}</span>
-            <div style={{ width: 28, height: 28, borderRadius: 8, background: bgColor, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{icon}</div>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 10, fontWeight: 700, color, textTransform: 'uppercase' as const, letterSpacing: '0.07em' }}>
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: color, flexShrink: 0 }} />
+              {label}
+            </span>
+            <div style={{ width: 28, height: 28, borderRadius: 9, background: bgColor, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{icon}</div>
           </div>
-          {/* Big value */}
+          {/* Big value — responsif seperti koala */}
           {isLoading
-            ? <Skel w="80%" h={20} r={4} />
-            : <p className="pf-balance-num" style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-1)', letterSpacing: -0.5, lineHeight: 1, marginBottom: 5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{fmtBalance(val)}</p>
+            ? <Skel w="80%" h={22} r={4} />
+            : <p className="pf-balance-num" style={{ fontSize: 'clamp(19px, 5.6vw, 24px)', fontWeight: 800, color: 'var(--text-1)', letterSpacing: -0.5, lineHeight: 1, marginBottom: 5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{fmtBalance(val)}</p>
           }
           <p style={{ fontSize: 11, color: 'var(--text-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{sub}</p>
         </div>
