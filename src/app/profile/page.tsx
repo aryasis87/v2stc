@@ -1724,14 +1724,21 @@ function ProfilePageContent() {
 
       {/* MOBILE HEADER */}
       <div className="pf-mob-header" style={{ width: '100%', zIndex: 50, background: 'var(--surface)', borderBottom: '1px solid var(--hairline)', transition: 'background 0.3s ease' }}>
-        <div style={{ width: '100%', padding: '11px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <button onClick={() => setLangSheetOpen(true)} title={t('language.title')} style={{ width: 36, height: 36, borderRadius: 10, background: 'var(--press)', border: '1px solid var(--hairline)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0, WebkitTapHighlightColor: 'transparent' }}>🌐</button>
-          <h1 style={{ fontSize: 17, fontWeight: 700, color: 'var(--text-1)', letterSpacing: -0.4 }}>{t('profile.title')}</h1>
-          <button onClick={() => loadProfile(true)} disabled={refreshing || isLoading} title={t('profile.refreshProfile')} style={{ width: 36, height: 36, background: 'var(--press)', border: '1px solid var(--hairline)', borderRadius: 10, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)', opacity: (refreshing || isLoading) ? 0.4 : 1, transition: 'opacity 0.15s', flexShrink: 0, WebkitTapHighlightColor: 'transparent' }}>
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" style={{ animation: (refreshing || isLoading) ? 'pf-spin 0.8s linear infinite' : 'none' }}>
-              <path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
-            </svg>
-          </button>
+        {/* Header large-title (seperti koala): judul besar rata-kiri + email,
+            tombol dikelompokkan di kanan. */}
+        <div style={{ width: '100%', padding: '8px 16px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontSize: 26, fontWeight: 800, letterSpacing: -0.6, color: 'var(--text-1)', lineHeight: 1.12 }}>{t('profile.title')}</div>
+            {profile?.email && <div style={{ fontSize: 12.5, color: 'var(--text-2)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{profile.email}</div>}
+          </div>
+          <span style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+            <button onClick={() => setLangSheetOpen(true)} title={t('language.title')} style={{ width: 36, height: 36, borderRadius: 10, background: 'var(--press)', border: '1px solid var(--hairline)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0, WebkitTapHighlightColor: 'transparent' }}>🌐</button>
+            <button onClick={() => loadProfile(true)} disabled={refreshing || isLoading} title={t('profile.refreshProfile')} style={{ width: 36, height: 36, background: 'var(--press)', border: '1px solid var(--hairline)', borderRadius: 10, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)', opacity: (refreshing || isLoading) ? 0.4 : 1, transition: 'opacity 0.15s', flexShrink: 0, WebkitTapHighlightColor: 'transparent' }}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" style={{ animation: (refreshing || isLoading) ? 'pf-spin 0.8s linear infinite' : 'none' }}>
+                <path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+              </svg>
+            </button>
+          </span>
         </div>
       </div>
 
