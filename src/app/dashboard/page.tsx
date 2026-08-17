@@ -21,6 +21,7 @@ import { useTradingSettings } from '@/lib/useTradingSettings';
 import { computeBestConfig, type BestConfigResult } from '@/lib/bestConfig';
 import { isAiSignalUnlocked } from '@/lib/aiSignalAccess';
 import { isFastReversalUnlocked, getFastReversalExpiry, getFastReversalEntry, FAST_REVERSAL_CONTACT_EMAIL } from '@/lib/fastReversalAccess';
+import { isBlitz5sUnlocked, getBlitz5sExpiry } from '@/lib/blitz5sAccess';
 import { getAiSignalEntry } from '@/lib/aiSignalAccess';
 import { sessionBeacon } from '@/lib/sessionBeacon';
 import { getRealAccessAt } from '@/lib/realAccess';
@@ -1702,6 +1703,9 @@ export default function DashboardPage() {
   const [aiUnlocked,  setAiUnlocked]  = useState(false);
   const [frUnlocked,  setFrUnlocked]  = useState(false);
   const [frExpiry,    setFrExpiry]    = useState<number|null>(null);
+  // ── Kunci mode 5st (BLITZ 5 detik) — fitur berbayar (Rp 85rb / 30 hari) ──
+  const [blitz5sUnlocked, setBlitz5sUnlocked] = useState(false);
+  const [blitz5sExpiry,   setBlitz5sExpiry]   = useState<number|null>(null);
 
   // Pemberitahuan aktivasi fitur berbayar — muncul SEKALI per kejadian.
   // Kunci penanda memuat stempel waktu, jadi perpanjangan memunculkannya lagi.
@@ -1794,14 +1798,16 @@ export default function DashboardPage() {
           const mail = await storage.get(SESSION_KEYS.EMAIL);
           if (!cancelled) { setMeId(uid ?? ''); setMeEmail(mail ?? ''); }
         } catch { /* identitas opsional */ }
-        const [ok, real, frOk, frExp] = await Promise.all([
+        const [ok, real, frOk, frExp, b5, b5Exp] = await Promise.all([
           isAiSignalUnlocked(uid), hasRealAccess(uid),
           isFastReversalUnlocked(uid), getFastReversalExpiry(uid),
+          isBlitz5sUnlocked(uid), getBlitz5sExpiry(uid),
         ]);
         if (!cancelled) {
           setAiUnlocked(ok); setAiCheckDone(true);
           setRealAccess(real); setRealCheckDone(true);
           setFrUnlocked(frOk); setFrExpiry(frExp); setFrCheckDone(true);
+          setBlitz5sUnlocked(b5); setBlitz5sExpiry(b5Exp);
         }
       } catch {
         if (!cancelled) { setAiCheckDone(true); setRealCheckDone(true); setFrCheckDone(true); } // gagal cek → terkunci (default aman)
@@ -2770,6 +2776,8 @@ export default function DashboardPage() {
     // sesinya berjalan sebagai FTT dan pengguna mengira pembalikan aktif
     // padahal tidak. Ditolak terang-terangan.
     if(tradingMode==='fastreversal' && !frUnlocked){ setFrLockOpen(true); return; }
+    // 5st berbayar: toggle aktif tapi akses belum/terkunci → arahkan ke aktivasi
+    if(tradingMode==='fastrade' && blitz5s && !blitz5sUnlocked){ router.push('/aktivasi-5st'); return; }
     if(tradingMode==='fastreversal' && reversalSteps.filter(k=>k>=1&&k<=10).length===0){
       setError('Fast Reversal butuh minimal satu langkah K yang dibalik. Isi K di pengaturan sebelum memulai.');
       return;
@@ -2846,7 +2854,7 @@ export default function DashboardPage() {
         await api.fastradeStart({
           mode:tradingMode==='ctc'?'CTC':'FTT',
           reversalSteps: tradingMode==='fastreversal' ? reversalSteps.filter(k=>k>=1&&k<=10) : undefined,
-          blitz: tradingMode==='fastrade' ? blitz5s : undefined,
+          blitz: (tradingMode==='fastrade' && blitz5s && blitz5sUnlocked) ? true : undefined,
           asset:{ric:selectedRic,name:selectedAsset?.name??selectedRic,profitRate:selectedAsset?.profitRate,iconUrl:selectedAsset?.iconUrl},
           martingale:{isEnabled:martingale.enabled,maxSteps:martingale.maxStep,baseAmount:amount*100,multiplierValue:martingale.multiplier,multiplierType:'FIXED',isAlwaysSignal:martingale.alwaysSignal??false},
           isDemoAccount:isDemo,currency:CURR_UNIT,currencyIso:CURR_UNIT,
@@ -3085,6 +3093,7 @@ export default function DashboardPage() {
       martingale={martingale} onMartingaleChange={setMartingale}
       ftTf={ftTf} onFtTfChange={setFtTf}
       blitz5s={blitz5s} onBlitz5sChange={setBlitz5s}
+      blitz5sLocked={!blitz5sUnlocked} blitz5sExpiry={blitz5sExpiry} onActivate5st={()=>router.push('/aktivasi-5st')}
       reversalSteps={reversalSteps} onReversalStepsChange={setReversalSteps} frExpiry={frExpiry}
       stopLoss={stopLoss} onSlChange={setStopLoss}
       stopProfit={stopProfit} onSpChange={setStopProfit}

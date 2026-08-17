@@ -9,6 +9,7 @@ import { checkIsAdmin, checkIsSuperAdmin } from '@/lib/supabaseRepository';
 import { ui } from '@/lib/uiText';
 import { getAiSignalAllowlist, setAiSignalAllowlist } from '@/lib/aiSignalAccess';
 import { getFastReversalMap, saveFastReversalMap, frExpiryFromNow, FR_DURATION_DAYS, type FrAccessMap } from '@/lib/fastReversalAccess';
+import { getBlitz5sMap, saveBlitz5sMap, blitz5sExpiryFromNow, BLITZ5S_DURATION_DAYS, type Blitz5sAccessMap } from '@/lib/blitz5sAccess';
 import { getMaintenance, setMaintenance } from '@/lib/maintenanceConfig';
 import { LanguageProvider, useLanguage, formatCurrency, formatDate, Language } from '@/lib';
 import { applyLanguageFromCountry } from '@/lib/LanguageContext';
@@ -867,6 +868,199 @@ const FastReversalManager: React.FC<{ open: boolean; onClose: () => void }> = ({
   );
 };
 
+const Blitz5sManager: React.FC<{ open: boolean; onClose: () => void }> = ({ open, onClose }) => {
+  const [users, setUsers]         = useState<AiWlUser[]>([]);
+  const [access, setAccess]       = useState<Blitz5sAccessMap>({});
+  const [loading, setLoading]     = useState(false);
+  const [query, setQuery]         = useState('');
+  const [view, setView]           = useState<'all' | 'on' | 'soon' | 'off'>('all');
+  const [saving, setSaving]       = useState(false);
+  const [dirty, setDirty]         = useState(false);
+  const [result, setResult]       = useState<{ ok: boolean; text: string } | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    setResult(null); setDirty(false); setQuery('');
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    setLoading(true);
+    Promise.all([api.admin.listWhitelist(), getBlitz5sMap()])
+      .then(([rows, map]: [any[], Blitz5sAccessMap]) => {
+        const mapped: AiWlUser[] = (rows ?? [])
+          .map((r: any) => ({
+            userId: String(r.user_id ?? r.userId ?? '').trim(),
+            name:   (r.name ?? '').trim() || undefined,
+            email:  String(r.email ?? '').toLowerCase().trim() || undefined,
+          }))
+          .filter((u: AiWlUser) => !!u.userId);
+        setUsers(mapped);
+        setAccess(map ?? {});
+      })
+      .catch(() => { setUsers([]); setResult({ ok: false, text: 'Gagal memuat daftar user.' }); })
+      .finally(() => setLoading(false));
+    return () => { document.body.style.overflow = prev; };
+  }, [open]);
+
+  if (!open) return null;
+
+  const now = Date.now();
+  const isActive = (uid: string) => (access[uid] ?? 0) > now;
+  const activeCount = Object.values(access).filter(ts => ts > now).length;
+  const daysLeft = (uid: string) => Math.max(0, Math.ceil(((access[uid] ?? 0) - now) / 86_400_000));
+
+  const q = query.trim().toLowerCase();
+  // Berbeda dari AI Signal, akses di sini punya MASA BERLAKU — jadi tapisnya
+  // ikut dimensi itu: yang segera habis paling butuh perhatian admin.
+  const filtered = (q
+    ? users.filter(u => u.userId.includes(q) || (u.name ?? '').toLowerCase().includes(q) || (u.email ?? '').includes(q))
+    : users)
+    .filter(u => {
+      if (view === 'all') return true;
+      if (view === 'on')  return isActive(u.userId);
+      if (view === 'soon') return isActive(u.userId) && daysLeft(u.userId) <= 7;
+      return !isActive(u.userId);
+    })
+    .slice()
+    // Aktif dulu, dan di antara yang aktif: yang paling cepat habis di atas.
+    .sort((a, b) => {
+      const ea = access[a.userId] ?? 0, eb = access[b.userId] ?? 0;
+      if (ea > now && eb > now) return ea - eb;
+      return Number(eb > now) - Number(ea > now);
+    });
+
+  const soonCount = users.filter(u => isActive(u.userId) && daysLeft(u.userId) <= 7).length;
+
+  // Perpanjang 30 hari untuk SEMUA yang sedang terlihat — pekerjaan rutin admin
+  // tiap awal bulan yang sebelumnya harus diklik satu per satu.
+  const extendVisible = () => {
+    setAccess(prev => {
+      const next = { ...prev };
+      filtered.forEach(u => { next[u.userId] = blitz5sExpiryFromNow(); });
+      return next;
+    });
+    setDirty(true); setResult(null);
+  };
+
+  // Toggle: aktifkan → 30 hari dari sekarang; matikan → hapus. Aktivasi ulang
+  // atas user yang sudah aktif me-reset masa berlaku ke 30 hari lagi.
+  const toggle = (uid: string) => {
+    setAccess(prev => {
+      const next = { ...prev };
+      if ((next[uid] ?? 0) > Date.now()) delete next[uid];
+      else next[uid] = blitz5sExpiryFromNow();
+      return next;
+    });
+    setDirty(true); setResult(null);
+  };
+
+  const handleSave = async () => {
+    if (saving) return;
+    setSaving(true); setResult(null);
+    try {
+      await saveBlitz5sMap(access);
+      setDirty(false);
+      setResult({ ok: true, text: `Tersimpan — ${activeCount} user aktif 5st.` });
+    } catch (e: any) {
+      setResult({ ok: false, text: e?.message || 'Gagal menyimpan.' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="pf-root" style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 16px' }}>
+      <div onClick={saving ? undefined : onClose} style={{ position: 'absolute', inset: 0, background: 'var(--backdrop)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', animation: 'pf-bd-in 0.2s ease' }} />
+      <div style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: 430, animation: 'pf-pop 0.28s cubic-bezier(0.32,0.72,0,1)' }}>
+        <div style={{ background: 'var(--modal)', border: '1px solid var(--modal-hair)', borderRadius: 22, overflow: 'hidden', boxShadow: '0 24px 60px rgba(0,0,0,0.35)' }}>
+          {/* Header */}
+          <div style={{ padding: '20px 22px', borderBottom: '1px solid var(--hairline)', display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ width: 38, height: 38, borderRadius: 11, background: 'linear-gradient(135deg,#38BDF8,#0284C7)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            </div>
+            <div style={{ flex: 1 }}>
+              <p style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-1)', letterSpacing: -0.3 }}>Aktivasi 5st</p>
+              <p style={{ fontSize: 12, color: 'var(--text-3)' }}>{activeCount} user aktif · {BLITZ5S_DURATION_DAYS} hari · Rp 85rb</p>
+            </div>
+            <button onClick={saving ? undefined : onClose} style={{ width: 30, height: 30, borderRadius: '50%', background: 'var(--press)', border: 'none', cursor: saving ? 'default' : 'pointer', color: 'var(--text-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+
+          <div style={{ padding: '16px 22px 18px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Cari User ID / nama / email…"
+              style={{ width: '100%', boxSizing: 'border-box', background: 'var(--input-bg)', border: '1px solid var(--border)', borderRadius: 12, padding: '11px 14px', fontSize: 14, color: 'var(--text-1)', fontFamily: 'inherit', outline: 'none' }}
+            />
+
+            {/* Tapis masa berlaku + perpanjang massal */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+              {([['all','Semua',users.length],['on','Aktif',activeCount],['soon','≤7 hari',soonCount],['off','Belum',users.length-activeCount]] as const).map(([v,label,n]) => (
+                <button key={v} className="k-chip" aria-pressed={view===v} onClick={() => setView(v as any)}>
+                  {label} <b style={{ fontWeight: 700 }}>{n}</b>
+                </button>
+              ))}
+              <span style={{ flex: 1 }} />
+              <button className="k-chip" onClick={extendVisible} disabled={filtered.length === 0}>
+                Perpanjang {filtered.length} × 30 hari
+              </button>
+            </div>
+
+
+            <div style={{ maxHeight: '46vh', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {loading && <p style={{ fontSize: 13, color: 'var(--text-3)', textAlign: 'center', padding: '18px 0' }}>Memuat…</p>}
+              {!loading && filtered.length === 0 && (
+                <p style={{ fontSize: 13, color: 'var(--text-3)', textAlign: 'center', padding: '18px 0' }}>
+                  {users.length === 0 ? 'Tidak ada user whitelist ber-User ID.' : 'Tidak ada yang cocok.'}
+                </p>
+              )}
+              {!loading && filtered.map((u) => {
+                const on = isActive(u.userId);
+                return (
+                  <button key={u.userId} onClick={() => toggle(u.userId)} style={{
+                    display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 12,
+                    cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit',
+                    background: on ? 'rgba(225,29,72,0.12)' : 'var(--input-bg)',
+                    border: `1px solid ${on ? 'rgba(225,29,72,0.5)' : 'var(--border)'}`,
+                  }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-1)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{u.name || u.userId}</p>
+                      <p style={{ fontSize: 11, color: 'var(--text-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>ID: {u.userId}{u.email ? ` · ${u.email}` : ''}</p>
+                    </div>
+                    {on && (
+                      <span style={{ fontSize: 10.5, fontWeight: 700, color: '#E11D48', background: 'rgba(225,29,72,0.12)', border: '1px solid rgba(225,29,72,0.35)', borderRadius: 7, padding: '2px 7px', flexShrink: 0, whiteSpace: 'nowrap' }}>{daysLeft(u.userId)}h</span>
+                    )}
+                    <div style={{ width: 40, height: 23, borderRadius: 99, flexShrink: 0, position: 'relative', transition: 'background 0.15s', background: on ? '#E11D48' : 'var(--press)', border: '1px solid var(--border)' }}>
+                      <div style={{ position: 'absolute', top: 2, left: on ? 19 : 2, width: 17, height: 17, borderRadius: '50%', background: '#fff', transition: 'left 0.15s', boxShadow: '0 1px 3px rgba(0,0,0,0.3)' }} />
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {result && (
+              <p style={{ fontSize: 12, fontWeight: 600, color: result.ok ? '#E11D48' : '#F87171' }}>{result.text}</p>
+            )}
+
+            <button onClick={handleSave} disabled={!dirty || saving} style={{
+              width: '100%', padding: '13px 0', borderRadius: 13, border: 'none', cursor: (!dirty || saving) ? 'default' : 'pointer',
+              fontSize: 14, fontWeight: 700, fontFamily: 'inherit',
+              background: (!dirty || saving) ? 'var(--press)' : 'linear-gradient(135deg,#38BDF8,#0284C7)',
+              color: (!dirty || saving) ? 'var(--text-3)' : '#fff',
+            }}>
+              {saving ? 'Menyimpan…' : 'Simpan Perubahan'}
+            </button>
+            <p style={{ fontSize: 11, color: 'var(--text-3)', lineHeight: 1.5 }}>
+              User aktif bisa memakai mode Fast Reversal dan otomatis boleh trading di akun REAL.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // ─────────────────────────────────────────────
 // MODE PEMELIHARAAN (super admin) — saat aktif, pengguna biasa melihat layar
 // "sedang diperbaiki" dan tidak bisa memakai aplikasi. Super admin dikecualikan.
@@ -1322,6 +1516,7 @@ function ProfilePageContent() {
   const [aiMgrOpen, setAiMgrOpen]             = useState(false);
   const [realMgrOpen, setRealMgrOpen]         = useState(false);
   const [frMgrOpen, setFrMgrOpen]             = useState(false);
+  const [blitz5sMgrOpen, setBlitz5sMgrOpen]   = useState(false);
   const [maintMgrOpen, setMaintMgrOpen]       = useState(false);
   const [realActive, setRealActive]           = useState(false);
   const [logoutSplash, setLogoutSplash]       = useState(false);
@@ -1783,6 +1978,13 @@ function ProfilePageContent() {
                   last={!isSuperAdminUser}
                 />
                 <TappableRow
+                  icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>}
+                  iconBg="linear-gradient(135deg,#38BDF8,#0284C7)"
+                  label="Aktivasi 5st"
+                  onClick={() => setBlitz5sMgrOpen(true)}
+                  last={!isSuperAdminUser}
+                />
+                <TappableRow
                   icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>}
                   iconBg="linear-gradient(135deg,#10b981,#059669)"
                   label="Aktivasi Mode REAL"
@@ -1961,6 +2163,13 @@ function ProfilePageContent() {
                   last={!isSuperAdminUser}
                 />
                 <TappableRow
+                  icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>}
+                  iconBg="linear-gradient(135deg,#38BDF8,#0284C7)"
+                  label="Aktivasi 5st"
+                  onClick={() => setBlitz5sMgrOpen(true)}
+                  last={!isSuperAdminUser}
+                />
+                <TappableRow
                   icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>}
                   iconBg="linear-gradient(135deg,#10b981,#059669)"
                   label="Aktivasi Mode REAL"
@@ -2043,6 +2252,7 @@ function ProfilePageContent() {
       <EmailComposer open={emailOpen} onClose={() => setEmailOpen(false)} />
       <AiSignalManager open={aiMgrOpen} onClose={() => setAiMgrOpen(false)} />
       <FastReversalManager open={frMgrOpen} onClose={() => setFrMgrOpen(false)} />
+      <Blitz5sManager open={blitz5sMgrOpen} onClose={() => setBlitz5sMgrOpen(false)} />
       <RealActivationManager open={realMgrOpen} onClose={() => setRealMgrOpen(false)} />
       <MaintenanceManager open={maintMgrOpen} onClose={() => setMaintMgrOpen(false)} />
     </div>

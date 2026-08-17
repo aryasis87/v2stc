@@ -13,7 +13,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { AlertCircle, ArrowRight, BarChart, Check, ChevronDown, ChevronUp,
          Clock, Copy, Radio, RefreshCw, Settings, X, BarChart2, Info,
-         Zap, Wallet, Waves, TrendingUp, TrendingDown } from 'lucide-react';
+         Zap, Wallet, Waves, TrendingUp, TrendingDown, Lock } from 'lucide-react';
 import { ui } from '@/lib/uiText';
 import { useDarkMode } from '@/lib/DarkModeContext';
 import { computeBestConfig, type BestConfigResult } from '@/lib/bestConfig';
@@ -313,6 +313,7 @@ export const SettingsCard: React.FC<{
   martingale:MartingaleConfig; onMartingaleChange:(c:MartingaleConfig)=>void;
   ftTf:FastTradeTimeframe; onFtTfChange:(v:FastTradeTimeframe)=>void;
   blitz5s:boolean; onBlitz5sChange:(v:boolean)=>void;
+  blitz5sLocked?:boolean; blitz5sExpiry?:number|null; onActivate5st?:()=>void;
   reversalSteps:number[]; onReversalStepsChange:(v:number[])=>void; frExpiry?:number|null;
   stopLoss:number; onSlChange:(v:number)=>void;
   stopProfit:number; onSpChange:(v:number)=>void;
@@ -324,7 +325,7 @@ export const SettingsCard: React.FC<{
   momentumPatterns:{candleSabit:boolean;dojiTerjepit:boolean;dojiPembatalan:boolean;bbSarBreak:boolean};
   onMomentumPatternsChange:(p:any)=>void;
   disabled?:boolean;
-}> = ({mode,assets,assetRic,onAssetChange,isDemo,onDemoChange,duration,onDurationChange,amount,onAmountChange,martingale,onMartingaleChange,ftTf,onFtTfChange,blitz5s,onBlitz5sChange,reversalSteps,onReversalStepsChange,frExpiry,stopLoss,onSlChange,stopProfit,onSpChange,indicatorType,onIndicatorTypeChange,indicatorPeriod,onIndicatorPeriodChange,indicatorSensitivity,onSensitivityChange,rsiOverbought,onOverboughtChange,rsiOversold,onOversoldChange,momentumPatterns,onMomentumPatternsChange,disabled}) => {
+}> = ({mode,assets,assetRic,onAssetChange,isDemo,onDemoChange,duration,onDurationChange,amount,onAmountChange,martingale,onMartingaleChange,ftTf,onFtTfChange,blitz5s,onBlitz5sChange,blitz5sLocked,blitz5sExpiry,onActivate5st,reversalSteps,onReversalStepsChange,frExpiry,stopLoss,onSlChange,stopProfit,onSpChange,indicatorType,onIndicatorTypeChange,indicatorPeriod,onIndicatorPeriodChange,indicatorSensitivity,onSensitivityChange,rsiOverbought,onOverboughtChange,rsiOversold,onOversoldChange,momentumPatterns,onMomentumPatternsChange,disabled}) => {
   // Dibaca DI SINI, tiap render — jangan dipindah ke tingkat modul.
   const C = rt.C;
   const T = rt.T;
@@ -492,16 +493,22 @@ export const SettingsCard: React.FC<{
                 </div>
               </div>
               {mode==='ctc'&&<div style={{ marginTop:8,padding:'9px 12px',borderRadius:10,background:'rgba(191,90,242,0.07)',border:'1px solid rgba(191,90,242,0.2)',display:'flex',gap:8 }}><Copy style={{ width:13,height:13,color:C.violet,flexShrink:0,marginTop:1 }}/><p style={{ fontSize:10,color:C.muted,lineHeight:1.5 }}>{T('dashboard.settings.ctcInfo')}</p></div>}
-              {/* 5st — eksekusi order BLITZ 5 detik (khusus FTT) */}
+              {/* 5st — eksekusi order BLITZ 5 detik (khusus FTT; fitur berbayar Rp 85rb / 30 hari) */}
               {mode==='fastrade'&&(
-                <button disabled={disabled} onClick={()=>onBlitz5sChange(!blitz5s)} style={{ marginTop:8,width:'100%',display:'flex',alignItems:'center',justifyContent:'space-between',gap:10,padding:'10px 12px',borderRadius:10,background:C.card2,border:`1px solid ${blitz5s?C.cyan:C.bdr}`,cursor:disabled?'not-allowed':'pointer' }}>
+                <button disabled={disabled} onClick={()=>{ if(blitz5sLocked){ onActivate5st?.(); return; } onBlitz5sChange(!blitz5s); }} style={{ marginTop:8,width:'100%',display:'flex',alignItems:'center',justifyContent:'space-between',gap:10,padding:'10px 12px',borderRadius:10,background:C.card2,border:`1px solid ${(blitz5s&&!blitz5sLocked)?C.cyan:C.bdr}`,cursor:disabled?'not-allowed':'pointer' }}>
                   <span style={{ display:'flex',flexDirection:'column',gap:2,textAlign:'left',minWidth:0 }}>
-                    <span style={{ fontSize:12,fontWeight:600,color:C.text }}>5st · Eksekusi 5 detik</span>
-                    <span style={{ fontSize:10,color:C.muted,lineHeight:1.4 }}>Order blitz keluar hasil dalam 5 detik. Sinyal tetap baca 2 candle (FTT).</span>
+                    <span style={{ fontSize:12,fontWeight:600,color:C.text,display:'flex',alignItems:'center',gap:5 }}>5st · Eksekusi 5 detik{blitz5sLocked&&<Lock style={{ width:11,height:11,color:C.muted }}/>}</span>
+                    <span style={{ fontSize:10,color:C.muted,lineHeight:1.4 }}>
+                      {blitz5sLocked
+                        ? 'Fitur premium — aktivasi Rp 85.000 / 30 hari. Ketuk untuk aktivasi.'
+                        : (blitz5sExpiry ? `Aktif · sisa ${Math.max(0,Math.ceil((blitz5sExpiry-Date.now())/86_400_000))} hari. Order blitz keluar hasil 5 detik (sinyal FTT).` : 'Order blitz keluar hasil dalam 5 detik. Sinyal tetap baca 2 candle (FTT).')}
+                    </span>
                   </span>
-                  <div style={{ width:38,height:22,borderRadius:99,flexShrink:0,background:blitz5s?C.cyan:C.bdr,position:'relative',transition:'background 0.15s' }}>
-                    <div style={{ position:'absolute',top:2,left:blitz5s?18:2,width:18,height:18,borderRadius:'50%',background:'#fff',transition:'left 0.15s',boxShadow:'0 1px 3px rgba(0,0,0,0.2)' }}/>
-                  </div>
+                  {blitz5sLocked
+                    ? <span style={{ fontSize:10,fontWeight:700,color:C.cyan,background:`${C.cyan}14`,border:`1px solid ${C.cyan}30`,borderRadius:8,padding:'4px 8px',whiteSpace:'nowrap',flexShrink:0 }}>Rp 85rb</span>
+                    : <div style={{ width:38,height:22,borderRadius:99,flexShrink:0,background:blitz5s?C.cyan:C.bdr,position:'relative',transition:'background 0.15s' }}>
+                        <div style={{ position:'absolute',top:2,left:blitz5s?18:2,width:18,height:18,borderRadius:'50%',background:'#fff',transition:'left 0.15s',boxShadow:'0 1px 3px rgba(0,0,0,0.2)' }}/>
+                      </div>}
                 </button>
               )}
             </div>
