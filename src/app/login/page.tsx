@@ -474,7 +474,7 @@ function LoginPageContent() {
   const [splash,   setSplash]   = useState<SplashPhase>('hidden');
   const [showLangSelector, setShowLangSelector] = useState(false);
   const [useImg, setUseImg] = useState(false);
-  const [whatsappUrl] = useState('mailto:supportstockity@gmail.com');
+  const [supportUrl] = useState('mailto:supportstockity@gmail.com');
   const [errorKey, setErrorKey] = useState(0); // increment to re-trigger shake
 
   const [toast, setToast] = useState<{ visible: boolean; message: string; hiding: boolean }>({
@@ -1108,7 +1108,7 @@ function LoginPageContent() {
                       <p className="err-txt">{error}</p>
                       {isWhitelistError && (
                         <a
-                          href={whatsappUrl}
+                          href={supportUrl}
                           target="_blank"
                           rel="noopener noreferrer"
                           style={{ fontSize: 11.5, color: 'var(--accent-light)', fontWeight: 600, marginTop: 5, display: 'inline-flex', alignItems: 'center', gap: 4, textDecoration: 'none' }}

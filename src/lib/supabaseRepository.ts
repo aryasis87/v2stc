@@ -75,8 +75,8 @@ export interface RegistrationConfig {
   maxRetries?: number;
   lockDuration?: number;
   maintenance?: boolean;
-  /** UI field: WhatsApp help URL */
-  whatsappHelpUrl?: string;
+  /** UI field: URL/email bantuan (support) */
+  helpUrl?: string;
   /** UI field: Kode referral/afiliasi Stockity untuk register inline (cookie `a`) */
   stockityReferral?: string;
   /** UI field: last updated timestamp (numeric ms) */
@@ -365,7 +365,7 @@ export async function getRegistrationConfig(): Promise<RegistrationConfig> {
     maxRetries:              3,
     lockDuration:            24,
     maintenance:             false,
-    whatsappHelpUrl:         '',
+    helpUrl:                 '',
     stockityReferral:        '',
     updatedAt:               0,
   };
@@ -379,7 +379,7 @@ export async function getRegistrationConfig(): Promise<RegistrationConfig> {
       maxRetries:             v.maxRetries      ?? 3,
       lockDuration:           v.lockDuration    ?? 24,
       maintenance:            v.maintenance     ?? false,
-      whatsappHelpUrl:        v.whatsappHelpUrl  ?? '',
+      helpUrl:                v.helpUrl ?? v.whatsappHelpUrl ?? '',
       stockityReferral:       v.stockityReferral ?? '',
       updatedAt:       data.updated_at
         ? new Date(data.updated_at).getTime()

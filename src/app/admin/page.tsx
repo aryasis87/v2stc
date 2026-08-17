@@ -434,24 +434,24 @@ const ImportDialog: React.FC<{ onClose: () => void; onImport: (json: string) => 
 
 // ─── URL Edit Dialog ──────────────────────────────────────────────────────────
 const UrlDialog: React.FC<{
-  field: 'whatsappHelpUrl' | 'stockityReferral';
+  field: 'helpUrl' | 'stockityReferral';
   currentValue: string; onClose: () => void; onSave: (v: string) => void; loading: boolean;
 }> = ({ field, currentValue, onClose, onSave, loading }) => {
   const [val, setVal] = useState(currentValue);
-  const isWa  = field === 'whatsappHelpUrl';
-  const isRef = field === 'stockityReferral';
+  const isHelp = field === 'helpUrl';
+  const isRef  = field === 'stockityReferral';
 
-  const color   = isRef ? 'text-violet-500'  : isWa ? 'text-emerald-500' : 'text-blue-500';
-  const bgColor = isRef ? 'bg-violet-100'     : isWa ? 'bg-emerald-100'   : 'bg-blue-100';
+  const color   = isRef ? 'text-violet-500'  : isHelp ? 'text-emerald-500' : 'text-blue-500';
+  const bgColor = isRef ? 'bg-violet-100'     : isHelp ? 'bg-emerald-100'   : 'bg-blue-100';
   const btnBg   = isRef ? 'bg-violet-500 hover:bg-violet-600'
-                : isWa  ? 'bg-emerald-500 hover:bg-emerald-600'
+                : isHelp ? 'bg-emerald-500 hover:bg-emerald-600'
                 :         'bg-blue-500 hover:bg-blue-600';
-  const icon    = isRef ? Icon.userPlus('w-5 h-5') : isWa ? Icon.phone('w-5 h-5') : Icon.link('w-5 h-5');
-  const title   = isRef ? 'Kode Referral Stockity' : isWa ? 'WhatsApp URL' : 'Registration URL';
+  const icon    = isRef ? Icon.userPlus('w-5 h-5') : isHelp ? Icon.link('w-5 h-5') : Icon.link('w-5 h-5');
+  const title   = isRef ? 'Kode Referral Stockity' : isHelp ? 'Email Bantuan' : 'Registration URL';
   const placeholder = isRef
     ? '8620c08b51a6'
-    : isWa
-    ? 'https://wa.me/628...'
+    : isHelp
+    ? 'mailto:supportstockity@gmail.com'
     : 'https://stockity1.id/id?a=...#auth';
 
   return (
@@ -1261,7 +1261,7 @@ export default function AdminPage() {
   const [allUsers,   setAllUsers]   = useState<WhitelistUser[]>([]);
   const [admins,     setAdmins]     = useState<AdminUser[]>([]);
   const [stats,      setStats]      = useState({ total: 0, active: 0, inactive: 0, recent: 0, recentAdded: 0 });
-  const [regConfig,  setRegConfig]  = useState<RegistrationConfig>({ whatsappHelpUrl: '', updatedAt: 0 });
+  const [regConfig,  setRegConfig]  = useState<RegistrationConfig>({ helpUrl: '', updatedAt: 0 });
 
   // UI
   const [isLoading,   setIsLoading]   = useState(true);
@@ -1381,7 +1381,7 @@ export default function AdminPage() {
       await api.admin.setPeriod(email, days);
       await loadData(currentEmail, isSuperAdmin);
     }, days > 0 ? `Masa aktif diset ${days} hari ✓` : 'Diset permanen ✓');
-  const handleUpdateUrl = (field: 'whatsappHelpUrl' | 'stockityReferral', val: string) =>
+  const handleUpdateUrl = (field: 'helpUrl' | 'stockityReferral', val: string) =>
     act(async () => {
       await updateRegistrationConfig(field, val.trim());
       setReferralOpen(false);

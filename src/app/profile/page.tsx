@@ -2054,9 +2054,9 @@ function ProfilePageContent() {
 // ─────────────────────────────────────────────
 
 /**
- * Tombol bantuan: mengarah ke tautan bantuan yang diatur admin
- * (app_config → whatsappHelpUrl). Keterangan kecil di bawahnya memberi tahu
- * bahwa layanan tersedia sepanjang waktu, agar pengguna tidak ragu menghubungi.
+ * Tombol bantuan: mengarah ke email support (supportstockity@gmail.com).
+ * Keterangan kecil di bawahnya memberi tahu bahwa layanan tersedia sepanjang
+ * waktu, agar pengguna tidak ragu menghubungi.
  */
 const HelpButton: React.FC<{ lang: string }> = ({ lang }) => {
   const [url, setUrl] = useState<string>('');
