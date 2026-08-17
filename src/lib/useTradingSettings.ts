@@ -45,6 +45,7 @@ export interface TradingSettings {
   amount:               number;
   martingale:           MartingaleConfig;
   ftTf:                 FastTradeTimeframe;
+  blitz5s:              boolean;    // Mode 5st: eksekusi order BLITZ 5 detik (FTT)
   reversalSteps:        number[];   // Fast Reversal: langkah K yang arahnya dibalik (maks 3)
   stopLoss:             number;
   stopProfit:           number;
@@ -66,6 +67,7 @@ const DEFAULTS: TradingSettings = {
   amount:               0,
   martingale:           { enabled: false, maxStep: 3, multiplier: 2.5, alwaysSignal: false },
   ftTf:                 '1m',
+  blitz5s:              false,
   reversalSteps:        [],
   stopLoss:             0,
   stopProfit:           0,

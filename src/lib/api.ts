@@ -281,6 +281,8 @@ export interface FastradeLog {
 export interface StartFastradePayload {
   /** Fast Reversal: langkah K yang arahnya dibalik. Kosong/undefined = FTT biasa. */
   reversalSteps?: number[];
+  /** Mode 5st: eksekusi order BLITZ 5 detik (mode tetap 'FTT'). */
+  blitz?: boolean;
   mode: 'FTT' | 'CTC';
   asset: { ric: string; name: string; profitRate?: number; iconUrl?: string | null };
   martingale: {

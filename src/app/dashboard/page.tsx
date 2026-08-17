@@ -2003,6 +2003,7 @@ export default function DashboardPage() {
   const amount               = _s.amount;
   const martingale           = _s.martingale;
   const ftTf                 = _s.ftTf;
+  const blitz5s              = _s.blitz5s ?? false;
   const reversalSteps        = _s.reversalSteps ?? [];
   const stopLoss             = _s.stopLoss;
   const stopProfit           = _s.stopProfit;
@@ -2020,6 +2021,7 @@ export default function DashboardPage() {
   const setAmount               = (v: number)                                    => _upd('amount', v);
   const setMartingale           = (v: MartingaleConfig)                          => _upd('martingale', v);
   const setFtTf                 = (v: FastTradeTimeframe)                        => _upd('ftTf', v);
+  const setBlitz5s              = (v: boolean)                                    => _upd('blitz5s', v);
   const setReversalSteps        = (v: number[])                                  => _upd('reversalSteps', v);
   const setStopLoss             = (v: number)                                    => _upd('stopLoss', v);
   const setStopProfit           = (v: number)                                    => _upd('stopProfit', v);
@@ -2844,6 +2846,7 @@ export default function DashboardPage() {
         await api.fastradeStart({
           mode:tradingMode==='ctc'?'CTC':'FTT',
           reversalSteps: tradingMode==='fastreversal' ? reversalSteps.filter(k=>k>=1&&k<=10) : undefined,
+          blitz: tradingMode==='fastrade' ? blitz5s : undefined,
           asset:{ric:selectedRic,name:selectedAsset?.name??selectedRic,profitRate:selectedAsset?.profitRate,iconUrl:selectedAsset?.iconUrl},
           martingale:{isEnabled:martingale.enabled,maxSteps:martingale.maxStep,baseAmount:amount*100,multiplierValue:martingale.multiplier,multiplierType:'FIXED',isAlwaysSignal:martingale.alwaysSignal??false},
           isDemoAccount:isDemo,currency:CURR_UNIT,currencyIso:CURR_UNIT,
@@ -3081,6 +3084,7 @@ export default function DashboardPage() {
       amount={amount} onAmountChange={setAmount}
       martingale={martingale} onMartingaleChange={setMartingale}
       ftTf={ftTf} onFtTfChange={setFtTf}
+      blitz5s={blitz5s} onBlitz5sChange={setBlitz5s}
       reversalSteps={reversalSteps} onReversalStepsChange={setReversalSteps} frExpiry={frExpiry}
       stopLoss={stopLoss} onSlChange={setStopLoss}
       stopProfit={stopProfit} onSpChange={setStopProfit}
