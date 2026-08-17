@@ -1281,7 +1281,6 @@ export default function AdminPage() {
   const [chatOpen,      setChatOpen]      = useState(false);
   const [reactReqOpen,  setReactReqOpen]  = useState(false);
   const [statsFilter,   setStatsFilter]   = useState<StatsFilter | null>(null);
-  const [waUrlOpen,     setWaUrlOpen]     = useState(false);
   const [referralOpen,  setReferralOpen]  = useState(false);
 
   // Debounce search
@@ -1385,8 +1384,7 @@ export default function AdminPage() {
   const handleUpdateUrl = (field: 'whatsappHelpUrl' | 'stockityReferral', val: string) =>
     act(async () => {
       await updateRegistrationConfig(field, val.trim());
-      if (field === 'whatsappHelpUrl') setWaUrlOpen(false);
-      else                             setReferralOpen(false);
+      setReferralOpen(false);
     }, field === 'stockityReferral' ? 'Kode referral diupdate ✓' : 'URL diupdate ✓');
 
   const handleExport = (fmt: 'json' | 'csv') => {
@@ -1512,18 +1510,6 @@ export default function AdminPage() {
         {/* ── CONFIG CARDS (Super Admin) ────────────────────────────────── */}
         {isSuperAdmin && (
           <div className="space-y-2 anim-fade">
-            <div className="bg-white rounded-2xl border border-slate-200 p-4 flex items-center gap-3 shadow-sm">
-              <div className="w-9 h-9 rounded-xl bg-emerald-100 flex items-center justify-center flex-shrink-0">
-                <span className="text-emerald-500">{Icon.phone('w-4 h-4')}</span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-slate-800">WhatsApp Bantuan</p>
-                <p className="text-xs text-emerald-600 truncate">{regConfig.whatsappHelpUrl || '—'}</p>
-              </div>
-              <button onClick={() => setWaUrlOpen(true)} className="py-1.5 px-3 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-semibold hover:bg-emerald-100 transition-colors flex-shrink-0">
-                Edit
-              </button>
-            </div>
             <div className="bg-white rounded-2xl border border-slate-200 p-4 flex items-center gap-3 shadow-sm">
               <div className="w-9 h-9 rounded-xl bg-violet-100 flex items-center justify-center flex-shrink-0">
                 <span className="text-violet-500">{Icon.userPlus('w-4 h-4')}</span>
@@ -1695,7 +1681,6 @@ export default function AdminPage() {
           onEdit={u => { setStatsFilter(null); setEditUser(u); }}
         />
       )}
-      {waUrlOpen  && <UrlDialog field="whatsappHelpUrl" currentValue={regConfig.whatsappHelpUrl ?? ''} onClose={() => setWaUrlOpen(false)} onSave={v => handleUpdateUrl('whatsappHelpUrl', v)} loading={isActing} />}
       {referralOpen && <UrlDialog field="stockityReferral" currentValue={regConfig.stockityReferral ?? ''} onClose={() => setReferralOpen(false)} onSave={v => handleUpdateUrl('stockityReferral', v)} loading={isActing} />}
     </div>
   );

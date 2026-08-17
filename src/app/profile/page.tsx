@@ -2064,12 +2064,7 @@ const HelpButton: React.FC<{ lang: string }> = ({ lang }) => {
   useEffect(() => {
     let alive = true;
     (async () => {
-      try {
-        const { getRegistrationConfig } = await import('@/lib/supabaseRepository');
-        const cfg = await getRegistrationConfig();
-        const u = (cfg?.whatsappHelpUrl ?? '').trim();
-        if (alive && u) setUrl(u);
-      } catch { /* tanpa tautan, tombol tidak ditampilkan */ }
+      if (alive) setUrl('mailto:supportstockity@gmail.com');
     })();
     return () => { alive = false; };
   }, []);

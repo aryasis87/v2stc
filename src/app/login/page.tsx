@@ -8,7 +8,7 @@ import { api } from '@/lib/api';
 import { loginToStockity, createSession, lastSessionError, getKnownDeviceId } from '@/lib/engine/stockityAuth';
 import { storage, isSessionValid, SESSION_KEYS } from '@/lib/storage';
 import { ui } from '@/lib/uiText';
-import { updateLastLogin, getRegistrationConfig } from '@/lib/supabaseRepository';
+import { updateLastLogin } from '@/lib/supabaseRepository';
 import { LanguageProvider, useLanguage, AVAILABLE_LANGUAGES, COUNTRY_ENTRIES, Language, isWindows } from '@/lib';
 
 type SplashPhase = 'hidden' | 'welcome' | 'verified' | 'out';
@@ -474,7 +474,7 @@ function LoginPageContent() {
   const [splash,   setSplash]   = useState<SplashPhase>('hidden');
   const [showLangSelector, setShowLangSelector] = useState(false);
   const [useImg, setUseImg] = useState(false);
-  const [whatsappUrl, setWhatsappUrl] = useState('https://wa.me/6285959860015');
+  const [whatsappUrl] = useState('mailto:supportstockity@gmail.com');
   const [errorKey, setErrorKey] = useState(0); // increment to re-trigger shake
 
   const [toast, setToast] = useState<{ visible: boolean; message: string; hiding: boolean }>({
@@ -508,12 +508,7 @@ function LoginPageContent() {
         setTimeout(() => { if (!savedEmail) emailRef.current?.focus(); }, 500);
       }
 
-      try {
-        const config = await getRegistrationConfig();
-        if (config.whatsappHelpUrl?.trim()) {
-          setWhatsappUrl(config.whatsappHelpUrl.trim());
-        }
-      } catch { /* gunakan default */ }
+      /* link dukungan sekarang = email supportstockity@gmail.com (tak lagi dari config) */
 
       if (typeof window !== 'undefined') {
         const registerSuccess = sessionStorage.getItem('stc_register_success');
