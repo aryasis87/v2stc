@@ -3295,7 +3295,7 @@ export default function DashboardPage() {
         )}
         <ActivationNoticeModal open={pemberitahuan !== null} onClose={()=>setPemberitahuan(null)} at={pemberitahuan?.at ?? 0} expiresAt={pemberitahuan?.sampai ?? null} featureLabel={pemberitahuan?.label ?? ''}/>
         <AiLockedModal open={aiLockOpen} onClose={()=>setAiLockOpen(false)} lang={language} onActivate={()=>{ setAiLockOpen(false); router.push('/aktivasi-aisignal'); }}/>
-        <FrLockedModal open={frLockOpen} onClose={()=>setFrLockOpen(false)} lang={language} onActivate={()=>{ setFrLockOpen(false); window.open(`https://wa.me/?text=${encodeURIComponent('Halo admin, saya ingin mengaktifkan mode Fast Reversal.')}`,'_blank','noopener,noreferrer'); }}/>
+        <FrLockedModal open={frLockOpen} onClose={()=>setFrLockOpen(false)} lang={language} onActivate={()=>{ setFrLockOpen(false); window.location.href = `mailto:${FAST_REVERSAL_CONTACT_EMAIL}?subject=${encodeURIComponent('Aktivasi Fast Reversal')}&body=${encodeURIComponent('Halo admin, saya ingin mengaktifkan mode Fast Reversal.')}`; }}/>
         <RealLockedModal
           open={realLockOpen}
           reason={realLockReason}
