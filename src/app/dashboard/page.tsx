@@ -1710,6 +1710,7 @@ export default function DashboardPage() {
   const [frExpiry,    setFrExpiry]    = useState<number|null>(null);
   // ── Kunci mode 5st (BLITZ 5 detik) — fitur berbayar (Rp 85rb / 30 hari) ──
   const [blitz5sUnlocked, setBlitz5sUnlocked] = useState(false);
+  const [blitz5sCheckDone, setBlitz5sCheckDone] = useState(false);
   const [blitz5sExpiry,   setBlitz5sExpiry]   = useState<number|null>(null);
 
   // Pemberitahuan aktivasi fitur berbayar — muncul SEKALI per kejadian.
@@ -1813,10 +1814,10 @@ export default function DashboardPage() {
           setAiUnlocked(ok); setAiCheckDone(true);
           setRealAccess(real); setRealCheckDone(true);
           setFrUnlocked(frOk); setFrExpiry(frExp); setFrCheckDone(true);
-          setBlitz5sUnlocked(b5); setBlitz5sExpiry(b5Exp);
+          setBlitz5sUnlocked(b5); setBlitz5sExpiry(b5Exp); setBlitz5sCheckDone(true);
         }
       } catch {
-        if (!cancelled) { setAiCheckDone(true); setRealCheckDone(true); setFrCheckDone(true); } // gagal cek → terkunci (default aman)
+        if (!cancelled) { setAiCheckDone(true); setRealCheckDone(true); setFrCheckDone(true); setBlitz5sCheckDone(true); } // gagal cek → terkunci (default aman)
       }
     })();
     // Flag 'stc_from_login' di-set halaman login/register tepat sebelum redirect —
@@ -2661,6 +2662,13 @@ export default function DashboardPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settingsLoaded, frCheckDone, frUnlocked]);
 
+  // 5st BERBAYAR: mode tersimpan 'blitz5s' utk user belum aktivasi → balik ke 'schedule'.
+  useEffect(() => {
+    if (!settingsLoaded || !blitz5sCheckDone || blitz5sUnlocked) return;
+    if (tradingMode === 'blitz5s' && !isFtRunning) setTradingMode('schedule');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [settingsLoaded, blitz5sCheckDone, blitz5sUnlocked]);
+
   const handleModeChange = (m:TradingMode)=>{
     // Mode AI Signal terkunci per akun — aktivasi via support
     if (m === 'aisignal' && !aiUnlocked) { setAiLockOpen(true); return; }
@@ -2786,7 +2794,7 @@ export default function DashboardPage() {
     // padahal tidak. Ditolak terang-terangan.
     if(tradingMode==='fastreversal' && !frUnlocked){ setFrLockOpen(true); return; }
     // 5st berbayar: toggle aktif tapi akses belum/terkunci → arahkan ke aktivasi
-    if(tradingMode==='fastrade' && blitz5s && !blitz5sUnlocked){ router.push('/aktivasi-5st'); return; }
+    if((tradingMode==='blitz5s' || (tradingMode==='fastrade' && blitz5s)) && !blitz5sUnlocked){ router.push('/aktivasi-5st'); return; }
     if(tradingMode==='fastreversal' && reversalSteps.filter(k=>k>=1&&k<=10).length===0){
       setError('Fast Reversal butuh minimal satu langkah K yang dibalik. Isi K di pengaturan sebelum memulai.');
       return;
