@@ -32,7 +32,10 @@ const KUNCI = 'stc_admin_entitlement';
  *  supaya pencabutan hak admin tetap berlaku dalam sehari. */
 const UMUR_MS = 24 * 60 * 60 * 1000;
 
-let diMemori: Promise<boolean> | null = null;
+// Cache DI-KUNCI per user-id. Dulu hanya Promise<boolean> tanpa uid → hasil admin
+// akun lama BOCOR ke akun baru saat ganti akun tanpa reload (semua mode berbayar
+// jadi terbuka). Sekarang menyimpan uid pemiliknya agar bisa diperiksa ulang.
+let diMemori: { uid: string; p: Promise<boolean> } | null = null;
 
 async function idPengguna(): Promise<string> {
   try {
@@ -43,17 +46,16 @@ async function idPengguna(): Promise<string> {
   }
 }
 
-async function periksa(): Promise<boolean> {
-  const uid = await idPengguna();
-
-  // 1) Jawaban tersimpan di perangkat — dipakai bila masih untuk pengguna yang
-  //    sama dan belum kedaluwarsa.
+async function periksa(uid: string): Promise<boolean> {
+  // 1) Jawaban tersimpan di perangkat — dipakai HANYA bila untuk pengguna yang
+  //    sama (uid TIDAK kosong) dan belum kedaluwarsa. `uid &&` mencegah entri
+  //    lama beruid-kosong cocok untuk semua orang.
   try {
     const mod = await import('./storage');
     const raw = await mod.storage.get(KUNCI);
     if (raw) {
       const c = JSON.parse(raw);
-      if (c && c.uid === uid && Date.now() - Number(c.at) < UMUR_MS) {
+      if (c && uid && c.uid === uid && Date.now() - Number(c.at) < UMUR_MS) {
         return c.admin === true;
       }
     }
@@ -68,18 +70,29 @@ async function periksa(): Promise<boolean> {
     admin = false; // gagal cek → tidak berhak (default aman)
   }
 
-  try {
-    const mod = await import('./storage');
-    await mod.storage.set(KUNCI, JSON.stringify({ uid, admin, at: Date.now() }));
-  } catch { /* gagal menyimpan hanya berarti ditanya lagi nanti */ }
+  // Simpan HANYA bila uid diketahui. Menyimpan di bawah uid kosong akan cocok
+  // untuk SEMUA pengguna berikutnya → membocorkan hak admin (akar bug "semua
+  // mode berbayar terbuka untuk user belum bayar").
+  if (uid) {
+    try {
+      const mod = await import('./storage');
+      await mod.storage.set(KUNCI, JSON.stringify({ uid, admin, at: Date.now() }));
+    } catch { /* gagal menyimpan hanya berarti ditanya lagi nanti */ }
+  }
 
   return admin;
 }
 
-/** Apakah pengguna saat ini admin atau super admin. Gagal cek → false (aman). */
+/** Apakah pengguna saat ini admin atau super admin. Gagal cek / uid kosong → false
+ *  (aman). Memo di-kunci per uid: ganti akun (bahkan tanpa reload) memicu cek ulang,
+ *  jadi hak admin akun lama tidak bocor ke akun baru. */
 export function isPrivilegedUser(): Promise<boolean> {
-  if (!diMemori) diMemori = periksa();
-  return diMemori;
+  return (async () => {
+    const uid = await idPengguna();
+    if (!uid) return false; // belum teridentifikasi → jangan beri hak apa pun
+    if (!diMemori || diMemori.uid !== uid) diMemori = { uid, p: periksa(uid) };
+    return diMemori.p;
+  })();
 }
 
 /** Buang cache — dipanggil saat logout supaya sesi berikutnya memeriksa ulang. */
