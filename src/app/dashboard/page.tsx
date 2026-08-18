@@ -1373,10 +1373,11 @@ const ADVICE_STR: Record<string, { title: string; body1: string; body2: string; 
 const CapitalAdviceModal: React.FC<{ open: boolean; onClose: () => void; lang: string; minAmount: number; currUnit: string }> = ({ open, onClose, lang, minAmount, currUnit }) => {
   if (!open) return null;
   const S = ADVICE_STR[lang] ?? ADVICE_STR.en;
-  // Rekomendasi ≈ 34,3× order minimum sehingga untuk IDR (minimum 14.000)
-  // hasilnya tepat Rp 480.000 — buffer yang lolos beberapa siklus martingale.
+  // Rekomendasi modal awal = Rp 1.200.000 (patokan IDR, order minimum 14.000).
   // Mata uang lain ikut menyesuaikan proporsional terhadap order minimumnya.
-  const rec = Math.round(Math.max(minAmount, 1) * 34.2857);
+  // (Sebelumnya ≈34,3× = Rp 480.000; dinaikkan 2026-08-18.)
+  const REC_IDR = 1_200_000, MIN_IDR = 14_000;
+  const rec = Math.round(Math.max(minAmount, 1) * (REC_IDR / MIN_IDR));
   const recLabel = `${currUnit} ${Math.round(rec).toLocaleString('id-ID')}`;
   return (
     <div style={{position:'fixed',inset:0,zIndex:80,display:'flex',alignItems:'center',justifyContent:'center',padding:'16px',animation:'fade-in 0.15s ease'}}>
