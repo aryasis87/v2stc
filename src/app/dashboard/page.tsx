@@ -2555,18 +2555,18 @@ export default function DashboardPage() {
 
   const blockedModes: TradingMode[] = (()=>{
     const b: TradingMode[] = [];
-    if(isSchedRunning||isSchedPaused){b.push('fastrade','ctc','aisignal','indicator','momentum');}
+    if(isSchedRunning||isSchedPaused){b.push('fastrade','blitz5s','ctc','aisignal','indicator','momentum');}
     if(isFtRunning&&ftStatus?.mode==='FTT'){b.push('schedule','ctc','aisignal','indicator','momentum');}
-    if(isFtRunning&&ftStatus?.mode==='CTC'){b.push('schedule','fastrade','aisignal','indicator','momentum');}
-    if(isAIRunning){b.push('schedule','fastrade','ctc','indicator','momentum');}
-    if(isIndRunning){b.push('schedule','fastrade','ctc','aisignal','momentum');}
-    if(isMomRunning){b.push('schedule','fastrade','ctc','aisignal','indicator');}
+    if(isFtRunning&&ftStatus?.mode==='CTC'){b.push('schedule','fastrade','blitz5s','aisignal','indicator','momentum');}
+    if(isAIRunning){b.push('schedule','fastrade','blitz5s','ctc','indicator','momentum');}
+    if(isIndRunning){b.push('schedule','fastrade','blitz5s','ctc','aisignal','momentum');}
+    if(isMomRunning){b.push('schedule','fastrade','blitz5s','ctc','aisignal','indicator');}
     return b.filter((v,i,a)=>a.indexOf(v)===i);
   })();
 
   const isActiveMode = (()=>{
     if(tradingMode==='schedule') return isSchedRunning||isSchedPaused;
-    if(tradingMode==='fastrade'||tradingMode==='ctc') return isFtRunning;
+    if(tradingMode==='fastrade'||tradingMode==='ctc'||tradingMode==='blitz5s') return isFtRunning;
     if(tradingMode==='aisignal') return isAIRunning;
     if(tradingMode==='indicator') return isIndRunning;
     if(tradingMode==='momentum') return isMomRunning;
@@ -2582,7 +2582,7 @@ export default function DashboardPage() {
 
   const sessionPnL = (()=>{
     if(tradingMode==='schedule') return (scheduleStatus as any)?.sessionPnL??0;
-    if(tradingMode==='fastrade'||tradingMode==='ctc') return ftStatus?.sessionPnL??0;
+    if(tradingMode==='fastrade'||tradingMode==='ctc'||tradingMode==='blitz5s') return ftStatus?.sessionPnL??0;
     if(tradingMode==='aisignal') return aiStatus?.sessionPnL??0;
     if(tradingMode==='indicator') return indicatorStatus?.sessionPnL??0;
     if(tradingMode==='momentum') return momentumStatus?.sessionPnL??0;
@@ -2595,7 +2595,7 @@ export default function DashboardPage() {
   useEffect(() => {
     sessionBeacon.publish({
       running: isAnyModeRunning,
-      modeLabel: {schedule:'Signal',fastrade:'Fastrade FTT',ctc:'Fastrade CTC',aisignal:'AI Signal',indicator:'Indicator',momentum:'Momentum'}[tradingMode] ?? 'Sesi',
+      modeLabel: {schedule:'Signal',fastrade:'Fastrade FTT',blitz5s:'5st · Blitz 5 Detik',ctc:'Fastrade CTC',aisignal:'AI Signal',indicator:'Indicator',momentum:'Momentum'}[tradingMode] ?? 'Sesi',
       pnlCents: sessionPnL,
       currencyUnit: currencyConfig.currencyUnit,
     });
@@ -2667,10 +2667,7 @@ export default function DashboardPage() {
     if (m === 'fastreversal' && !frUnlocked) { setFrLockOpen(true); return; }
     // 5st = kartu penemuan: belum aktivasi → portal; sudah aktivasi → jalankan
     // sebagai Fastrade FTT dengan toggle 5st menyala (eksekusi blitz 5 detik).
-    if (m === 'blitz5s') {
-      if (!blitz5sUnlocked) { router.push('/aktivasi-5st'); return; }
-      setTradingMode('fastrade'); setBlitz5s(true); setError(null); return;
-    }
+    if (m === 'blitz5s' && !blitz5sUnlocked) { router.push('/aktivasi-5st'); return; }
     // Izinkan ganti pilihan mode kapan saja (proteksi start ada di handleStart)
     if(m!==tradingMode) setTradingMode(m);
     setError(null);
@@ -2797,7 +2794,7 @@ export default function DashboardPage() {
     // Cegah start jika ada mode LAIN yang sedang berjalan (hanya 1 mode boleh aktif)
     const otherRunning = (
       (tradingMode!=='schedule'&&(isSchedRunning||isSchedPaused))||
-      ((tradingMode!=='fastrade'&&tradingMode!=='ctc'&&tradingMode!=='fastreversal')&&isFtRunning)||
+      ((tradingMode!=='fastrade'&&tradingMode!=='ctc'&&tradingMode!=='fastreversal'&&tradingMode!=='blitz5s')&&isFtRunning)||
       (tradingMode!=='aisignal'&&isAIRunning)||
       (tradingMode!=='indicator'&&isIndRunning)||
       (tradingMode!=='momentum'&&isMomRunning)
@@ -2847,7 +2844,7 @@ export default function DashboardPage() {
             ? { ...baseCfg, reversalSteps: reversalSteps.filter(k=>k>=1&&k<=10) }
           : baseCfg;
         await deviceSession.startMode({
-          mode: tradingMode as 'fastrade'|'ctc'|'fastreversal'|'aisignal'|'indicator'|'momentum',
+          mode: (tradingMode==='blitz5s'?'fastrade':tradingMode) as 'fastrade'|'ctc'|'fastreversal'|'aisignal'|'indicator'|'momentum',
           config: cfg,
           callbacks: {
             onLog: (log:any)=>{
@@ -2860,13 +2857,13 @@ export default function DashboardPage() {
           },
         });
         setDeviceEngineOn(true);
-      } else if(tradingMode==='fastrade'||tradingMode==='ctc'||tradingMode==='fastreversal'){
+      } else if(tradingMode==='fastrade'||tradingMode==='ctc'||tradingMode==='fastreversal'||tradingMode==='blitz5s'){
         // Fast Reversal dieksekusi server-side sebagai FTT + reversalSteps —
         // backend memakai mode 'FTT'; pembedanya HANYA daftar langkah itu.
         await api.fastradeStart({
           mode:tradingMode==='ctc'?'CTC':'FTT',
           reversalSteps: tradingMode==='fastreversal' ? reversalSteps.filter(k=>k>=1&&k<=10) : undefined,
-          blitz: (tradingMode==='fastrade' && blitz5s && blitz5sUnlocked) ? true : undefined,
+          blitz: (((tradingMode==='fastrade' && blitz5s) || tradingMode==='blitz5s') && blitz5sUnlocked) ? true : undefined,
           asset:{ric:selectedRic,name:selectedAsset?.name??selectedRic,profitRate:selectedAsset?.profitRate,iconUrl:selectedAsset?.iconUrl},
           martingale:{isEnabled:martingale.enabled,maxSteps:martingale.maxStep,baseAmount:amount*100,multiplierValue:martingale.multiplier,multiplierType:'FIXED',isAlwaysSignal:martingale.alwaysSignal??false},
           isDemoAccount:isDemo,currency:CURR_UNIT,currencyIso:CURR_UNIT,
@@ -2933,7 +2930,7 @@ export default function DashboardPage() {
         if(isSchedRunning||isSchedPaused) await api.scheduleStop();
         else if(tradingMode==='schedule') await api.scheduleStop();
       }
-      if(tradingMode==='fastrade'||tradingMode==='ctc') await api.fastradeStop();
+      if(tradingMode==='fastrade'||tradingMode==='ctc'||tradingMode==='blitz5s') await api.fastradeStop();
       else if(isFtRunning) await api.fastradeStop();
       if(tradingMode==='aisignal') await api.aiSignalStop();
       else if(isAIRunning) await api.aiSignalStop();
@@ -3354,7 +3351,7 @@ export default function DashboardPage() {
               <div>
                 <h1 style={{fontSize:26,fontWeight:700,color:C.text,letterSpacing:'-0.02em',lineHeight:1.1,marginBottom:6}}>Dashboard</h1>
                 <p style={{fontSize:13,color:C.muted}}>
-                  {({schedule:'Signal Mode',fastrade:'Fastrade FTT',ctc:'Fastrade CTC',aisignal:'AI Signal',indicator:'Indicator',momentum:'Momentum'} as Record<string,string>)[tradingMode]}
+                  {({schedule:'Signal Mode',fastrade:'Fastrade FTT',blitz5s:'5st · Blitz 5 Detik',ctc:'Fastrade CTC',aisignal:'AI Signal',indicator:'Indicator',momentum:'Momentum'} as Record<string,string>)[tradingMode]}
                 </p>
               </div>
               <div style={{display:'flex',alignItems:'center',gap:10}}>
@@ -3425,13 +3422,13 @@ export default function DashboardPage() {
                   <span className="dsh-label">{T('dashboard.mode')}</span>
                   <div style={{position:'relative'}}>
                     <span style={{color:isActiveMode?modeAccent(tradingMode):C.muted}}>
-                      {{schedule:<Calendar style={{width:15,height:15}}/>,fastrade:<Zap style={{width:15,height:15}}/>,ctc:<Copy style={{width:15,height:15}}/>,aisignal:<Radio style={{width:15,height:15}}/>,indicator:<BarChart style={{width:15,height:15}}/>,momentum:<Waves style={{width:15,height:15}}/>}[tradingMode]}
+                      {{schedule:<Calendar style={{width:15,height:15}}/>,fastrade:<Zap style={{width:15,height:15}}/>,blitz5s:<Zap style={{width:15,height:15}}/>,ctc:<Copy style={{width:15,height:15}}/>,aisignal:<Radio style={{width:15,height:15}}/>,indicator:<BarChart style={{width:15,height:15}}/>,momentum:<Waves style={{width:15,height:15}}/>}[tradingMode]}
                     </span>
                     {isActiveMode&&<span style={{position:'absolute',top:-3,right:-3,width:7,height:7,borderRadius:'50%',background:modeAccent(tradingMode),animation:'ping 1.6s ease-in-out infinite'}}/>}
                   </div>
                 </div>
                 <p style={{fontSize:22,fontWeight:650,color:C.text,lineHeight:1.15,letterSpacing:'-0.02em',marginBottom:4,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
-                  {{schedule:'Signal',fastrade:'Fastrade FTT',ctc:'CTC',aisignal:'AI Signal',indicator:'Indicator',momentum:'Momentum'}[tradingMode]}
+                  {{schedule:'Signal',fastrade:'Fastrade FTT',blitz5s:'5st · Blitz 5 Detik',ctc:'CTC',aisignal:'AI Signal',indicator:'Indicator',momentum:'Momentum'}[tradingMode]}
                 </p>
                 <p style={{fontSize:12,display:'flex',alignItems:'center',gap:6,color:isActiveMode?modeAccent(tradingMode):C.muted,fontWeight:isActiveMode?600:400}}>
                   <span style={{width:6,height:6,borderRadius:'50%',background:isActiveMode?modeAccent(tradingMode):C.muted,opacity:isActiveMode?1:0.5}}/>
@@ -3547,7 +3544,7 @@ export default function DashboardPage() {
                           }
                         : {
                             label:T('dashboard.mode'), icon:<Radio style={{width:14,height:14}}/>,
-                            value:({schedule:'Signal Mode',fastrade:'Fastrade FTT Mode',ctc:'Fastrade CTC',aisignal:'AI Signal Mode',indicator:'Analysis Strategy Mode',momentum:'Momentum Mode'} as Record<string,string>)[tradingMode],
+                            value:({schedule:'Signal Mode',fastrade:'Fastrade FTT Mode',blitz5s:'5st · Blitz 5 Detik',ctc:'Fastrade CTC',aisignal:'AI Signal Mode',indicator:'Analysis Strategy Mode',momentum:'Momentum Mode'} as Record<string,string>)[tradingMode],
                             col:ac,
                           },
                     ];
@@ -3669,13 +3666,13 @@ export default function DashboardPage() {
                   <span className="dsh-label">{T('dashboard.mode')}</span>
                   <div style={{position:'relative',flexShrink:0}}>
                     <span style={{color:isActiveMode?modeAccent(tradingMode):C.muted}}>
-                      {{schedule:<Calendar style={{width:14,height:14}}/>,fastrade:<Zap style={{width:14,height:14}}/>,ctc:<Copy style={{width:14,height:14}}/>,aisignal:<Radio style={{width:14,height:14}}/>,indicator:<BarChart style={{width:14,height:14}}/>,momentum:<Waves style={{width:14,height:14}}/>}[tradingMode]}
+                      {{schedule:<Calendar style={{width:14,height:14}}/>,fastrade:<Zap style={{width:14,height:14}}/>,blitz5s:<Zap style={{width:14,height:14}}/>,ctc:<Copy style={{width:14,height:14}}/>,aisignal:<Radio style={{width:14,height:14}}/>,indicator:<BarChart style={{width:14,height:14}}/>,momentum:<Waves style={{width:14,height:14}}/>}[tradingMode]}
                     </span>
                     {isActiveMode&&<span style={{position:'absolute',top:-3,right:-3,width:6,height:6,borderRadius:'50%',background:modeAccent(tradingMode),animation:'ping 1.6s ease-in-out infinite'}}/>}
                   </div>
                 </div>
                 <p style={{fontSize:16,fontWeight:650,color:C.text,lineHeight:1.15,letterSpacing:'-0.01em',marginBottom:3,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>
-                  {{schedule:'Signal',fastrade:'Fastrade FTT',ctc:'Fastrade CTC',aisignal:'AI Signal',indicator:'Indicator',momentum:'Momentum'}[tradingMode]}
+                  {{schedule:'Signal',fastrade:'Fastrade FTT',blitz5s:'5st · Blitz 5 Detik',ctc:'Fastrade CTC',aisignal:'AI Signal',indicator:'Indicator',momentum:'Momentum'}[tradingMode]}
                 </p>
                 <p style={{fontSize:11,display:'flex',alignItems:'center',gap:5,color:isActiveMode?modeAccent(tradingMode):C.muted,fontWeight:isActiveMode?600:400}}>
                   <span style={{width:5,height:5,borderRadius:'50%',background:isActiveMode?modeAccent(tradingMode):C.muted,opacity:isActiveMode?1:0.5}}/>
@@ -3751,7 +3748,7 @@ export default function DashboardPage() {
                         ?{label:T('dashboard.modePicker.running'),icon:<Zap style={{width:13,height:13}}/>,value:`K${asStep}/${martingale.maxStep}`,col:C.amber}
                         :nextT
                         ?{label:T('dashboard.schedule.nextSignal'),icon:<Timer style={{width:13,height:13}}/>,value:`${nextT}${nextS!=null?' · '+nextS+'s':''}`,col:ac}
-                        :{label:T('dashboard.mode'),icon:<Radio style={{width:13,height:13}}/>,value:({schedule:'Signal Mode',fastrade:'Fastrade FTT Mode',ctc:'Fastrade CTC',aisignal:'AI Signal Mode',indicator:'Analysis Strategy Mode',momentum:'Momentum Mode'} as Record<string,string>)[tradingMode],col:ac},
+                        :{label:T('dashboard.mode'),icon:<Radio style={{width:13,height:13}}/>,value:({schedule:'Signal Mode',fastrade:'Fastrade FTT Mode',blitz5s:'5st · Blitz 5 Detik',ctc:'Fastrade CTC',aisignal:'AI Signal Mode',indicator:'Analysis Strategy Mode',momentum:'Momentum Mode'} as Record<string,string>)[tradingMode],col:ac},
                     ];
                     return statCards.map((s,i)=>(
                       <div key={i} className="ds-card dsh-tile-sm">
@@ -3905,7 +3902,7 @@ export default function DashboardPage() {
                     <div style={{display:'flex',alignItems:'center',gap:6,minWidth:0}}>
                       <span style={{width:6,height:6,borderRadius:'50%',background:modeAccent(tradingMode),animation:'pulse 1.6s ease-in-out infinite',flexShrink:0}}/>
                       <span style={{fontSize:11,fontWeight:600,color:modeAccent(tradingMode),whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>
-                        {{schedule:'Signal Mode',fastrade:'Fastrade FTT',ctc:'Fastrade CTC',aisignal:'AI Signal Mode',indicator:'Analysis Strategy Mode',momentum:'Momentum Mode'}[tradingMode]}
+                        {{schedule:'Signal Mode',fastrade:'Fastrade FTT',blitz5s:'5st · Blitz 5 Detik',ctc:'Fastrade CTC',aisignal:'AI Signal Mode',indicator:'Analysis Strategy Mode',momentum:'Momentum Mode'}[tradingMode]}
                       </span>
                     </div>
                     <Lock style={{width:11,height:11,color:modeAccent(tradingMode),opacity:0.7,flexShrink:0}}/>

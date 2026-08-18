@@ -398,7 +398,7 @@ export const SettingsCard: React.FC<{
   const isNewMode = mode==='aisignal'||mode==='indicator'||mode==='momentum';
   // Nama mode dibuat RINGKAS agar muat satu baris pada label pengaturan
   // (dulu mis. "Fastrade FTT Mode" terlalu panjang & terpotong tak rapi).
-  const modeLabel = mode==='aisignal'?'AI Signal':mode==='indicator'?'Indicator':mode==='momentum'?'Momentum':mode==='ctc'?'Fastrade CTC':mode==='fastrade'?'Fastrade FTT':'Signal';
+  const modeLabel = mode==='aisignal'?'AI Signal':mode==='indicator'?'Indicator':mode==='momentum'?'Momentum':mode==='ctc'?'Fastrade CTC':mode==='blitz5s'?'5st · Blitz 5 Detik':mode==='fastrade'?'Fastrade FTT':'Signal';
   const acctCol = isDemo ? C.amber : C.cyan;
 
   return (
@@ -471,7 +471,11 @@ export const SettingsCard: React.FC<{
                 </button>
                 {/* Durasi / Timeframe */}
                 <div style={{ flex:'0 0 auto',minWidth:0 }}>
-                  {!isNewMode&&(mode==='fastrade'
+                  {!isNewMode&&(mode==='blitz5s'
+                    ?<div style={{ height:44,borderRadius:12,display:'flex',alignItems:'center',gap:6,padding:'0 10px',background:C.faint,border:`1px solid ${C.bdr}`,minWidth:0 }}>
+                       <Clock style={{ width:13,height:13,color:C.sky }}/><span style={{ fontSize:11,fontWeight:700,color:C.sky,whiteSpace:'nowrap' }}>5 Detik ⚡</span>
+                     </div>
+                    :mode==='fastrade'
                     ?<button disabled={disabled} onClick={()=>setPickerOpen('ftTf')} style={{ width:'100%',height:44,borderRadius:12,cursor:'pointer',display:'flex',alignItems:'center',gap:6,padding:'0 10px',background:C.card2,border:`1px solid ${C.bdr}`,minWidth:0 }}>
                        <Clock style={{ width:13,height:13,color:C.muted,flexShrink:0 }}/><span style={{ fontSize:11,fontWeight:600,color:C.text,flex:1,textAlign:'left',whiteSpace:'nowrap' }}>{FT_TF.find(t=>t.value===ftTf)?.label||''}</span><ChevronDown style={{ width:12,height:12,color:C.muted,flexShrink:0 }}/>
                      </button>
