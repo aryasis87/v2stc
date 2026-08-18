@@ -1018,7 +1018,7 @@ const MobileSessionSheet: React.FC<{
         </div>
         {/* content */}
         <div style={{flex:1,overflowY:'auto',display:'flex',flexDirection:'column',background:C.bg,WebkitOverflowScrolling:'touch' as any,minHeight:0}}>
-          {(mode==='fastrade'||mode==='ctc')&&(
+          {(mode==='fastrade'||mode==='ctc'||mode==='blitz5s')&&(
             <FastradePanel status={ftStatus} logs={ftLogs} isLoading={false} fillHeight={false} inModal={true}/>
           )}
           {mode==='aisignal'&&(
@@ -1542,7 +1542,7 @@ const ModeSessionPanel: React.FC<{
             inModal
           />
         )}
-        {(mode === 'fastrade' || mode === 'ctc') && (
+        {(mode === 'fastrade' || mode === 'ctc' || mode === 'blitz5s') && (
           <FastradePanel status={ftStatus} logs={ftLogs} isLoading={ftLoading} fillHeight={fillHeight} inModal />
         )}
         {mode === 'aisignal' && (

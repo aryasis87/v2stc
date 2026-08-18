@@ -157,7 +157,7 @@ export const ControlCard: React.FC<{
           {/* ── Always Signal badge ── */}
           {(()=>{
             const schAS = mode==='schedule'&&(scheduleStatus as any)?.alwaysSignalActive;
-            const ftAS  = (mode==='fastrade'||mode==='ctc')&&(ftStatus as any)?.alwaysSignalActive;
+            const ftAS  = (mode==='fastrade'||mode==='ctc'||mode==='blitz5s')&&(ftStatus as any)?.alwaysSignalActive;
             const aiAS  = mode==='aisignal'&&aiStatus?.alwaysSignalStatus?.isActive;
             const indAS = mode==='indicator'&&(indicatorStatus as any)?.alwaysSignalActive;
             const momAS = mode==='momentum'&&(momentumStatus as any)?.alwaysSignalActive;
