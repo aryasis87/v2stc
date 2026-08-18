@@ -69,6 +69,8 @@ let T: (k: string) => string = (k: string) => k;
 let AI_LOCKED = false;
 // Fast Reversal juga terkunci per akun, dengan MASA BERLAKU 30 hari.
 let FR_LOCKED = false;
+// Mode 5st (blitz 5 detik) — berbayar per akun, 30 hari.
+let BLITZ5S_LOCKED = false;
 
 // TradingMode kini dari ./theme (dipakai bersama berkas hasil pemecahan).
 // FastTradeTimeframe dipindah ke ./theme (dipakai bersama SettingsCard).
@@ -968,7 +970,7 @@ const MobileSessionSheet: React.FC<{
   const ac = modeAccent(mode);
   const modeLabel: Record<TradingMode,string> = {
     schedule:'Signal Mode', fastrade:'Fastrade FTT Mode', ctc:'Fastrade CTC',
-    fastreversal:'Fast Reversal',
+    fastreversal:'Fast Reversal', blitz5s:'5st · Blitz 5 Detik',
     aisignal:'AI Signal Mode', indicator:'Analysis Strategy Mode', momentum:'Momentum Mode',
   };
 
@@ -1062,6 +1064,7 @@ const ModePickerModal: React.FC<{
   const MODES = [
     { v: 'schedule'  as TradingMode, label: 'Signal Mode',           icon: <Calendar  style={{ width: 16, height: 16 }} />, accent: C.cyan,   desc: 'Manual Input Signal' },
     { v: 'fastrade'  as TradingMode, label: 'Fastrade FTT Mode',    icon: <Zap       style={{ width: 16, height: 16 }} />, accent: C.cyan,   desc: 'Fast Trade Execution' },
+    { v: 'blitz5s'   as TradingMode, label: '5st · Blitz 5 Detik',  icon: <Clock     style={{ width: 16, height: 16 }} />, accent: C.sky,    desc: BLITZ5S_LOCKED ? 'Premium · Rp 85rb — aktivasi' : 'Hasil keluar 5 detik (FTT)' },
     { v: 'ctc'       as TradingMode, label: 'Fastrade CTC',         icon: <Copy      style={{ width: 16, height: 16 }} />, accent: C.violet, desc: 'Ultra-Fast Execution' },
     { v: 'fastreversal' as TradingMode, label: 'Fast Reversal',    icon: <Repeat    style={{ width: 16, height: 16 }} />, accent: C.coral,  desc: 'FTT + Balik Arah di K Terpilih' },
     { v: 'aisignal'  as TradingMode, label: 'AI Signal Mode',       icon: <Radio     style={{ width: 16, height: 16 }} />, accent: C.sky,    desc: 'AI Signal Automation' },
@@ -1111,6 +1114,7 @@ const ModePickerModal: React.FC<{
             const isOtherRunning = locked && !isAct; // mode lain sedang berjalan
             const isAiLockedRow = v === 'aisignal' && AI_LOCKED; // fitur terkunci per akun
             const isFrLockedRow = v === 'fastreversal' && FR_LOCKED; // berbayar, 30 hari
+            const isBlitz5sLockedRow = v === 'blitz5s' && BLITZ5S_LOCKED; // berbayar, 30 hari
             const infoShown = infoOpen === v;
             return (
               <div key={v} style={{display:'flex',flexDirection:'column',gap:0}}>
@@ -1126,7 +1130,7 @@ const ModePickerModal: React.FC<{
                   borderRadius:14,cursor:'pointer',
                   background:isAct?`${accent}14`:C.card2,
                   border:`1px solid ${isAct?`${accent}45`:C.bdr}`,
-                  opacity:(isOtherRunning||isAiLockedRow||isFrLockedRow)?0.55:1,
+                  opacity:(isOtherRunning||isAiLockedRow||isFrLockedRow||isBlitz5sLockedRow)?0.55:1,
                   transition:'background 0.15s,border-color 0.15s',
                 }}
               >
@@ -1150,7 +1154,7 @@ const ModePickerModal: React.FC<{
                   </div>
                   <span style={{display:'block',fontSize:11,color:C.muted,marginTop:1}}>{desc}</span>
                 </div>
-                {(isAiLockedRow||isFrLockedRow) ? (
+                {(isAiLockedRow||isFrLockedRow||isBlitz5sLockedRow) ? (
                   <Lock style={{width:14,height:14,color:C.amber,flexShrink:0}}/>
                 ) : isAct && (
                   <Check style={{width:16,height:16,color:accent,flexShrink:0}}/>
@@ -1468,6 +1472,7 @@ const ModeSessionPanel: React.FC<{
   const MODE_LIST = [
     { v: 'schedule'  as TradingMode, label: 'Signal Mode',           icon: <Calendar  style={{ width: 12, height: 12 }} />, accent: C.cyan,   desc: 'Manual Input Signal' },
     { v: 'fastrade'  as TradingMode, label: 'Fastrade FTT Mode',    icon: <Zap       style={{ width: 12, height: 12 }} />, accent: C.cyan,   desc: 'Fast Trade Execution' },
+    { v: 'blitz5s'   as TradingMode, label: '5st · Blitz 5 Detik',  icon: <Clock     style={{ width: 12, height: 12 }} />, accent: C.sky,    desc: BLITZ5S_LOCKED ? 'Premium · Rp 85rb — aktivasi' : 'Hasil keluar 5 detik (FTT)' },
     { v: 'ctc'       as TradingMode, label: 'Fastrade CTC',         icon: <Copy      style={{ width: 12, height: 12 }} />, accent: C.violet, desc: 'Ultra-Fast Execution' },
     { v: 'fastreversal' as TradingMode, label: 'Fast Reversal',    icon: <Repeat    style={{ width: 16, height: 16 }} />, accent: C.coral,  desc: 'FTT + Balik Arah di K Terpilih' },
     { v: 'aisignal'  as TradingMode, label: 'AI Signal Mode',       icon: <Radio     style={{ width: 12, height: 12 }} />, accent: C.sky,    desc: 'AI Signal Automation' },
@@ -1787,6 +1792,7 @@ export default function DashboardPage() {
   // agar user yang punya akses tidak melihat kilatan ikon gembok.
   AI_LOCKED = aiCheckDone && !aiUnlocked;
   FR_LOCKED = frCheckDone && !frUnlocked;
+  BLITZ5S_LOCKED = !blitz5sUnlocked;
 
   useEffect(() => {
     let cancelled = false;
@@ -2659,6 +2665,12 @@ export default function DashboardPage() {
     // Mode AI Signal terkunci per akun — aktivasi via support
     if (m === 'aisignal' && !aiUnlocked) { setAiLockOpen(true); return; }
     if (m === 'fastreversal' && !frUnlocked) { setFrLockOpen(true); return; }
+    // 5st = kartu penemuan: belum aktivasi → portal; sudah aktivasi → jalankan
+    // sebagai Fastrade FTT dengan toggle 5st menyala (eksekusi blitz 5 detik).
+    if (m === 'blitz5s') {
+      if (!blitz5sUnlocked) { router.push('/aktivasi-5st'); return; }
+      setTradingMode('fastrade'); setBlitz5s(true); setError(null); return;
+    }
     // Izinkan ganti pilihan mode kapan saja (proteksi start ada di handleStart)
     if(m!==tradingMode) setTradingMode(m);
     setError(null);

@@ -19,7 +19,7 @@ import { storage } from './storage';
  * Rumahnya di sini, bukan di app/dashboard/theme.ts: src/lib TIDAK BOLEH
  * bergantung pada src/app. Dashboard yang mengimpor ke sini.
  */
-export type TradingMode = 'schedule' | 'fastrade' | 'ctc' | 'fastreversal' | 'aisignal' | 'indicator' | 'momentum';
+export type TradingMode = 'schedule' | 'fastrade' | 'ctc' | 'fastreversal' | 'blitz5s' | 'aisignal' | 'indicator' | 'momentum';
 type FastTradeTimeframe = '1m' | '5m' | '15m' | '30m' | '1h';
 type IndicatorType    = 'SMA' | 'EMA' | 'RSI';
 
