@@ -14,9 +14,10 @@
 import { storage, SESSION_KEYS } from '../storage';
 import { edgeCall } from './edgeCall';
 import type { ScheduledOrder, ScheduleConfig } from './scheduleEngine';
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../supabaseConfig';
 
-const FN_URL = `${process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''}/functions/v1/session-state`;
-const ANON   = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '';
+const FN_URL = `${SUPABASE_URL}/functions/v1/session-state`;
+const ANON   = SUPABASE_ANON_KEY;
 
 /** Jeda minimum antar penyimpanan — hindari badai tulis saat tick cepat */
 const SAVE_THROTTLE_MS = 4000;

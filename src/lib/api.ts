@@ -1,6 +1,7 @@
 // lib/api.ts  — maps to actual NestJS backend routes
 import { getAuthToken, sessionLogout, storage, SESSION_KEYS } from './storage';
 import { PAKAI_MESIN_PERANGKAT } from './runtimeMode';
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from './supabaseConfig';
 
 const getBase = () => process.env.NEXT_PUBLIC_API_URL ?? '';
 
@@ -743,8 +744,8 @@ export interface SystemStatus {
 // ── v4: pemanggil Edge Function stc-admin (pengganti /admin/* di VPS) ───────
 // Autentikasi memakai authtoken Stockity dari cache perangkat; Edge Function
 // memvalidasi ke Stockity lalu memeriksa admin_users/super_admins.
-const ADMIN_FN = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? "") + "/functions/v1/stc-admin";
-const SB_ANON  = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
+const ADMIN_FN = SUPABASE_URL + "/functions/v1/stc-admin";
+const SB_ANON  = SUPABASE_ANON_KEY;
 
 async function adminEdge(action: string, payload?: unknown): Promise<any> {
   // WEB: token Stockity TIDAK ada di klien (login web dapat JWT backend, bukan

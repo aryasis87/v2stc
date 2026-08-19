@@ -19,14 +19,15 @@
 
 import { CapacitorHttp } from '@capacitor/core';
 import { edgeCall } from './edgeCall';
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../supabaseConfig';
 
 const STOCKITY_BASE = 'https://api.stockity1.id';
 const DEFAULT_UA =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 ' +
   '(KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36';
 
-const FN_URL = `${process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''}/functions/v1/stc-auth`;
-const ANON   = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '';
+const FN_URL = `${SUPABASE_URL}/functions/v1/stc-auth`;
+const ANON   = SUPABASE_ANON_KEY;
 
 /** Ringkasan struktur respons login terakhir (untuk diagnosa, tanpa nilai rahasia) */
 export let lastLoginShape = "";

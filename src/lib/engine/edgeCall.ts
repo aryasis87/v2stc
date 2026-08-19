@@ -14,9 +14,10 @@
 // ─────────────────────────────────────────────────────────────────────
 
 import { CapacitorHttp } from '@capacitor/core';
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../supabaseConfig';
 
-const SB_URL  = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
-const SB_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '';
+const SB_URL  = SUPABASE_URL;
+const SB_ANON = SUPABASE_ANON_KEY;
 
 export interface EdgeResult<T = any> {
   ok: boolean;
