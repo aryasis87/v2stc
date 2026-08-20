@@ -61,7 +61,7 @@ const EN: IsiPanduan = {
         },
         {
           h: 'Ready to use immediately',
-          p: 'After registering you are signed in automatically and REAL mode is unlocked. Still, begin with the demo account to test your settings first.',
+          p: 'After registering you are signed in automatically. Your account starts on the DEMO account — begin there to test your settings. REAL trading is a separate one-time activation (see Access & activation).',
         },
         {
           h: 'Why only through the app',
@@ -73,7 +73,7 @@ const EN: IsiPanduan = {
       id: 'mode',
       ikon: 'Layers',
       judul: 'Choosing a mode',
-      ringkas: 'Six modes, each working differently',
+      ringkas: 'Eight modes, each working differently',
       isi: [
         {
           h: 'Signal',
@@ -88,6 +88,14 @@ const EN: IsiPanduan = {
           p: 'It reads the market the same way as FTT, but the order direction is reversed. Used when the market often turns after moving.',
         },
         {
+          h: 'Fast Reversal',
+          p: 'Reads the market like FTT, but reverses the direction only on the specific candles (K) you pick. Made for markets that tend to snap back at certain points. A paid feature, active for 30 days.',
+        },
+        {
+          h: '5st · Blitz 5 seconds',
+          p: 'A blitz order whose result lands in just 5 seconds. It still reads two candles like FTT — only the order duration is 5 seconds. Turned on as an add-on to Fastrade FTT. A paid feature (monthly).',
+        },
+        {
           h: 'AI Signal',
           p: 'The bot decides the direction itself at each minute boundary and executes immediately. You only set the amount and the stop limits.',
         },
@@ -98,6 +106,34 @@ const EN: IsiPanduan = {
         {
           h: 'Momentum',
           p: 'The bot waits for specific candle patterns to appear, such as a doji. It places the fewest orders of all modes, but the most selective ones.',
+        },
+      ],
+    },
+    {
+      id: 'akses',
+      ikon: 'KeyRound',
+      judul: 'Access & activation',
+      ringkas: 'Premium features and how to unlock them',
+      isi: [
+        {
+          h: 'REAL account — one-time Rp 150,000',
+          p: 'By default your account runs on DEMO. To unlock REAL trading, activate it on the Activate REAL page: pay Rp 150,000 once via QRIS and upload the proof. Once approved, REAL mode stays open.',
+        },
+        {
+          h: 'AI Signal — Rp 50,000 / month',
+          p: 'The AI Signal mode needs a Rp 50,000 monthly subscription. Activate it on the Activate AI Signal page.',
+        },
+        {
+          h: '5st · Blitz 5 seconds — Rp 85,000 / month',
+          p: 'The blitz order whose result lands in 5 seconds. Rp 85,000 per month via the Activate 5st page.',
+        },
+        {
+          h: 'Fast Reversal — paid (30 days)',
+          p: 'FTT with a direction flip on the candles you pick. Paid access for 30 days — activate it following the prompt shown in the app.',
+        },
+        {
+          h: 'How to pay',
+          p: 'Every activation uses QRIS. Scan or download the QRIS on the activation page, pay the exact amount, upload the proof, then wait for confirmation. Admins already have every feature unlocked.',
         },
       ],
     },
@@ -217,7 +253,7 @@ const EN: IsiPanduan = {
         },
         {
           h: 'REAL mode is locked',
-          p: 'REAL mode only opens for accounts registered through the registration page in the app. Tap Register Account on the message that appears to create one.',
+          p: 'REAL trading is a one-time paid activation. Open the Activate REAL page, pay Rp 150,000 via QRIS and upload the proof; once approved, REAL mode opens. Until then the account runs on DEMO.',
         },
         {
           h: 'Still stuck',
@@ -263,7 +299,7 @@ const ID: IsiPanduan = {
         },
         {
           h: 'Akun langsung siap dipakai',
-          p: 'Setelah pendaftaran berhasil, Anda otomatis masuk dan mode REAL terbuka. Mulailah tetap dari akun demo untuk menguji pengaturan Anda lebih dulu.',
+          p: 'Setelah pendaftaran berhasil, Anda otomatis masuk. Akun dimulai di DEMO — mulailah dari sana untuk menguji pengaturan. Trading akun REAL adalah aktivasi terpisah sekali bayar (lihat Akses & aktivasi).',
         },
         {
           h: 'Kenapa harus lewat aplikasi',
@@ -275,7 +311,7 @@ const ID: IsiPanduan = {
       id: 'mode',
       ikon: 'Layers',
       judul: 'Memilih mode',
-      ringkas: 'Enam mode, masing-masing punya cara kerja berbeda',
+      ringkas: 'Delapan mode, masing-masing punya cara kerja berbeda',
       isi: [
         {
           h: 'Signal',
@@ -290,6 +326,14 @@ const ID: IsiPanduan = {
           p: 'Cara membacanya sama dengan FTT, tetapi arah ordernya dibalik. Dipakai saat pasar sering berbalik setelah bergerak.',
         },
         {
+          h: 'Fast Reversal',
+          p: 'Membaca pasar seperti FTT, tetapi arah order dibalik hanya pada candle (K) tertentu yang Anda pilih. Dibuat untuk pasar yang cenderung berbalik di titik tertentu. Fitur berbayar, aktif 30 hari.',
+        },
+        {
+          h: '5st · Blitz 5 Detik',
+          p: 'Order blitz yang hasilnya keluar hanya dalam 5 detik. Sinyalnya tetap membaca dua candle seperti FTT — hanya durasi ordernya yang 5 detik. Diaktifkan sebagai tambahan pada Fastrade FTT. Fitur berbayar (bulanan).',
+        },
+        {
           h: 'AI Signal',
           p: 'Bot menentukan arah sendiri pada tiap pergantian menit lalu langsung mengeksekusi. Anda cukup mengatur nominal dan batas berhenti.',
         },
@@ -300,6 +344,34 @@ const ID: IsiPanduan = {
         {
           h: 'Momentum',
           p: 'Bot menunggu pola candle tertentu muncul, seperti doji atau candle sabit. Ordernya paling jarang di antara semua mode, tetapi paling terpilih.',
+        },
+      ],
+    },
+    {
+      id: 'akses',
+      ikon: 'KeyRound',
+      judul: 'Akses & aktivasi',
+      ringkas: 'Fitur premium dan cara mengaktifkannya',
+      isi: [
+        {
+          h: 'Akun REAL — sekali bayar Rp 150.000',
+          p: 'Secara bawaan akun berjalan di DEMO. Untuk membuka trading akun REAL, aktifkan di halaman Aktivasi REAL: bayar sekali Rp 150.000 lewat QRIS lalu unggah buktinya. Setelah disetujui, mode REAL terbuka.',
+        },
+        {
+          h: 'AI Signal — Rp 50.000 / bulan',
+          p: 'Mode AI Signal butuh langganan Rp 50.000 per bulan. Aktifkan di halaman Aktivasi AI Signal.',
+        },
+        {
+          h: '5st · Blitz 5 detik — Rp 85.000 / bulan',
+          p: 'Order blitz yang hasilnya keluar dalam 5 detik. Rp 85.000 per bulan lewat halaman Aktivasi 5st.',
+        },
+        {
+          h: 'Fast Reversal — berbayar (30 hari)',
+          p: 'FTT dengan pembalikan arah pada candle yang Anda pilih. Akses berbayar untuk 30 hari — aktifkan mengikuti petunjuk yang muncul di aplikasi.',
+        },
+        {
+          h: 'Cara membayar',
+          p: 'Semua aktivasi memakai QRIS. Scan atau unduh QRIS di halaman aktivasi, bayar tepat sesuai nominal, unggah bukti, lalu tunggu konfirmasi. Admin sudah otomatis mendapat semua fitur.',
         },
       ],
     },
@@ -419,7 +491,7 @@ const ID: IsiPanduan = {
         },
         {
           h: 'Mode REAL terkunci',
-          p: 'Mode real hanya terbuka untuk akun yang didaftarkan lewat halaman daftar di aplikasi. Tekan tombol daftar akun pada pesan yang muncul untuk membuatnya.',
+          p: 'Trading REAL adalah aktivasi berbayar sekali. Buka halaman Aktivasi REAL, bayar Rp 150.000 via QRIS lalu unggah bukti; setelah disetujui, mode REAL terbuka. Sebelum itu akun berjalan di DEMO.',
         },
         {
           h: 'Masih bermasalah',

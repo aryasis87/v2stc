@@ -10,11 +10,11 @@ import { useLanguage } from '@/lib';
 import { panduan } from '@/lib/guideText';
 import {
   BookOpen, Rocket, UserPlus, Layers, TrendingUp, ShieldCheck, Activity,
-  LifeBuoy, ChevronDown, Info, ExternalLink, Smartphone, Check, Minus, Sparkles,
+  LifeBuoy, ChevronDown, Info, ExternalLink, Smartphone, Check, Minus, Sparkles, KeyRound,
 } from 'lucide-react';
 
 const IKON: Record<string, typeof BookOpen> = {
-  Rocket, UserPlus, Layers, TrendingUp, ShieldCheck, Activity, LifeBuoy, Smartphone,
+  Rocket, UserPlus, Layers, TrendingUp, ShieldCheck, Activity, LifeBuoy, Smartphone, KeyRound,
 };
 
 // Aksen TUNGGAL & konsisten (emerald) — bersih & premium, bukan pelangi dekoratif.
