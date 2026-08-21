@@ -252,10 +252,13 @@ export async function validate2faOtp(
     const status = res?.status ?? 0;
     const data: any = res?.data ?? {};
     if (status >= 400) {
-      const msg =
-        data?.errors?.[0]?.context?.message ||
-        data?.errors?.[0]?.message ||
-        'Kode OTP salah atau sudah kedaluwarsa';
+      const code = data?.errors?.[0]?.code;
+      // Stockity kerap balas 500 'unexpected.exception' saat OTP salah/kedaluwarsa.
+      const otpLikelyWrong = status === 401 || status === 422 || status === 500 ||
+        code === 'unexpected.exception' || String(code ?? '').includes('otp');
+      const msg = otpLikelyWrong
+        ? 'Kode OTP salah atau sudah kedaluwarsa. Pakai kode terbaru dari aplikasi authenticator lalu coba lagi.'
+        : (data?.errors?.[0]?.context?.message || data?.errors?.[0]?.message || 'Verifikasi 2FA gagal, coba lagi');
       return { ok: false, error: msg };
     }
     const token = data?.data?.['2fa_token'] ?? data?.['2fa_token'] ?? '';
