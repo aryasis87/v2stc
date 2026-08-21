@@ -915,8 +915,14 @@ async function localOrdersSet(list: ScheduleOrder[]): Promise<void> {
 export const api = {
   // ── Auth ──────────────────────────────────
   login: (email: string, password: string) =>
+    req<
+      | { accessToken: string; userId: string; email: string; deviceId: string }
+      | { twoFactorRequired: true; deviceId: string }
+    >('POST', '/auth/login', { email, password }),
+  /** Langkah 2 login akun ber-2FA: OTP dari authenticator + deviceId (dari respons login). */
+  login2fa: (email: string, password: string, otp: string, deviceId: string) =>
     req<{ accessToken: string; userId: string; email: string; deviceId: string }>(
-      'POST', '/auth/login', { email, password }
+      'POST', '/auth/login-2fa', { email, password, otp, deviceId }
     ),
   /**
    * Registrasi akun Stockity langsung (inline, tanpa webview).

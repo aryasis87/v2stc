@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { api } from '@/lib/api';
-import { loginToStockity, createSession, lastSessionError, getKnownDeviceId } from '@/lib/engine/stockityAuth';
+import { loginToStockity, createSession, lastSessionError, getKnownDeviceId, validate2faOtp } from '@/lib/engine/stockityAuth';
 import { storage, isSessionValid, SESSION_KEYS } from '@/lib/storage';
 import { ui } from '@/lib/uiText';
 import { updateLastLogin } from '@/lib/supabaseRepository';
@@ -476,6 +476,10 @@ function LoginPageContent() {
   const [useImg, setUseImg] = useState(false);
   const [supportUrl] = useState('mailto:supportstockity@gmail.com');
   const [errorKey, setErrorKey] = useState(0); // increment to re-trigger shake
+  // ── 2FA: akun ber-2FA butuh OTP setelah email+password benar ──
+  const [twoFa, setTwoFa] = useState<{ deviceId: string; email: string; password: string; native: boolean } | null>(null);
+  const [otp, setOtp] = useState('');
+  const [verifying, setVerifying] = useState(false);
 
   const [toast, setToast] = useState<{ visible: boolean; message: string; hiding: boolean }>({
     visible: false, message: '', hiding: false,
@@ -714,6 +718,12 @@ function LoginPageContent() {
                         : Array.from({ length: 32 }, () => "0123456789abcdef"[Math.floor(Math.random() * 16)]).join(""));
 
         const login = await loginToStockity(emailVal, passVal, devId);
+        if (login.twoFactorRequired) {
+          // Akun ber-2FA → minta OTP. Simpan deviceId agar konsisten ke validate/otp.
+          setTwoFa({ deviceId: login.deviceId || devId, email: emailVal, password: passVal, native: true });
+          setLoading(false); setLoginStep('idle');
+          return;
+        }
         if (!login.ok || !login.authToken) throw new Error(login.error ?? t("login.invalidCredentials"));
 
         // Token Stockity dipakai engine perangkat & pemanggil Edge Function
@@ -746,7 +756,14 @@ function LoginPageContent() {
         // Dulu di sini ada pengecualian untuk akun self-register (afiliasi)
         // yang wajib lewat aplikasi. Program afiliasi dihentikan 2026-08-11
         // dan seluruh eksekusi kini berjalan di server.
-        res = await api.login(emailVal, passVal);
+        const r = await api.login(emailVal, passVal);
+        if ('twoFactorRequired' in r) {
+          // Akun ber-2FA → minta OTP. deviceId dari backend agar konsisten.
+          setTwoFa({ deviceId: r.deviceId, email: emailVal, password: passVal, native: false });
+          setLoading(false); setLoginStep('idle');
+          return;
+        }
+        res = r;
         const role = await api.admin
           .me(res.accessToken)
           .catch(() => ({ isAdmin: false, isSuperAdmin: false }));
@@ -781,6 +798,49 @@ function LoginPageContent() {
       setLoginStep('idle');
     }
   };
+
+  // ── Verifikasi OTP 2FA ──────────────────────────────────────────────────
+  // Native: validate/otp di perangkat → 2fa_token → sign_in ulang → sesi.
+  // Web: backend /auth/login-2fa yang mengurus validate/otp + sign_in.
+  const verify2fa = async () => {
+    if (!twoFa || verifying) return;
+    const code = otp.replace(/\s/g, '');
+    if (code.length < 4) { setError(language === 'id' ? 'Masukkan kode OTP.' : 'Enter the OTP code.'); setErrorKey(k => k + 1); return; }
+    setVerifying(true); setError(''); setLoginStep('auth');
+    try {
+      let res: { accessToken: string; userId: string; email: string; deviceId: string };
+      if (twoFa.native) {
+        const v = await validate2faOtp(code, twoFa.deviceId);
+        if (!v.ok || !v.token) throw new Error(v.error ?? 'Kode OTP salah.');
+        const login = await loginToStockity(twoFa.email, twoFa.password, twoFa.deviceId, v.token);
+        if (!login.ok || !login.authToken) throw new Error(login.error ?? t('login.invalidCredentials'));
+        await storage.set('stc_stockity_token', login.authToken);
+        await storage.set(SESSION_KEYS.DEVICE_ID, twoFa.deviceId);
+        const sess = await createSession(login.authToken, twoFa.deviceId, 'session', twoFa.password);
+        if (!sess) throw new Error(lastSessionError || 'Gagal membuat sesi.');
+        await storage.set(SESSION_KEYS.IS_PRIVILEGED, sess.isAdmin ? 'true' : 'false');
+        res = { accessToken: login.authToken, userId: sess.userId || login.userId || '', email: sess.email || twoFa.email, deviceId: twoFa.deviceId };
+      } else {
+        res = await api.login2fa(twoFa.email, twoFa.password, code, twoFa.deviceId);
+        const role = await api.admin.me(res.accessToken).catch(() => ({ isAdmin: false, isSuperAdmin: false }));
+        await storage.set(SESSION_KEYS.IS_PRIVILEGED, role.isAdmin || role.isSuperAdmin ? 'true' : 'false');
+      }
+      setLoginStep('saving');
+      if (remember) {
+        await storage.set('stc_remember_email', twoFa.email);
+        await storage.set('stc_remember_password', twoFa.password);
+      }
+      updateLastLogin(res.email || twoFa.email).catch(() => {});
+      setTwoFa(null); setOtp('');
+      await runSplash(res);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Verifikasi 2FA gagal.');
+      setErrorKey(k => k + 1);
+      setVerifying(false);
+      setLoginStep('idle');
+    }
+  };
+  const cancel2fa = () => { setTwoFa(null); setOtp(''); setError(''); setVerifying(false); setLoginStep('idle'); };
 
   // ── Login via Google ───────────────────────────────────────────────────────
   // Native: buka authorization URL di in-app WebView (mode 'oauth'); plugin
@@ -997,6 +1057,43 @@ function LoginPageContent() {
           {/* Latar tenang — 2 gradient halus (minimal) */}
           <div className="ambient amb-1" />
           <div className="ambient amb-2" />
+
+          {/* ── Overlay OTP 2FA ── */}
+          {twoFa && (
+            <div
+              onClick={(e) => { if (e.target === e.currentTarget && !verifying) cancel2fa(); }}
+              style={{ position: 'fixed', inset: 0, zIndex: 60, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, background: 'rgba(0,0,0,0.72)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)' }}
+            >
+              <div style={{ width: '100%', maxWidth: 360, background: 'var(--card, #14161d)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 22, padding: '26px 22px', boxShadow: '0 24px 60px rgba(0,0,0,0.5)', textAlign: 'center' }}>
+                <div style={{ width: 52, height: 52, margin: '0 auto 14px', borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(48,209,88,0.12)', border: '1px solid rgba(48,209,88,0.28)', color: '#30d158' }}>
+                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                </div>
+                <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text, #fff)', margin: '0 0 6px' }}>{language === 'id' ? 'Verifikasi 2FA' : 'Two-factor verification'}</h2>
+                <p style={{ fontSize: 13, lineHeight: 1.5, color: 'var(--muted, #9aa4b2)', margin: '0 0 18px' }}>
+                  {language === 'id' ? 'Masukkan 6 digit kode dari aplikasi authenticator Anda.' : 'Enter the 6-digit code from your authenticator app.'}
+                </p>
+                <input
+                  inputMode="numeric" autoComplete="one-time-code" maxLength={6} autoFocus
+                  placeholder="••••••" value={otp}
+                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  onKeyDown={(e) => { if (e.key === 'Enter') verify2fa(); }}
+                  style={{ width: '100%', textAlign: 'center', fontSize: 26, fontWeight: 700, letterSpacing: 8, padding: '12px 10px', borderRadius: 14, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', color: 'var(--text, #fff)', outline: 'none', fontVariantNumeric: 'tabular-nums' }}
+                />
+                {error && (
+                  <div key={errorKey} className="err" style={{ marginTop: 14 }}>
+                    <div className="err-dot" /><div><p className="err-txt">{error}</p></div>
+                  </div>
+                )}
+                <button className="btn" style={{ marginTop: 16 }} onClick={verify2fa} disabled={verifying || otp.length < 4}>
+                  {verifying && <div className="spin" />}
+                  {verifying ? (language === 'id' ? 'Memverifikasi…' : 'Verifying…') : (language === 'id' ? 'Verifikasi & Masuk' : 'Verify & Sign in')}
+                </button>
+                <button onClick={cancel2fa} disabled={verifying} style={{ marginTop: 12, background: 'none', border: 'none', color: 'var(--muted, #9aa4b2)', fontSize: 13, fontWeight: 600, cursor: verifying ? 'not-allowed' : 'pointer' }}>
+                  {language === 'id' ? 'Batal' : 'Cancel'}
+                </button>
+              </div>
+            </div>
+          )}
 
           <div className="card">
             {/* Brand */}

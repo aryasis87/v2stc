@@ -39,6 +39,9 @@ export interface StockityLoginResult {
   /** Pesan siap tampil bila gagal */
   error?: string;
   status?: number;
+  /** Akun ber-2FA: sign_in butuh OTP. deviceId dibawa agar konsisten ke validate/otp. */
+  twoFactorRequired?: boolean;
+  deviceId?: string;
 }
 
 export interface SessionResult {
@@ -179,15 +182,16 @@ export function isTwoFactorError(body: any): boolean {
   } catch { return false; }
 }
 
-/** Login email+password langsung ke Stockity dari perangkat */
+/** Login email+password langsung ke Stockity dari perangkat.
+ *  `twoFaToken` diisi pada percobaan kedua (akun ber-2FA) — hasil validate/otp. */
 export async function loginToStockity(
-  email: string, password: string, deviceId: string,
+  email: string, password: string, deviceId: string, twoFaToken?: string,
 ): Promise<StockityLoginResult> {
   try {
     const res = await CapacitorHttp.post({
       url: `${STOCKITY_BASE}/passport/v2/sign_in?locale=id`,
       headers: headers(deviceId),
-      data: { email, password },
+      data: { email, password, ...(twoFaToken ? { '2fa_token': twoFaToken } : {}) },
       readTimeout: 20000,
       connectTimeout: 20000,
     });
@@ -196,10 +200,10 @@ export async function loginToStockity(
     const data: any = res?.data ?? {};
 
     if (status >= 400) {
-      // 2FA diperiksa LEBIH DULU: galatnya datang di status yang sama dengan
-      // kata sandi salah, jadi tanpa ini pesannya menyesatkan.
-      if (isTwoFactorError(data)) {
-        return { ok: false, error: MSG_2FA, status };
+      // Akun ber-2FA: sign_in pertama balas galat 2fa. Bila BELUM kirim
+      // 2fa_token → minta OTP (bawa deviceId agar konsisten ke validate/otp).
+      if (isTwoFactorError(data) && !twoFaToken) {
+        return { ok: false, twoFactorRequired: true, deviceId, error: MSG_2FA, status };
       }
       const msg =
         data?.errors?.[0]?.context?.message ||
@@ -224,6 +228,39 @@ export async function loginToStockity(
 
     lastLoginShape += " tokenLen=" + String(token).length;
     return { ok: true, authToken: String(token), userId, status };
+  } catch (e: any) {
+    return { ok: false, error: e?.message ?? 'Tidak dapat menghubungi Stockity.' };
+  }
+}
+
+/**
+ * Langkah 2 alur 2FA DI PERANGKAT: kirim OTP (dari aplikasi authenticator user)
+ * ke Stockity → dapat `2fa_token`. deviceId WAJIB sama dengan yang dipakai
+ * loginToStockity pertama (Stockity mengaitkan tantangan ke device-id itu).
+ */
+export async function validate2faOtp(
+  otp: string, deviceId: string,
+): Promise<{ ok: boolean; token?: string; error?: string }> {
+  try {
+    const res = await CapacitorHttp.post({
+      url: `${STOCKITY_BASE}/passport/v1/2fa/validate/otp?locale=id`,
+      headers: headers(deviceId),
+      data: { otp: String(otp ?? '').trim() },
+      readTimeout: 20000,
+      connectTimeout: 20000,
+    });
+    const status = res?.status ?? 0;
+    const data: any = res?.data ?? {};
+    if (status >= 400) {
+      const msg =
+        data?.errors?.[0]?.context?.message ||
+        data?.errors?.[0]?.message ||
+        'Kode OTP salah atau sudah kedaluwarsa';
+      return { ok: false, error: msg };
+    }
+    const token = data?.data?.['2fa_token'] ?? data?.['2fa_token'] ?? '';
+    if (!token) return { ok: false, error: 'Gagal memperoleh token 2FA' };
+    return { ok: true, token: String(token) };
   } catch (e: any) {
     return { ok: false, error: e?.message ?? 'Tidak dapat menghubungi Stockity.' };
   }
