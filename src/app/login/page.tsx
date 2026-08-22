@@ -480,6 +480,7 @@ function LoginPageContent() {
   const [twoFa, setTwoFa] = useState<{ deviceId: string; email: string; password: string; native: boolean } | null>(null);
   const [otp, setOtp] = useState('');
   const [verifying, setVerifying] = useState(false);
+  const otpRef = useRef<HTMLInputElement>(null);
 
   const [toast, setToast] = useState<{ visible: boolean; message: string; hiding: boolean }>({
     visible: false, message: '', hiding: false,
@@ -1058,37 +1059,69 @@ function LoginPageContent() {
           <div className="ambient amb-1" />
           <div className="ambient amb-2" />
 
-          {/* ── Overlay OTP 2FA ── */}
+          {/* ── Overlay OTP 2FA (didesain ulang: kotak OTP 6-segmen + animasi halus) ── */}
           {twoFa && (
             <div
+              className="tfa-overlay"
               onClick={(e) => { if (e.target === e.currentTarget && !verifying) cancel2fa(); }}
-              style={{ position: 'fixed', inset: 0, zIndex: 60, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, background: 'rgba(0,0,0,0.72)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)' }}
             >
-              <div style={{ width: '100%', maxWidth: 360, background: 'var(--card, #14161d)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 22, padding: '26px 22px', boxShadow: '0 24px 60px rgba(0,0,0,0.5)', textAlign: 'center' }}>
-                <div style={{ width: 52, height: 52, margin: '0 auto 14px', borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(48,209,88,0.12)', border: '1px solid rgba(48,209,88,0.28)', color: '#30d158' }}>
-                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              <style>{`
+                @keyframes tfaFade { from { opacity: 0 } to { opacity: 1 } }
+                @keyframes tfaPop { from { opacity: 0; transform: translateY(14px) scale(.955) } to { opacity: 1; transform: none } }
+                @keyframes tfaGlow { 0%,100% { box-shadow: 0 0 0 0 rgba(48,209,88,.34) } 50% { box-shadow: 0 0 0 12px rgba(48,209,88,0) } }
+                @keyframes tfaCaret { 0%,100% { opacity: 1 } 50% { opacity: 0 } }
+                .tfa-overlay { position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center; padding: 20px; background: radial-gradient(130% 130% at 50% -10%, rgba(48,209,88,.10), rgba(0,0,0,.80)); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); animation: tfaFade .22s ease; }
+                .tfa-card { width: 100%; max-width: 384px; position: relative; overflow: hidden; background: linear-gradient(180deg, rgba(30,34,44,.97), rgba(18,20,27,.98)); border: 1px solid rgba(255,255,255,.09); border-radius: 26px; padding: 32px 26px 24px; box-shadow: 0 30px 80px rgba(0,0,0,.62); text-align: center; animation: tfaPop .32s cubic-bezier(.16,1,.3,1); }
+                .tfa-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, rgba(48,209,88,.65), transparent); }
+                .tfa-badge { width: 62px; height: 62px; margin: 0 auto 16px; border-radius: 19px; display: flex; align-items: center; justify-content: center; background: linear-gradient(160deg, rgba(48,209,88,.24), rgba(48,209,88,.05)); border: 1px solid rgba(48,209,88,.4); color: #30d158; animation: tfaGlow 2.6s ease-in-out infinite; }
+                .tfa-email { display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin: 0 auto 20px; padding: 5px 13px; border-radius: 999px; font-size: 12.5px; font-weight: 600; color: var(--text,#fff); background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1); }
+                .otp-wrap { position: relative; display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin: 2px 0; }
+                .otp-box { aspect-ratio: 1 / 1.18; display: flex; align-items: center; justify-content: center; font-size: 25px; font-weight: 800; color: #fff; border-radius: 14px; background: rgba(255,255,255,.045); border: 1.5px solid rgba(255,255,255,.12); transition: border-color .16s, background .16s, box-shadow .16s; font-variant-numeric: tabular-nums; }
+                .otp-box.filled { background: rgba(48,209,88,.11); border-color: rgba(48,209,88,.5); }
+                .otp-box.active { border-color: #30d158; background: rgba(48,209,88,.09); box-shadow: 0 0 0 3px rgba(48,209,88,.17); }
+                .otp-box .caret { width: 2px; height: 26px; background: #30d158; border-radius: 2px; animation: tfaCaret 1.05s step-end infinite; }
+                .otp-input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; border: none; outline: none; cursor: text; font-size: 16px; }
+                .tfa-link { margin-top: 14px; background: none; border: none; color: var(--muted,#9aa4b2); font-size: 13px; font-weight: 600; }
+                .tfa-link:disabled { cursor: not-allowed; opacity: .6; }
+              `}</style>
+              <div className="tfa-card">
+                <div className="tfa-badge">
+                  <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2 4 5v6c0 5 3.4 8.5 8 10 4.6-1.5 8-5 8-10V5l-8-3Z"/><path d="M9 12l2 2 4-4"/></svg>
                 </div>
-                <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text, #fff)', margin: '0 0 6px' }}>{language === 'id' ? 'Verifikasi 2FA' : 'Two-factor verification'}</h2>
-                <p style={{ fontSize: 13, lineHeight: 1.5, color: 'var(--muted, #9aa4b2)', margin: '0 0 18px' }}>
-                  {language === 'id' ? 'Masukkan 6 digit kode dari aplikasi authenticator Anda.' : 'Enter the 6-digit code from your authenticator app.'}
+                <h2 style={{ fontSize: 19, fontWeight: 800, letterSpacing: -0.2, color: 'var(--text, #fff)', margin: '0 0 7px' }}>{language === 'id' ? 'Verifikasi Dua Langkah' : 'Two-Factor Verification'}</h2>
+                <p style={{ fontSize: 13, lineHeight: 1.55, color: 'var(--muted, #9aa4b2)', margin: '0 0 16px' }}>
+                  {language === 'id' ? 'Masukkan 6 digit kode dari aplikasi authenticator kamu.' : 'Enter the 6-digit code from your authenticator app.'}
                 </p>
-                <input
-                  inputMode="numeric" autoComplete="one-time-code" maxLength={6} autoFocus
-                  placeholder="••••••" value={otp}
-                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                  onKeyDown={(e) => { if (e.key === 'Enter') verify2fa(); }}
-                  style={{ width: '100%', textAlign: 'center', fontSize: 26, fontWeight: 700, letterSpacing: 8, padding: '12px 10px', borderRadius: 14, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', color: 'var(--text, #fff)', outline: 'none', fontVariantNumeric: 'tabular-nums' }}
-                />
+                {twoFa.email && <div className="tfa-email">{twoFa.email}</div>}
+                <div className="otp-wrap" onClick={() => otpRef.current?.focus()}>
+                  {Array.from({ length: 6 }).map((_, i) => {
+                    const ch = otp[i];
+                    const active = i === otp.length && otp.length < 6;
+                    return (
+                      <div key={i} className={`otp-box${ch ? ' filled' : ''}${active ? ' active' : ''}`}>
+                        {ch ?? (active ? <span className="caret" /> : '')}
+                      </div>
+                    );
+                  })}
+                  <input
+                    ref={otpRef}
+                    className="otp-input"
+                    inputMode="numeric" autoComplete="one-time-code" maxLength={6} autoFocus
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    onKeyDown={(e) => { if (e.key === 'Enter') verify2fa(); }}
+                  />
+                </div>
                 {error && (
-                  <div key={errorKey} className="err" style={{ marginTop: 14 }}>
+                  <div key={errorKey} className="err" style={{ marginTop: 16 }}>
                     <div className="err-dot" /><div><p className="err-txt">{error}</p></div>
                   </div>
                 )}
-                <button className="btn" style={{ marginTop: 16 }} onClick={verify2fa} disabled={verifying || otp.length < 4}>
+                <button className="btn" style={{ marginTop: 18 }} onClick={verify2fa} disabled={verifying || otp.length < 6}>
                   {verifying && <div className="spin" />}
                   {verifying ? (language === 'id' ? 'Memverifikasi…' : 'Verifying…') : (language === 'id' ? 'Verifikasi & Masuk' : 'Verify & Sign in')}
                 </button>
-                <button onClick={cancel2fa} disabled={verifying} style={{ marginTop: 12, background: 'none', border: 'none', color: 'var(--muted, #9aa4b2)', fontSize: 13, fontWeight: 600, cursor: verifying ? 'not-allowed' : 'pointer' }}>
+                <button className="tfa-link" onClick={cancel2fa} disabled={verifying}>
                   {language === 'id' ? 'Batal' : 'Cancel'}
                 </button>
               </div>

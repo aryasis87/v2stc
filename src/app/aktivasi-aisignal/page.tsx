@@ -130,9 +130,9 @@ export default function AktivasiAiSignalPage() {
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
             <div style={sx.qrisFrame}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/qris-aktivasi.jpg" alt="QRIS" style={{ width: 232, maxWidth: '66vw', height: 'auto', display: 'block', borderRadius: 10 }} />
+              <img src="/qr-pembayaran-terbaru.jpeg" alt="QRIS" style={{ width: 232, maxWidth: '66vw', height: 'auto', display: 'block', borderRadius: 10 }} />
             </div>
-            <a href="/qris-aktivasi.jpg" download="QRIS-StcAutoTrade.jpg" className="aktv-tap" style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 12.5, fontWeight: 700, color: AC, background: 'rgba(16,185,129,0.12)', border: `1px solid ${AC}44`, borderRadius: 10, padding: '9px 16px', textDecoration: 'none' }}>
+            <a href="/qr-pembayaran-terbaru.jpeg" download="QRIS-StcAutoTrade.jpg" className="aktv-tap" style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 12.5, fontWeight: 700, color: AC, background: 'rgba(16,185,129,0.12)', border: `1px solid ${AC}44`, borderRadius: 10, padding: '9px 16px', textDecoration: 'none' }}>
               <Download style={{ width: 15, height: 15 }} /> Unduh QRIS
             </a>
             <p style={{ fontSize: 12.5, color: '#9aa6a1', textAlign: 'center', lineHeight: 1.55 }}>Scan atau unduh <b style={{ color: '#f4f6f5' }}>QRIS</b>, bayar tepat <b style={{ color: AC }}>{PRICE}</b>, simpan buktinya.</p>
