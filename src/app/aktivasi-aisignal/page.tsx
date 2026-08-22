@@ -85,8 +85,12 @@ export default function AktivasiAiSignalPage() {
             <div style={sx.doneBadge}><Check style={{ width: 34, height: 34, color: '#04210b' }} /></div>
             <h1 style={{ fontSize: 22, fontWeight: 700, marginBottom: 10, letterSpacing: '-0.4px', color: '#f4f6f5' }}>Pengajuan Terkirim</h1>
             <p style={{ fontSize: 14.5, lineHeight: 1.6, color: '#9aa6a1', maxWidth: 360, margin: '0 auto' }}>
-              Pembayaran diverifikasi admin. Mode <b style={{ color: '#f4f6f5' }}>AI Signal</b> akan aktif pada akun <b style={{ color: AC }}>{sid}</b> biasanya dalam ~10 menit. Admin online 24 jam.
+              Pengajuan kamu <b style={{ color: '#f4f6f5' }}>sedang diproses</b>, mohon menunggu. Pembayaran diverifikasi admin dan <b style={{ color: '#f4f6f5' }}>AI Signal</b> akan aktif pada akun <b style={{ color: AC }}>{sid}</b> biasanya dalam ~10 menit.
             </p>
+            <div style={{ marginTop: 18, padding: '13px 15px', borderRadius: 14, background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.22)', maxWidth: 360, marginInline: 'auto' }}>
+              <p style={{ fontSize: 12.5, lineHeight: 1.55, color: '#c4cec9', margin: 0 }}>Belum ada respons setelah <b style={{ color: '#f4f6f5' }}>12 jam</b>? Laporkan ke kami:</p>
+              <a href="mailto:supportstockity@gmail.com?subject=Aktivasi%20AI%20Signal%20belum%20diproses" style={{ display: 'inline-block', marginTop: 8, fontSize: 13, fontWeight: 700, color: AC, textDecoration: 'none' }}>✉️ supportstockity@gmail.com</a>
+            </div>
           </div>
         </div>
       </div>
