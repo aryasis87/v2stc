@@ -613,6 +613,41 @@ const OpenPositionTimer: React.FC<{orderKey:string|null|undefined;col:string;com
   );
 };
 
+// Banner GLOBAL "entry aktif" untuk dashboard utama (di bawah Today Profit).
+// Tampil untuk SEMUA mode selama ada eksekusi entry/posisi terbuka. Timer
+// dihitung klien sejak `orderKey` (entry aktif) muncul; reset tiap entry baru.
+const ActiveEntryBanner: React.FC<{orderKey:string|null;accent:string;label:string;sub:string}> = ({orderKey,accent,label,sub}) => {
+  const startRef = useRef<{key:string;t:number}|null>(null);
+  const [now,setNow] = useState(()=>Date.now());
+  useEffect(()=>{
+    if(orderKey){ if(!startRef.current||startRef.current.key!==orderKey) startRef.current={key:orderKey,t:Date.now()}; }
+    else startRef.current=null;
+  },[orderKey]);
+  useEffect(()=>{ if(!orderKey) return; const t=setInterval(()=>setNow(Date.now()),1000); return()=>clearInterval(t); },[orderKey]);
+  if(!orderKey||!startRef.current) return null;
+  const sec=Math.max(0,Math.floor((now-startRef.current.t)/1000));
+  const mm=`${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}`;
+  return (
+    <div style={{position:'relative',overflow:'hidden',display:'flex',alignItems:'center',gap:12,padding:'12px 15px',borderRadius:16,background:`${accent}0e`,border:`1px solid ${accent}30`}}>
+      <span style={{position:'relative',display:'inline-flex',width:34,height:34,borderRadius:11,alignItems:'center',justifyContent:'center',background:`${accent}18`,color:accent,flexShrink:0}}>
+        <Zap style={{width:17,height:17}}/>
+        <span style={{position:'absolute',inset:-1,borderRadius:12,border:`2px solid ${accent}`,opacity:0.5,animation:'ping 1.6s ease-in-out infinite'}}/>
+      </span>
+      <div style={{minWidth:0,flex:1}}>
+        <div style={{fontSize:12.5,fontWeight:700,color:C.text,display:'flex',alignItems:'center',gap:7,minWidth:0}}>
+          <span style={{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{label}</span>
+          <span style={{width:6,height:6,borderRadius:'50%',background:accent,flexShrink:0,animation:'pulse 1s ease-in-out infinite'}}/>
+        </div>
+        <div style={{fontSize:11,color:C.muted,marginTop:1,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{sub}</div>
+      </div>
+      <div style={{fontSize:21,fontWeight:800,color:accent,fontVariantNumeric:'tabular-nums',flexShrink:0,letterSpacing:'-0.02em'}}>{mm}</div>
+      <span style={{position:'absolute',left:0,bottom:0,height:3,width:'100%',overflow:'hidden',pointerEvents:'none'}}>
+        <span style={{display:'block',height:'100%',width:'35%',background:`linear-gradient(90deg,transparent,${accent},transparent)`,animation:'pos-sweep 1.5s linear infinite'}}/>
+      </span>
+    </div>
+  );
+};
+
 const SchedulePanel: React.FC<{orders:ScheduleOrder[];logs:ExecutionLog[];onOpenModal:()=>void;isRunning:boolean;isLoading:boolean;fillHeight?:boolean;compact?:boolean;onViewSession?:()=>void;historyIdsRef?:React.MutableRefObject<Set<string>>;inModal?:boolean}> =
 ({orders,logs,onOpenModal,isRunning,isLoading,fillHeight,compact,onViewSession,historyIdsRef,inModal}) => {
   const listRef  = useRef<HTMLDivElement>(null);
@@ -2630,6 +2665,31 @@ export default function DashboardPage() {
   // True jika ADA mode apapun yang sedang berjalan (bukan hanya mode yang dilihat)
   const isAnyModeRunning = isSchedRunning || isSchedPaused || isFtRunning || isAIRunning || isIndRunning || isMomRunning;
 
+  // Deteksi ADA eksekusi entry/posisi TERBUKA (belum ada hasil) lintas SEMUA mode.
+  // `key` berubah tiap entry baru agar timer banner reset. Hanya satu mode jalan
+  // pada satu waktu, jadi OR lintas mode aman.
+  const activeEntry = (():{active:boolean;key:string|null}=>{
+    const mon = scheduleOrders.find(o=>o.isExecuted && !o.result && !o.isSkipped);
+    if((isSchedRunning||isSchedPaused) && mon) return { active:true, key:`sch-${mon.id}` };
+    if(isFtRunning){
+      const oid = ftStatus?.activeOrderId; const ph = ftStatus?.phase||'';
+      if(oid) return { active:true, key:`ft-${oid}` };
+      if(ph==='EXECUTING'||ph==='WAITING_RESULT') return { active:true, key:`ft-${ph}-${ftStatus?.cycleNumber??0}-${ftStatus?.martingaleStep??0}` };
+    }
+    if(isAIRunning){
+      const ao = aiPendingOrders.find(o=>o.isExecuted && !o.result);
+      if(ao) return { active:true, key:`ai-${ao.id}` };
+      if((aiStatus?.monitoringStatus?.active_monitoring_count??0)>0) return { active:true, key:`ai-mon-${aiStatus?.monitoringStatus?.active_monitoring_count}` };
+    }
+    for(const [run,st,pfx] of [[isIndRunning,indicatorStatus,'ind'],[isMomRunning,momentumStatus,'mom']] as const){
+      if(!run||!st) continue;
+      const oid=(st as any).activeOrderId; const ph=String((st as any).phase||(st as any).lastStatus||'');
+      if(oid) return { active:true, key:`${pfx}-${oid}` };
+      if(/EXEC|WAIT.*RESULT|MONITOR/i.test(ph)) return { active:true, key:`${pfx}-${ph}` };
+    }
+    return { active:false, key:null };
+  })();
+
   const selectedAsset = assets.find(a=>a.ric===selectedRic)??null;
   const pendingOrders = scheduleOrders.filter(o=>!o.isExecuted&&!o.isSkipped);
   const canStart = tradingMode==='schedule' ? !!(selectedRic&&pendingOrders.length>0) : !!selectedRic;
@@ -3912,6 +3972,14 @@ export default function DashboardPage() {
 
 </div>
             {TopCards}
+            {activeEntry.active && (
+              <ActiveEntryBanner
+                orderKey={activeEntry.key}
+                accent={modeAccent(tradingMode)}
+                label={language==='id' ? 'Entry aktif berjalan' : 'Active entry running'}
+                sub={(language==='id' ? 'Posisi terbuka · ' : 'Position open · ') + (({schedule:'Signal',fastrade:'Fastrade FTT',blitz5s:'5st · Blitz',ctc:'Fastrade CTC',aisignal:'AI Signal',indicator:'Indicator',momentum:'Momentum'} as Record<string,string>)[tradingMode] ?? 'Sesi')}
+              />
+            )}
             <div style={{display:'flex',flexDirection:'row',gap:g,alignItems:'stretch'}}>
               {/* LEFT: chart card — stretches to match right column height */}
               <Card style={{flex:3,padding:12,display:'flex',flexDirection:'column',minWidth:0}}>
