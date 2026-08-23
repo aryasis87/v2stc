@@ -616,7 +616,7 @@ const OpenPositionTimer: React.FC<{orderKey:string|null|undefined;col:string;com
 // Banner GLOBAL "entry aktif" untuk dashboard utama (di bawah Today Profit).
 // Saat posisi TERBUKA: bar progres mengisi kiri→kanan (0→100%) + timer berjalan.
 // Saat posisi CLOSED: kilat MENANG/KALAH sesaat (`flash`) sebelum hilang.
-const ActiveEntryBanner: React.FC<{active:boolean;orderKey:string|null;flash:'win'|'lose'|null;accent:string;label:string;sub:string}> = ({active,orderKey,flash,accent,label,sub}) => {
+const ActiveEntryBanner: React.FC<{active:boolean;orderKey:string|null;flash:'win'|'lose'|null;durationSec:number;trend:string|null;accent:string;label:string;sub:string}> = ({active,orderKey,flash,durationSec,trend,accent,label,sub}) => {
   const startRef = useRef<{key:string;t:number}|null>(null);
   const [now,setNow] = useState(()=>Date.now());
   useEffect(()=>{
@@ -639,8 +639,12 @@ const ActiveEntryBanner: React.FC<{active:boolean;orderKey:string|null;flash:'wi
   }
 
   if(!active||!orderKey||!startRef.current) return null;
-  const sec=Math.max(0,Math.floor((now-startRef.current.t)/1000));
-  const mm=`${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}`;
+  const elapsed=Math.max(0,Math.floor((now-startRef.current.t)/1000));
+  const remaining=Math.max(0, durationSec-elapsed);
+  const pct=durationSec>0?Math.min(100,(elapsed/durationSec)*100):0;
+  const mm=`${Math.floor(remaining/60)}:${String(remaining%60).padStart(2,'0')}`;
+  const hasTrend = trend!=null && trend!=='';
+  const isBuy = hasTrend && /call|buy|up/i.test(trend!);
   return (
     <div style={{position:'relative',overflow:'hidden',display:'flex',alignItems:'center',gap:12,padding:'12px 15px',borderRadius:16,background:`${accent}0e`,border:`1px solid ${accent}30`}}>
       <span style={{position:'relative',display:'inline-flex',width:34,height:34,borderRadius:11,alignItems:'center',justifyContent:'center',background:`${accent}18`,color:accent,flexShrink:0}}>
@@ -654,10 +658,13 @@ const ActiveEntryBanner: React.FC<{active:boolean;orderKey:string|null;flash:'wi
         </div>
         <div style={{fontSize:11,color:C.muted,marginTop:1,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{sub}</div>
       </div>
-      <div style={{fontSize:21,fontWeight:800,color:accent,fontVariantNumeric:'tabular-nums',flexShrink:0,letterSpacing:'-0.02em'}}>{mm}</div>
-      {/* bar progres kiri→kanan (0→100%) */}
+      {hasTrend && (
+        <span style={{fontSize:10,fontWeight:800,padding:'3px 8px',borderRadius:7,flexShrink:0,color:isBuy?C.cyan:C.coral,background:isBuy?`${C.cyan}16`:`${C.coral}16`,border:`1px solid ${isBuy?C.cyan:C.coral}38`,letterSpacing:'0.02em'}}>{isBuy?'BUY ▲':'SELL ▼'}</span>
+      )}
+      <div style={{fontSize:21,fontWeight:800,color:accent,fontVariantNumeric:'tabular-nums',flexShrink:0,letterSpacing:'-0.02em',minWidth:52,textAlign:'right'}}>{mm}</div>
+      {/* bar progres kiri→kanan mengikuti waktu berjalan (0→100%) */}
       <span style={{position:'absolute',left:0,bottom:0,height:3,width:'100%',background:`${accent}22`,overflow:'hidden',pointerEvents:'none'}}>
-        <span style={{display:'block',height:'100%',background:accent,animation:'pos-fill 1.8s linear infinite'}}/>
+        <span style={{display:'block',height:'100%',width:`${pct}%`,background:accent,transition:'width 1s linear'}}/>
       </span>
     </div>
   );
@@ -1681,9 +1688,12 @@ const DarkModeToggleStrip: React.FC<{
   isDarkMode: boolean;
   onToggle: () => void;
   C: Colors;
-}> = ({ isDarkMode, onToggle, C }) => (
+  disabled?: boolean;
+}> = ({ isDarkMode, onToggle, C, disabled }) => (
   <button
-    onClick={onToggle}
+    onClick={disabled ? undefined : onToggle}
+    disabled={disabled}
+    title={disabled ? 'Nonaktif saat mode berjalan' : undefined}
     style={{
       width: '100%',
       display: 'flex',
@@ -1693,7 +1703,8 @@ const DarkModeToggleStrip: React.FC<{
       borderRadius: 14,
       background: C.card,
       border: `1px solid ${C.bdr}`,
-      cursor: 'pointer',
+      cursor: disabled ? 'not-allowed' : 'pointer',
+      opacity: disabled ? 0.5 : 1,
       WebkitTapHighlightColor: 'transparent',
     }}
   >
@@ -2683,26 +2694,34 @@ export default function DashboardPage() {
   // Deteksi ADA eksekusi entry/posisi TERBUKA (belum ada hasil) lintas SEMUA mode.
   // `key` berubah tiap entry baru agar timer banner reset. Hanya satu mode jalan
   // pada satu waktu, jadi OR lintas mode aman.
-  const activeEntry = (():{active:boolean;key:string|null}=>{
+  const activeEntry = (():{active:boolean;key:string|null;trend:string|null}=>{
     const mon = scheduleOrders.find(o=>o.isExecuted && !o.result && !o.isSkipped);
-    if((isSchedRunning||isSchedPaused) && mon) return { active:true, key:`sch-${mon.id}` };
+    if((isSchedRunning||isSchedPaused) && mon) return { active:true, key:`sch-${mon.id}`, trend:mon.trend };
     if(isFtRunning){
+      const tr = ftStatus?.activeTrend ?? ftStatus?.currentTrend ?? null;
       const oid = ftStatus?.activeOrderId; const ph = ftStatus?.phase||'';
-      if(oid) return { active:true, key:`ft-${oid}` };
-      if(ph==='EXECUTING'||ph==='WAITING_RESULT') return { active:true, key:`ft-${ph}-${ftStatus?.cycleNumber??0}-${ftStatus?.martingaleStep??0}` };
+      if(oid) return { active:true, key:`ft-${oid}`, trend:tr };
+      if(ph==='EXECUTING'||ph==='WAITING_RESULT') return { active:true, key:`ft-${ph}-${ftStatus?.cycleNumber??0}-${ftStatus?.martingaleStep??0}`, trend:tr };
     }
     if(isAIRunning){
       const ao = aiPendingOrders.find(o=>o.isExecuted && !o.result);
-      if(ao) return { active:true, key:`ai-${ao.id}` };
-      if((aiStatus?.monitoringStatus?.active_monitoring_count??0)>0) return { active:true, key:`ai-mon-${aiStatus?.monitoringStatus?.active_monitoring_count}` };
+      if(ao) return { active:true, key:`ai-${ao.id}`, trend:ao.trend };
+      if((aiStatus?.monitoringStatus?.active_monitoring_count??0)>0) return { active:true, key:`ai-mon-${aiStatus?.monitoringStatus?.active_monitoring_count}`, trend:null };
     }
     for(const [run,st,pfx] of [[isIndRunning,indicatorStatus,'ind'],[isMomRunning,momentumStatus,'mom']] as const){
       if(!run||!st) continue;
+      const tr=((st as any).activeTrend ?? (st as any).currentTrend ?? (st as any).lastTrend ?? null);
       const oid=(st as any).activeOrderId; const ph=String((st as any).phase||(st as any).lastStatus||'');
-      if(oid) return { active:true, key:`${pfx}-${oid}` };
-      if(/EXEC|WAIT.*RESULT|MONITOR/i.test(ph)) return { active:true, key:`${pfx}-${ph}` };
+      if(oid) return { active:true, key:`${pfx}-${oid}`, trend:tr };
+      if(/EXEC|WAIT.*RESULT|MONITOR/i.test(ph)) return { active:true, key:`${pfx}-${ph}`, trend:tr };
     }
-    return { active:false, key:null };
+    return { active:false, key:null, trend:null };
+  })();
+  // Durasi order (detik) mode aktif — untuk hitung mundur & bar progres.
+  const entryDurationSec = (()=>{
+    if(tradingMode==='blitz5s') return 5;
+    if(tradingMode==='fastrade'||tradingMode==='ctc'){ const m:Record<string,number>={'1m':60,'5m':300,'15m':900,'30m':1800,'1h':3600}; return m[String(ftTf)]??60; }
+    return duration>0 ? duration : 60;
   })();
   // Menang/kalah mode aktif → memicu kilat saat sebuah posisi CLOSED.
   const entryWL = (():{w:number;l:number}=>{
@@ -3631,6 +3650,8 @@ export default function DashboardPage() {
                   active={activeEntry.active}
                   orderKey={activeEntry.key}
                   flash={entryFlash}
+                  durationSec={entryDurationSec}
+                  trend={activeEntry.trend}
                   accent={modeAccent(tradingMode)}
                   label={language==='id' ? 'Entry aktif berjalan' : 'Active entry running'}
                   sub={(language==='id' ? 'Posisi terbuka · ' : 'Position open · ') + (({schedule:'Signal',fastrade:'Fastrade FTT',blitz5s:'5st · Blitz',ctc:'Fastrade CTC',aisignal:'AI Signal',indicator:'Indicator',momentum:'Momentum'} as Record<string,string>)[tradingMode] ?? 'Sesi')}
@@ -3778,7 +3799,7 @@ export default function DashboardPage() {
                 {SettingsCardEl}
                 {ControlCardEl}
                 {/* ── Dark Mode Toggle ── */}
-                <DarkModeToggleStrip isDarkMode={isDarkMode} onToggle={toggleDarkMode} C={C} />
+                <DarkModeToggleStrip isDarkMode={isDarkMode} onToggle={toggleDarkMode} C={C} disabled={isAnyModeRunning} />
               </div>
             </div>
           </div>
@@ -3882,6 +3903,8 @@ export default function DashboardPage() {
                   active={activeEntry.active}
                   orderKey={activeEntry.key}
                   flash={entryFlash}
+                  durationSec={entryDurationSec}
+                  trend={activeEntry.trend}
                   accent={modeAccent(tradingMode)}
                   label={language==='id' ? 'Entry aktif berjalan' : 'Active entry running'}
                   sub={(language==='id' ? 'Posisi terbuka · ' : 'Position open · ') + (({schedule:'Signal',fastrade:'Fastrade FTT',blitz5s:'5st · Blitz',ctc:'Fastrade CTC',aisignal:'AI Signal',indicator:'Indicator',momentum:'Momentum'} as Record<string,string>)[tradingMode] ?? 'Sesi')}
@@ -3953,7 +3976,7 @@ export default function DashboardPage() {
                 {SettingsCardEl}
                 {ControlCardEl}
                 {/* ── Dark Mode Toggle ── */}
-                <DarkModeToggleStrip isDarkMode={isDarkMode} onToggle={toggleDarkMode} C={C} />
+                <DarkModeToggleStrip isDarkMode={isDarkMode} onToggle={toggleDarkMode} C={C} disabled={isAnyModeRunning} />
               </div>
 
             </div>
@@ -4036,6 +4059,8 @@ export default function DashboardPage() {
                 active={activeEntry.active}
                 orderKey={activeEntry.key}
                 flash={entryFlash}
+                durationSec={entryDurationSec}
+                trend={activeEntry.trend}
                 accent={modeAccent(tradingMode)}
                 label={language==='id' ? 'Entry aktif berjalan' : 'Active entry running'}
                 sub={(language==='id' ? 'Posisi terbuka · ' : 'Position open · ') + (({schedule:'Signal',fastrade:'Fastrade FTT',blitz5s:'5st · Blitz',ctc:'Fastrade CTC',aisignal:'AI Signal',indicator:'Indicator',momentum:'Momentum'} as Record<string,string>)[tradingMode] ?? 'Sesi')}
@@ -4392,7 +4417,7 @@ export default function DashboardPage() {
             {SettingsCardEl}
             {ControlCardEl}
             {/* ── Dark Mode Toggle ── */}
-            <DarkModeToggleStrip isDarkMode={isDarkMode} onToggle={toggleDarkMode} C={C} />
+            <DarkModeToggleStrip isDarkMode={isDarkMode} onToggle={toggleDarkMode} C={C} disabled={isAnyModeRunning} />
           </div>
         )}
       </div>
