@@ -589,6 +589,30 @@ const LivePositionTimer: React.FC<{since:number;col:string;compact?:boolean}> = 
   );
 };
 
+// Timer posisi terbuka untuk mode non-jadwal (Fastrade dsb). Menghitung waktu
+// berjalan sejak `orderKey` (id order aktif) muncul; reset saat id ganti / hilang.
+const OpenPositionTimer: React.FC<{orderKey:string|null|undefined;col:string;compact?:boolean}> = ({orderKey,col,compact}) => {
+  const startRef = useRef<{key:string;t:number}|null>(null);
+  const [now,setNow] = useState(()=>Date.now());
+  useEffect(()=>{
+    if(orderKey){ if(!startRef.current||startRef.current.key!==orderKey) startRef.current={key:orderKey,t:Date.now()}; }
+    else startRef.current=null;
+  },[orderKey]);
+  useEffect(()=>{ if(!orderKey) return; const t=setInterval(()=>setNow(Date.now()),1000); return()=>clearInterval(t); },[orderKey]);
+  if(!orderKey||!startRef.current) return null;
+  const sec=Math.max(0,Math.floor((now-startRef.current.t)/1000));
+  const mm=`${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}`;
+  return (
+    <span style={{position:'relative',display:'inline-flex',alignItems:'center',gap:4,fontSize:compact?9:10,fontWeight:700,padding:'2px 8px',borderRadius:99,color:col,background:`${col}12`,border:`1px solid ${col}30`,fontVariantNumeric:'tabular-nums',overflow:'hidden'}}>
+      <span style={{width:5,height:5,borderRadius:'50%',background:col,animation:'pulse 1s ease-in-out infinite'}}/>
+      {mm}
+      <span style={{position:'absolute',left:0,bottom:0,height:2,width:'100%',overflow:'hidden',pointerEvents:'none'}}>
+        <span style={{display:'block',height:'100%',width:'40%',background:`linear-gradient(90deg,transparent,${col},transparent)`,animation:'pos-sweep 1.5s linear infinite'}}/>
+      </span>
+    </span>
+  );
+};
+
 const SchedulePanel: React.FC<{orders:ScheduleOrder[];logs:ExecutionLog[];onOpenModal:()=>void;isRunning:boolean;isLoading:boolean;fillHeight?:boolean;compact?:boolean;onViewSession?:()=>void;historyIdsRef?:React.MutableRefObject<Set<string>>;inModal?:boolean}> =
 ({orders,logs,onOpenModal,isRunning,isLoading,fillHeight,compact,onViewSession,historyIdsRef,inModal}) => {
   const listRef  = useRef<HTMLDivElement>(null);
@@ -776,7 +800,10 @@ const FastradePanel: React.FC<{status:FastradeStatus|null;logs:FastradeLog[];isL
               <Zap style={{width:14,height:14,color:accent}}/>
               <span style={{fontSize:12,fontWeight:600,color:C.sub}}>{isCTC?T('dashboard.fastTrade.ctcSession'):T('dashboard.fastTrade.fttSession')}</span>
             </div>
-<StatusChip col={accent} label={T('common.active')} pulse/>
+            <div style={{display:'flex',alignItems:'center',gap:7,flexShrink:0}}>
+              <OpenPositionTimer orderKey={isOn ? (status?.activeOrderId ?? null) : null} col={accent}/>
+              <StatusChip col={accent} label={T('common.active')} pulse/>
+            </div>
           </>
         ) : (
           <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:5,width:'100%'}}>
