@@ -616,7 +616,7 @@ const OpenPositionTimer: React.FC<{orderKey:string|null|undefined;col:string;com
 // Banner GLOBAL "entry aktif" untuk dashboard utama (di bawah Today Profit).
 // Saat posisi TERBUKA: bar progres mengisi kiri→kanan (0→100%) + timer berjalan.
 // Saat posisi CLOSED: kilat MENANG/KALAH sesaat (`flash`) sebelum hilang.
-const ActiveEntryBanner: React.FC<{active:boolean;orderKey:string|null;flash:'win'|'lose'|null;durationSec:number;trend:string|null;accent:string;label:string;sub:string}> = ({active,orderKey,flash,durationSec,trend,accent,label,sub}) => {
+const ActiveEntryBanner: React.FC<{active:boolean;orderKey:string|null;flash:'win'|'lose'|null;durationSec:number;expiryMs:number|null;trend:string|null;accent:string;label:string;sub:string}> = ({active,orderKey,flash,durationSec,expiryMs,trend,accent,label,sub}) => {
   const startRef = useRef<{key:string;t:number}|null>(null);
   const fillRef = useRef<{k:string;d:number}>({k:'',d:0}); // delay animasi bar (stabil per entry)
   const [now,setNow] = useState(()=>Date.now());
@@ -640,14 +640,15 @@ const ActiveEntryBanner: React.FC<{active:boolean;orderKey:string|null;flash:'wi
   }
 
   if(!active||!orderKey||!startRef.current) return null;
-  const elapsed=Math.max(0,Math.floor((now-startRef.current.t)/1000));
-  const remaining=Math.max(0, durationSec-elapsed);
+  // Sumber waktu: expiryMs (NYATA dari order) bila ada, jika tidak deteksi klien.
+  const startMs = expiryMs!=null ? (expiryMs - durationSec*1000) : startRef.current.t;
+  const remaining = expiryMs!=null ? Math.max(0, Math.round((expiryMs-now)/1000)) : Math.max(0, durationSec-Math.floor((now-startMs)/1000));
   const mm=`${Math.floor(remaining/60)}:${String(remaining%60).padStart(2,'0')}`;
   const hasTrend = trend!=null && trend!=='';
   const isBuy = hasTrend && /call|buy|up/i.test(trend!);
   // Delay animasi bar dihitung SEKALI per entry (stabil) → bar mengisi 0→100%
   // mulus selama durationSec, sinkron dengan hitung mundur; tak restart tiap detik.
-  if(fillRef.current.k !== startRef.current.key){ fillRef.current = { k: startRef.current.key, d: Math.max(0,(Date.now()-startRef.current.t)/1000) }; }
+  if(fillRef.current.k !== startRef.current.key){ fillRef.current = { k: startRef.current.key, d: Math.max(0,(Date.now()-startMs)/1000) }; }
   return (
     <div style={{position:'relative',overflow:'hidden',display:'flex',alignItems:'center',gap:12,padding:'12px 15px',borderRadius:16,background:`${accent}0e`,border:`1px solid ${accent}30`}}>
       <span style={{position:'relative',display:'inline-flex',width:34,height:34,borderRadius:11,alignItems:'center',justifyContent:'center',background:`${accent}18`,color:accent,flexShrink:0}}>
@@ -2763,6 +2764,16 @@ export default function DashboardPage() {
     if(tradingMode==='fastrade'||tradingMode==='ctc'){ const m:Record<string,number>={'1m':60,'5m':300,'15m':900,'30m':1800,'1h':3600}; return m[String(ftTf)]??60; }
     return duration>0 ? duration : 60;
   })();
+  // Waktu kedaluwarsa NYATA posisi (epoch ms) agar hitung mundur sinkron dgn order:
+  //  • Signal: waktu eksekusi order (timeInMillis) + durasi.
+  //  • FTT/CTC: order tutup di batas timeframe (candle) → batas berikutnya.
+  //  • lainnya (blitz/AI/indикator/momentum): null → pakai deteksi klien.
+  const entryExpiryMs = (():number|null=>{
+    if(!activeEntry.active) return null;
+    if(isSchedRunning||isSchedPaused){ const mon = scheduleOrders.find(o=>o.isExecuted && !o.result && !o.isSkipped); if(mon?.timeInMillis) return mon.timeInMillis + entryDurationSec*1000; }
+    if((tradingMode==='fastrade'||tradingMode==='ctc') && isFtRunning){ const P=entryDurationSec*1000; return Math.ceil(Date.now()/P)*P; }
+    return null;
+  })();
   // Menang/kalah mode aktif → memicu kilat saat sebuah posisi CLOSED.
   const entryWL = (():{w:number;l:number}=>{
     if(tradingMode==='fastrade'||tradingMode==='ctc'||tradingMode==='blitz5s') return { w:ftStatus?.totalWins??0, l:ftStatus?.totalLosses??0 };
@@ -3693,6 +3704,7 @@ export default function DashboardPage() {
                   orderKey={activeEntry.key}
                   flash={entryFlash}
                   durationSec={entryDurationSec}
+                  expiryMs={entryExpiryMs}
                   trend={activeEntry.trend}
                   accent={modeAccent(tradingMode)}
                   label={language==='id' ? 'Entry aktif berjalan' : 'Active entry running'}
@@ -3946,6 +3958,7 @@ export default function DashboardPage() {
                   orderKey={activeEntry.key}
                   flash={entryFlash}
                   durationSec={entryDurationSec}
+                  expiryMs={entryExpiryMs}
                   trend={activeEntry.trend}
                   accent={modeAccent(tradingMode)}
                   label={language==='id' ? 'Entry aktif berjalan' : 'Active entry running'}
@@ -4102,6 +4115,7 @@ export default function DashboardPage() {
                 orderKey={activeEntry.key}
                 flash={entryFlash}
                 durationSec={entryDurationSec}
+                expiryMs={entryExpiryMs}
                 trend={activeEntry.trend}
                 accent={modeAccent(tradingMode)}
                 label={language==='id' ? 'Entry aktif berjalan' : 'Active entry running'}
