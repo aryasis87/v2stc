@@ -191,6 +191,12 @@ export async function getCurrencyConfig(a: AccountAuth): Promise<{
 export async function getDealsHistory(
   a: AccountAuth, accountType: 'demo' | 'real' = 'demo',
 ): Promise<any[]> {
+  // Browser guard: di web (bukan native Capacitor) panggilan langsung ke
+  // api.stockity1.id diblokir CORS. Lewati tanpa request → tak ada error CORS
+  // di console; fitur "profit hari ini" bersifat native-first.
+  if (typeof window !== 'undefined' && (window as any).Capacitor?.isNativePlatform?.() !== true) {
+    return [];
+  }
   const body = await get(
     `${BASE}/bo-deals-history/v3/deals/trade?type=${accountType}&locale=id`, a, 15000,
   );
