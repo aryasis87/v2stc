@@ -618,6 +618,7 @@ const OpenPositionTimer: React.FC<{orderKey:string|null|undefined;col:string;com
 // Saat posisi CLOSED: kilat MENANG/KALAH sesaat (`flash`) sebelum hilang.
 const ActiveEntryBanner: React.FC<{active:boolean;orderKey:string|null;flash:'win'|'lose'|null;durationSec:number;trend:string|null;accent:string;label:string;sub:string}> = ({active,orderKey,flash,durationSec,trend,accent,label,sub}) => {
   const startRef = useRef<{key:string;t:number}|null>(null);
+  const fillRef = useRef<{k:string;d:number}>({k:'',d:0}); // delay animasi bar (stabil per entry)
   const [now,setNow] = useState(()=>Date.now());
   useEffect(()=>{
     if(orderKey){ if(!startRef.current||startRef.current.key!==orderKey) startRef.current={key:orderKey,t:Date.now()}; }
@@ -641,10 +642,12 @@ const ActiveEntryBanner: React.FC<{active:boolean;orderKey:string|null;flash:'wi
   if(!active||!orderKey||!startRef.current) return null;
   const elapsed=Math.max(0,Math.floor((now-startRef.current.t)/1000));
   const remaining=Math.max(0, durationSec-elapsed);
-  const pct=durationSec>0?Math.min(100,(elapsed/durationSec)*100):0;
   const mm=`${Math.floor(remaining/60)}:${String(remaining%60).padStart(2,'0')}`;
   const hasTrend = trend!=null && trend!=='';
   const isBuy = hasTrend && /call|buy|up/i.test(trend!);
+  // Delay animasi bar dihitung SEKALI per entry (stabil) → bar mengisi 0→100%
+  // mulus selama durationSec, sinkron dengan hitung mundur; tak restart tiap detik.
+  if(fillRef.current.k !== startRef.current.key){ fillRef.current = { k: startRef.current.key, d: Math.max(0,(Date.now()-startRef.current.t)/1000) }; }
   return (
     <div style={{position:'relative',overflow:'hidden',display:'flex',alignItems:'center',gap:12,padding:'12px 15px',borderRadius:16,background:`${accent}0e`,border:`1px solid ${accent}30`}}>
       <span style={{position:'relative',display:'inline-flex',width:34,height:34,borderRadius:11,alignItems:'center',justifyContent:'center',background:`${accent}18`,color:accent,flexShrink:0}}>
@@ -662,9 +665,9 @@ const ActiveEntryBanner: React.FC<{active:boolean;orderKey:string|null;flash:'wi
         <span style={{fontSize:10,fontWeight:800,padding:'3px 8px',borderRadius:7,flexShrink:0,color:isBuy?C.cyan:C.coral,background:isBuy?`${C.cyan}16`:`${C.coral}16`,border:`1px solid ${isBuy?C.cyan:C.coral}38`,letterSpacing:'0.02em'}}>{isBuy?'BUY ▲':'SELL ▼'}</span>
       )}
       <div style={{fontSize:21,fontWeight:800,color:accent,fontVariantNumeric:'tabular-nums',flexShrink:0,letterSpacing:'-0.02em',minWidth:52,textAlign:'right'}}>{mm}</div>
-      {/* bar progres kiri→kanan mengikuti waktu berjalan (0→100%) */}
+      {/* bar progres 0→100% — animasi penuh selama durationSec, sinkron hitung mundur */}
       <span style={{position:'absolute',left:0,bottom:0,height:3,width:'100%',background:`${accent}22`,overflow:'hidden',pointerEvents:'none'}}>
-        <span style={{display:'block',height:'100%',width:`${pct}%`,background:accent,transition:'width 1s linear'}}/>
+        <span key={fillRef.current.k} style={{display:'block',height:'100%',width:'0%',background:accent,animation:`pos-fill-run ${Math.max(1,durationSec)}s linear forwards`,animationDelay:`-${fillRef.current.d}s`}}/>
       </span>
     </div>
   );
@@ -1404,6 +1407,42 @@ const AiLockedModal: React.FC<{ open: boolean; onClose: () => void; lang: string
 };
 
 // ═══════════════════════════════════════════
+// 5st (BLITZ) LOCKED MODAL — berbayar, popup dulu sebelum ke portal pembayaran
+// ═══════════════════════════════════════════
+const BLITZ5S_LOCK_STR: Record<string, { title: string; body: string; hint: string; go: string; close: string }> = {
+  id: { title: 'Mode 5st (Blitz) Terkunci', body: 'Order kilat 5 detik — fitur berbayar Rp 85.000 / 30 hari.', hint: 'Lanjut ke portal pembayaran untuk mengaktifkan. Pembayaran via QRIS, aktif setelah diverifikasi admin.', go: 'Lanjut ke Pembayaran', close: 'Tutup' },
+  en: { title: '5st (Blitz) Mode Locked', body: '5-second blitz orders — a paid feature, Rp 85,000 / 30 days.', hint: 'Continue to the payment portal to activate. Payment via QRIS, active after admin verification.', go: 'Continue to Payment', close: 'Close' },
+  ru: { title: 'Режим 5st (Blitz) заблокирован', body: 'Блиц-ордера 5 секунд — платная функция, Rp 85.000 / 30 дней.', hint: 'Перейдите к оплате, чтобы активировать. Оплата через QRIS, активация после проверки.', go: 'Перейти к оплате', close: 'Закрыть' },
+  es: { title: 'Modo 5st (Blitz) bloqueado', body: 'Órdenes blitz de 5 segundos — función de pago, Rp 85.000 / 30 días.', hint: 'Continúa al portal de pago para activar. Pago vía QRIS, activo tras verificación.', go: 'Ir al pago', close: 'Cerrar' },
+  ms: { title: 'Mod 5st (Blitz) Dikunci', body: 'Order kilat 5 saat — ciri berbayar Rp 85,000 / 30 hari.', hint: 'Teruskan ke portal pembayaran untuk mengaktifkan. Bayaran via QRIS, aktif selepas disahkan.', go: 'Teruskan ke Pembayaran', close: 'Tutup' },
+};
+
+const Blitz5sLockedModal: React.FC<{ open: boolean; onClose: () => void; lang: string; onActivate: () => void }> = ({ open, onClose, lang, onActivate }) => {
+  if (!open) return null;
+  const S = BLITZ5S_LOCK_STR[lang] ?? BLITZ5S_LOCK_STR.en;
+  return (
+    <div style={{position:'fixed',inset:0,zIndex:80,display:'flex',alignItems:'center',justifyContent:'center',padding:'16px',animation:'fade-in 0.15s ease'}}>
+      <div onClick={onClose} style={{position:'absolute',inset:0,background:'rgba(0,0,0,0.72)',backdropFilter:'blur(10px)',WebkitBackdropFilter:'blur(10px)'}}/>
+      <div style={{position:'relative',width:'100%',maxWidth:380,background:C.bg,borderRadius:20,border:`1px solid ${C.bdr}`,padding:'24px 22px',animation:'slide-up 0.28s cubic-bezier(0.32,0.72,0,1)',textAlign:'center'}}>
+        <div style={{width:52,height:52,margin:'0 auto 14px',borderRadius:16,display:'flex',alignItems:'center',justifyContent:'center',background:`${C.sky}14`,border:`1px solid ${C.sky}30`}}>
+          <Clock style={{width:22,height:22,color:C.sky}}/>
+        </div>
+        <p style={{fontSize:16,fontWeight:700,color:C.text,marginBottom:6}}>{S.title}</p>
+        <p style={{fontSize:13,color:C.sub,lineHeight:1.5,marginBottom:4}}>{S.body}</p>
+        <p style={{fontSize:12,color:C.muted,lineHeight:1.55,marginBottom:16}}>{S.hint}</p>
+        <div style={{display:'flex',gap:8}}>
+          <button onClick={onClose} style={{flex:1,padding:'11px 0',borderRadius:12,background:C.card2,border:`1px solid ${C.bdr}`,cursor:'pointer',fontSize:13,fontWeight:600,color:C.sub}}>{S.close}</button>
+          <button onClick={onActivate}
+             style={{flex:1.4,padding:'11px 0',borderRadius:12,background:C.sky,border:'none',cursor:'pointer',fontSize:13,fontWeight:700,color:'#ffffff',display:'flex',alignItems:'center',justifyContent:'center'}}>
+            {S.go}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ═══════════════════════════════════════════
 // REAL LOCKED MODAL — v4: mode REAL hanya utk akun baru via selfregister
 // ═══════════════════════════════════════════
 const REAL_LOCK_STR: Record<string, { title: string; body: string; hint: string; cta: string; close: string }> = {
@@ -1862,6 +1901,7 @@ export default function DashboardPage() {
   const [aiCheckDone, setAiCheckDone] = useState(false);
   const [frCheckDone, setFrCheckDone] = useState(false);
   const [aiLockOpen,  setAiLockOpen]  = useState(false);
+  const [blitz5sLockOpen, setBlitz5sLockOpen] = useState(false);
   const [frLockOpen,  setFrLockOpen]  = useState(false);
   const [adviceOpen,  setAdviceOpen]  = useState(false);
   // ── v4: akses mode REAL (user lama demo-only) ─────────────────────────────
@@ -2839,7 +2879,7 @@ export default function DashboardPage() {
     if (m === 'fastreversal' && !frUnlocked) { setFrLockOpen(true); return; }
     // 5st = kartu penemuan: belum aktivasi → portal; sudah aktivasi → jalankan
     // sebagai Fastrade FTT dengan toggle 5st menyala (eksekusi blitz 5 detik).
-    if (m === 'blitz5s' && !blitz5sUnlocked) { router.push('/aktivasi-5st'); return; }
+    if (m === 'blitz5s' && !blitz5sUnlocked) { setBlitz5sLockOpen(true); return; }
     // Izinkan ganti pilihan mode kapan saja (proteksi start ada di handleStart)
     if(m!==tradingMode) setTradingMode(m);
     setError(null);
@@ -2958,7 +2998,7 @@ export default function DashboardPage() {
     // padahal tidak. Ditolak terang-terangan.
     if(tradingMode==='fastreversal' && !frUnlocked){ setFrLockOpen(true); return; }
     // 5st berbayar: toggle aktif tapi akses belum/terkunci → arahkan ke aktivasi
-    if((tradingMode==='blitz5s' || (tradingMode==='fastrade' && blitz5s)) && !blitz5sUnlocked){ router.push('/aktivasi-5st'); return; }
+    if((tradingMode==='blitz5s' || (tradingMode==='fastrade' && blitz5s)) && !blitz5sUnlocked){ setBlitz5sLockOpen(true); return; }
     if(tradingMode==='fastreversal' && reversalSteps.filter(k=>k>=1&&k<=10).length===0){
       setError('Fast Reversal butuh minimal satu langkah K yang dibalik. Isi K di pengaturan sebelum memulai.');
       return;
@@ -3156,6 +3196,7 @@ export default function DashboardPage() {
     @keyframes ping        { 0%{transform:scale(1);opacity:1} 80%,100%{transform:scale(2);opacity:0} }
     @keyframes pos-sweep   { 0%{transform:translateX(-130%)} 100%{transform:translateX(330%)} }
     @keyframes pos-fill    { 0%{width:0%;opacity:1} 88%{opacity:1} 100%{width:100%;opacity:0} }
+    @keyframes pos-fill-run{ from{width:0%} to{width:100%} }
     @keyframes slide-up    { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
     @keyframes fade-in     { from{opacity:0} to{opacity:1} }
     @keyframes profit-slide-up   { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
@@ -3491,6 +3532,7 @@ export default function DashboardPage() {
         )}
         <ActivationNoticeModal open={pemberitahuan !== null} onClose={()=>setPemberitahuan(null)} at={pemberitahuan?.at ?? 0} expiresAt={pemberitahuan?.sampai ?? null} featureLabel={pemberitahuan?.label ?? ''}/>
         <AiLockedModal open={aiLockOpen} onClose={()=>setAiLockOpen(false)} lang={language} onActivate={()=>{ setAiLockOpen(false); router.push('/aktivasi-aisignal'); }}/>
+        <Blitz5sLockedModal open={blitz5sLockOpen} onClose={()=>setBlitz5sLockOpen(false)} lang={language} onActivate={()=>{ setBlitz5sLockOpen(false); router.push('/aktivasi-5st'); }}/>
         <FrLockedModal open={frLockOpen} onClose={()=>setFrLockOpen(false)} lang={language} onActivate={()=>{ setFrLockOpen(false); window.location.href = `mailto:${FAST_REVERSAL_CONTACT_EMAIL}?subject=${encodeURIComponent('Aktivasi Fast Reversal')}&body=${encodeURIComponent('Halo admin, saya ingin mengaktifkan mode Fast Reversal.')}`; }}/>
         <RealLockedModal
           open={realLockOpen}
