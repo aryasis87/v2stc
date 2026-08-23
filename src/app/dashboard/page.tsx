@@ -3592,6 +3592,17 @@ export default function DashboardPage() {
 
             </div>
 
+            {activeEntry.active && (
+              <div style={{marginBottom:g}}>
+                <ActiveEntryBanner
+                  orderKey={activeEntry.key}
+                  accent={modeAccent(tradingMode)}
+                  label={language==='id' ? 'Entry aktif berjalan' : 'Active entry running'}
+                  sub={(language==='id' ? 'Posisi terbuka · ' : 'Position open · ') + (({schedule:'Signal',fastrade:'Fastrade FTT',blitz5s:'5st · Blitz',ctc:'Fastrade CTC',aisignal:'AI Signal',indicator:'Indicator',momentum:'Momentum'} as Record<string,string>)[tradingMode] ?? 'Sesi')}
+                />
+              </div>
+            )}
+
             {/* ── MAIN 2-COLUMN LAYOUT ───────────────────────────────────── */}
             <div style={{display:'grid',gridTemplateColumns:'1fr 360px',gap:16,alignItems:'start'}}>
 
@@ -3829,6 +3840,17 @@ export default function DashboardPage() {
                 );
               })()}
             </div>
+
+            {activeEntry.active && (
+              <div style={{marginBottom:g}}>
+                <ActiveEntryBanner
+                  orderKey={activeEntry.key}
+                  accent={modeAccent(tradingMode)}
+                  label={language==='id' ? 'Entry aktif berjalan' : 'Active entry running'}
+                  sub={(language==='id' ? 'Posisi terbuka · ' : 'Position open · ') + (({schedule:'Signal',fastrade:'Fastrade FTT',blitz5s:'5st · Blitz',ctc:'Fastrade CTC',aisignal:'AI Signal',indicator:'Indicator',momentum:'Momentum'} as Record<string,string>)[tradingMode] ?? 'Sesi')}
+                />
+              </div>
+            )}
 
             {/* ── ROW 2: Main 2-column — Chart + Sidebar ── */}
             <div style={{display:'grid',gridTemplateColumns:'1fr 288px',gap:12,alignItems:'start'}}>
