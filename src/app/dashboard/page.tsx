@@ -573,6 +573,22 @@ const PickerBtn: React.FC<{
 
 
 // OrderInputModal dipindah ke ./OrderInputModal.
+
+// Timer live untuk POSISI TERBUKA (order dieksekusi, hasil belum keluar):
+// menghitung waktu berjalan sejak posisi dibuka (MM:SS) + titik berdenyut.
+const LivePositionTimer: React.FC<{since:number;col:string;compact?:boolean}> = ({since,col,compact}) => {
+  const [now,setNow] = useState(()=>Date.now());
+  useEffect(()=>{ const t=setInterval(()=>setNow(Date.now()),1000); return()=>clearInterval(t); },[]);
+  const sec = Math.max(0, Math.floor((now - since)/1000));
+  const label = `${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}`;
+  return (
+    <span style={{display:'inline-flex',alignItems:'center',gap:4,fontSize:compact?9:10,fontWeight:700,padding:'1px 6px',borderRadius:99,color:col,background:`${col}12`,border:`1px solid ${col}28`,flexShrink:0,fontVariantNumeric:'tabular-nums'}}>
+      <span style={{width:5,height:5,borderRadius:'50%',background:col,animation:'pulse 1s ease-in-out infinite'}}/>
+      {label}
+    </span>
+  );
+};
+
 const SchedulePanel: React.FC<{orders:ScheduleOrder[];logs:ExecutionLog[];onOpenModal:()=>void;isRunning:boolean;isLoading:boolean;fillHeight?:boolean;compact?:boolean;onViewSession?:()=>void;historyIdsRef?:React.MutableRefObject<Set<string>>;inModal?:boolean}> =
 ({orders,logs,onOpenModal,isRunning,isLoading,fillHeight,compact,onViewSession,historyIdsRef,inModal}) => {
   const listRef  = useRef<HTMLDivElement>(null);
@@ -648,18 +664,27 @@ const SchedulePanel: React.FC<{orders:ScheduleOrder[];logs:ExecutionLog[];onOpen
             const timeFz = compact ? '10.5px' : '12px';
             const itemPad = compact ? '5px 10px' : '8px 12px';
             const itemGap = compact ? 5 : 8;
+            // Waktu posisi dibuka: pakai executedAt dari log bila ada, jika tidak jatuh ke jadwal.
+            const execAt = logs.find(l => l.orderId === o.id)?.executedAt ?? o.timeInMillis;
             return (
               <div key={o.id} className="schedule-item" style={{
                 display:'flex',alignItems:'center',gap:itemGap,padding:itemPad,
                 borderBottom:`1px solid ${C.bdr}`,
                 background: isMartingale ? `${C.amber}08` : `${C.sky}08`,
-                minWidth:0,overflow:'hidden',
+                minWidth:0,overflow:'hidden',position:'relative',
               }}>
                 <span style={{fontSize:compact?9:10,fontWeight:700,color:col,width:18,textAlign:'center',flexShrink:0,animation:'pulse 1.2s ease-in-out infinite'}}>{label}</span>
                 <span style={{fontSize:timeFz,fontFamily:'inherit',fontVariantNumeric:'tabular-nums',color:C.text,fontWeight:600,flexShrink:0}}>{o.time}</span>
                 <span style={{fontSize:compact?8:9,fontWeight:700,padding:'1px 5px',borderRadius:4,color:isCall?C.cyan:C.coral,background:isCall?`${C.cyan}12`:`${C.coral}12`,flexShrink:0}}>{isCall?'B':'S'}</span>
-                <span style={{fontSize:compact?8:9,fontWeight:700,padding:'1px 6px',borderRadius:99,color:col,background:`${col}12`,border:`1px solid ${col}28`,flexShrink:0,marginLeft:'auto'}}>
-                  {isMartingale ? `K${ms!.currentStep}` : 'Monitor'}
+                <span style={{display:'inline-flex',alignItems:'center',gap:5,marginLeft:'auto',flexShrink:0}}>
+                  {isMartingale && (
+                    <span style={{fontSize:compact?8:9,fontWeight:700,padding:'1px 6px',borderRadius:99,color:col,background:`${col}12`,border:`1px solid ${col}28`}}>K{ms!.currentStep}</span>
+                  )}
+                  <LivePositionTimer since={execAt} col={col} compact={compact} />
+                </span>
+                {/* garis sapuan animasi: menandakan posisi masih berjalan */}
+                <span style={{position:'absolute',left:0,bottom:0,height:2,width:'100%',overflow:'hidden',pointerEvents:'none'}}>
+                  <span style={{display:'block',height:'100%',width:'38%',background:`linear-gradient(90deg,transparent,${col},transparent)`,animation:'pos-sweep 1.5s linear infinite'}}/>
                 </span>
               </div>
             );
@@ -2991,6 +3016,7 @@ export default function DashboardPage() {
     @keyframes spin        { to { transform: rotate(360deg); } }
     @keyframes pulse       { 0%,100%{opacity:1} 50%{opacity:0.5} }
     @keyframes ping        { 0%{transform:scale(1);opacity:1} 80%,100%{transform:scale(2);opacity:0} }
+    @keyframes pos-sweep   { 0%{transform:translateX(-130%)} 100%{transform:translateX(330%)} }
     @keyframes slide-up    { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
     @keyframes fade-in     { from{opacity:0} to{opacity:1} }
     @keyframes profit-slide-up   { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
