@@ -614,17 +614,31 @@ const OpenPositionTimer: React.FC<{orderKey:string|null|undefined;col:string;com
 };
 
 // Banner GLOBAL "entry aktif" untuk dashboard utama (di bawah Today Profit).
-// Tampil untuk SEMUA mode selama ada eksekusi entry/posisi terbuka. Timer
-// dihitung klien sejak `orderKey` (entry aktif) muncul; reset tiap entry baru.
-const ActiveEntryBanner: React.FC<{orderKey:string|null;accent:string;label:string;sub:string}> = ({orderKey,accent,label,sub}) => {
+// Saat posisi TERBUKA: bar progres mengisi kiri→kanan (0→100%) + timer berjalan.
+// Saat posisi CLOSED: kilat MENANG/KALAH sesaat (`flash`) sebelum hilang.
+const ActiveEntryBanner: React.FC<{active:boolean;orderKey:string|null;flash:'win'|'lose'|null;accent:string;label:string;sub:string}> = ({active,orderKey,flash,accent,label,sub}) => {
   const startRef = useRef<{key:string;t:number}|null>(null);
   const [now,setNow] = useState(()=>Date.now());
   useEffect(()=>{
     if(orderKey){ if(!startRef.current||startRef.current.key!==orderKey) startRef.current={key:orderKey,t:Date.now()}; }
     else startRef.current=null;
   },[orderKey]);
-  useEffect(()=>{ if(!orderKey) return; const t=setInterval(()=>setNow(Date.now()),1000); return()=>clearInterval(t); },[orderKey]);
-  if(!orderKey||!startRef.current) return null;
+  useEffect(()=>{ if(!active) return; const t=setInterval(()=>setNow(Date.now()),1000); return()=>clearInterval(t); },[active]);
+
+  if(flash){
+    const win = flash==='win'; const col = win?C.cyan:C.coral;
+    return (
+      <div className={win?'win-flash':'lose-flash'} style={{position:'relative',overflow:'hidden',display:'flex',alignItems:'center',gap:12,padding:'12px 15px',borderRadius:16,background:`${col}16`,border:`1px solid ${col}45`}}>
+        <span style={{display:'inline-flex',width:34,height:34,borderRadius:11,alignItems:'center',justifyContent:'center',background:`${col}22`,color:col,fontSize:18,fontWeight:900,flexShrink:0}}>{win?'✓':'✕'}</span>
+        <div style={{minWidth:0,flex:1}}>
+          <div style={{fontSize:13,fontWeight:800,color:col,letterSpacing:'-0.01em'}}>{win?'POSISI MENANG':'POSISI KALAH'}</div>
+          <div style={{fontSize:11,color:C.muted,marginTop:1,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{sub}</div>
+        </div>
+      </div>
+    );
+  }
+
+  if(!active||!orderKey||!startRef.current) return null;
   const sec=Math.max(0,Math.floor((now-startRef.current.t)/1000));
   const mm=`${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}`;
   return (
@@ -641,8 +655,9 @@ const ActiveEntryBanner: React.FC<{orderKey:string|null;accent:string;label:stri
         <div style={{fontSize:11,color:C.muted,marginTop:1,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{sub}</div>
       </div>
       <div style={{fontSize:21,fontWeight:800,color:accent,fontVariantNumeric:'tabular-nums',flexShrink:0,letterSpacing:'-0.02em'}}>{mm}</div>
-      <span style={{position:'absolute',left:0,bottom:0,height:3,width:'100%',overflow:'hidden',pointerEvents:'none'}}>
-        <span style={{display:'block',height:'100%',width:'35%',background:`linear-gradient(90deg,transparent,${accent},transparent)`,animation:'pos-sweep 1.5s linear infinite'}}/>
+      {/* bar progres kiri→kanan (0→100%) */}
+      <span style={{position:'absolute',left:0,bottom:0,height:3,width:'100%',background:`${accent}22`,overflow:'hidden',pointerEvents:'none'}}>
+        <span style={{display:'block',height:'100%',background:accent,animation:'pos-fill 1.8s linear infinite'}}/>
       </span>
     </div>
   );
@@ -2689,6 +2704,23 @@ export default function DashboardPage() {
     }
     return { active:false, key:null };
   })();
+  // Menang/kalah mode aktif → memicu kilat saat sebuah posisi CLOSED.
+  const entryWL = (():{w:number;l:number}=>{
+    if(tradingMode==='fastrade'||tradingMode==='ctc'||tradingMode==='blitz5s') return { w:ftStatus?.totalWins??0, l:ftStatus?.totalLosses??0 };
+    if(tradingMode==='aisignal') return { w:aiStatus?.totalWins??0, l:aiStatus?.totalLosses??0 };
+    if(tradingMode==='indicator') return { w:indicatorStatus?.totalWins??0, l:indicatorStatus?.totalLosses??0 };
+    if(tradingMode==='momentum') return { w:momentumStatus?.totalWins??0, l:momentumStatus?.totalLosses??0 };
+    return { w:scheduleOrders.filter(o=>/^win$/i.test(o.result||'')).length, l:scheduleOrders.filter(o=>/^los/i.test(o.result||'')).length };
+  })();
+  const [entryFlash,setEntryFlash] = useState<'win'|'lose'|null>(null);
+  const prevWLRef = useRef({w:entryWL.w,l:entryWL.l});
+  useEffect(()=>{
+    const p = prevWLRef.current; let f:'win'|'lose'|null=null;
+    if(entryWL.w>p.w) f='win'; else if(entryWL.l>p.l) f='lose';
+    prevWLRef.current={w:entryWL.w,l:entryWL.l};
+    if(f){ setEntryFlash(f); const id=setTimeout(()=>setEntryFlash(null),2600); return ()=>clearTimeout(id); }
+  },[entryWL.w,entryWL.l]);
+  const showEntryBanner = activeEntry.active || !!entryFlash;
 
   const selectedAsset = assets.find(a=>a.ric===selectedRic)??null;
   const pendingOrders = scheduleOrders.filter(o=>!o.isExecuted&&!o.isSkipped);
@@ -3104,6 +3136,7 @@ export default function DashboardPage() {
     @keyframes pulse       { 0%,100%{opacity:1} 50%{opacity:0.5} }
     @keyframes ping        { 0%{transform:scale(1);opacity:1} 80%,100%{transform:scale(2);opacity:0} }
     @keyframes pos-sweep   { 0%{transform:translateX(-130%)} 100%{transform:translateX(330%)} }
+    @keyframes pos-fill    { 0%{width:0%;opacity:1} 88%{opacity:1} 100%{width:100%;opacity:0} }
     @keyframes slide-up    { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
     @keyframes fade-in     { from{opacity:0} to{opacity:1} }
     @keyframes profit-slide-up   { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
@@ -3592,10 +3625,12 @@ export default function DashboardPage() {
 
             </div>
 
-            {activeEntry.active && (
+            {showEntryBanner && (
               <div style={{marginBottom:g}}>
                 <ActiveEntryBanner
+                  active={activeEntry.active}
                   orderKey={activeEntry.key}
+                  flash={entryFlash}
                   accent={modeAccent(tradingMode)}
                   label={language==='id' ? 'Entry aktif berjalan' : 'Active entry running'}
                   sub={(language==='id' ? 'Posisi terbuka · ' : 'Position open · ') + (({schedule:'Signal',fastrade:'Fastrade FTT',blitz5s:'5st · Blitz',ctc:'Fastrade CTC',aisignal:'AI Signal',indicator:'Indicator',momentum:'Momentum'} as Record<string,string>)[tradingMode] ?? 'Sesi')}
@@ -3841,10 +3876,12 @@ export default function DashboardPage() {
               })()}
             </div>
 
-            {activeEntry.active && (
+            {showEntryBanner && (
               <div style={{marginBottom:g}}>
                 <ActiveEntryBanner
+                  active={activeEntry.active}
                   orderKey={activeEntry.key}
+                  flash={entryFlash}
                   accent={modeAccent(tradingMode)}
                   label={language==='id' ? 'Entry aktif berjalan' : 'Active entry running'}
                   sub={(language==='id' ? 'Posisi terbuka · ' : 'Position open · ') + (({schedule:'Signal',fastrade:'Fastrade FTT',blitz5s:'5st · Blitz',ctc:'Fastrade CTC',aisignal:'AI Signal',indicator:'Indicator',momentum:'Momentum'} as Record<string,string>)[tradingMode] ?? 'Sesi')}
@@ -3994,9 +4031,11 @@ export default function DashboardPage() {
 
 </div>
             {TopCards}
-            {activeEntry.active && (
+            {showEntryBanner && (
               <ActiveEntryBanner
+                active={activeEntry.active}
                 orderKey={activeEntry.key}
+                flash={entryFlash}
                 accent={modeAccent(tradingMode)}
                 label={language==='id' ? 'Entry aktif berjalan' : 'Active entry running'}
                 sub={(language==='id' ? 'Posisi terbuka · ' : 'Position open · ') + (({schedule:'Signal',fastrade:'Fastrade FTT',blitz5s:'5st · Blitz',ctc:'Fastrade CTC',aisignal:'AI Signal',indicator:'Indicator',momentum:'Momentum'} as Record<string,string>)[tradingMode] ?? 'Sesi')}
