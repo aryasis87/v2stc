@@ -259,6 +259,9 @@ export interface FastradeStatus {
   /** Fast Reversal berjalan sebagai FTT + reversalSteps — ini satu-satunya
    *  penanda yang membedakannya dari FTT biasa saat memulihkan keadaan. */
   reversalSteps?: number[];
+  /** 5st (blitz 5 detik) juga berjalan sebagai FTT — penanda ini membedakan sesi
+   *  5st dari FTT biasa saat memulihkan keadaan (mis. buka di perangkat baru). */
+  blitz?: boolean;
 }
 
 export interface FastradeLog {

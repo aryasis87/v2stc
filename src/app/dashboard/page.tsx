@@ -1581,6 +1581,7 @@ const ModeSessionPanel: React.FC<{
     if(isFtR) {
       if((ftStatus as any)?.mode === 'CTC') return 'ctc';
       if(((ftStatus as any)?.reversalSteps?.length ?? 0) > 0) return 'fastreversal';
+      if((ftStatus as any)?.blitz) return 'blitz5s';
       if(mode === 'blitz5s' || mode === 'fastreversal' || mode === 'ctc') return mode;
       return 'fastrade';
     }
@@ -2536,6 +2537,7 @@ export default function DashboardPage() {
           const sub: TradingMode =
             ftData!.mode === 'CTC' ? 'ctc'
             : (ftData!.reversalSteps?.length ?? 0) > 0 ? 'fastreversal'
+            : ftData!.blitz ? 'blitz5s'   // status kini bawa penanda blitz → 5st pulih walau di perangkat baru
             : (['ctc', 'fastreversal', 'blitz5s'].includes(localMode) ? localMode : 'fastrade');
           setTradingMode(sub);
           setIsModeChosen(true);
