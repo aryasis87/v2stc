@@ -40,7 +40,7 @@ import { applyLanguageFromCountry } from '@/lib/LanguageContext';
 import { useDarkMode } from '@/lib/DarkModeContext';
 import {
   Activity, AlertCircle, BarChart2, Calendar,
-  ChevronDown, ChevronUp, Info, Plus,
+  ChevronDown, ChevronUp, ChevronRight, Info, Plus,
   Settings, Trash2, X, Zap, TrendingUp, TrendingDown,
   PlayCircle, StopCircle, PauseCircle, RefreshCw, Timer, Copy,
   ArrowRight, Radio, BarChart, Waves,
@@ -1114,9 +1114,8 @@ const MobileSessionSheet: React.FC<{
           padding:'16px 24px',
           display:'flex',alignItems:'center',justifyContent:'space-between',
         }}>
-          <div style={{display:'flex',alignItems:'center',gap:10}}>
-            <span style={{width:8,height:8,borderRadius:'50%',background:ac,animation:'pulse 1.6s ease-in-out infinite',flexShrink:0}}/>
-            <p style={{fontSize:20,fontWeight:600,color:C.text,letterSpacing:'-0.02em',margin:0}}>{modeLabel[mode]}</p>
+          <div style={{display:'flex',alignItems:'center',gap:10,minWidth:0}}>
+            <p style={{fontSize:20,fontWeight:600,color:C.text,letterSpacing:'-0.02em',margin:0,minWidth:0,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{modeLabel[mode]}</p>
           </div>
           <button
             onClick={onClose}
@@ -1156,16 +1155,6 @@ const MobileSessionSheet: React.FC<{
 // MODE PICKER MODAL
 // ═══════════════════════════════════════════
 
-/** Penjelasan singkat tiap mode, ditulis untuk orang awam */
-const MODE_INFO_KEY: Record<string, string> = {
-  schedule:  'modeSchedule',
-  fastrade:  'modeFastrade',
-  ctc:       'modeCtc',
-  aisignal:  'modeAiSignal',
-  indicator: 'modeIndicator',
-  momentum:  'modeMomentum',
-};
-
 const ModePickerModal: React.FC<{
   open: boolean; onClose: () => void;
   mode: TradingMode; onModeChange: (m: TradingMode) => void;
@@ -1173,7 +1162,6 @@ const ModePickerModal: React.FC<{
 }> = ({ open, onClose, mode, onModeChange, locked, blockedModes }) => {
   if (!open) return null;
 
-  const [infoOpen, setInfoOpen] = useState<string | null>(null);
   const MODES = [
     { v: 'schedule'  as TradingMode, label: 'Signal Mode',           icon: <Calendar  style={{ width: 16, height: 16 }} />, accent: C.cyan,   desc: 'Manual Input Signal' },
     { v: 'fastrade'  as TradingMode, label: 'Fastrade FTT Mode',    icon: <Zap       style={{ width: 16, height: 16 }} />, accent: C.cyan,   desc: 'Fast Trade Execution' },
@@ -1228,18 +1216,16 @@ const ModePickerModal: React.FC<{
             const isAiLockedRow = v === 'aisignal' && AI_LOCKED; // fitur terkunci per akun
             const isFrLockedRow = v === 'fastreversal' && FR_LOCKED; // berbayar, 30 hari
             const isBlitz5sLockedRow = v === 'blitz5s' && BLITZ5S_LOCKED; // berbayar, 30 hari
-            const infoShown = infoOpen === v;
             return (
-              <div key={v} style={{display:'flex',flexDirection:'column',gap:0}}>
-              <div style={{display:'flex',alignItems:'stretch',gap:6}}>
               <button
+                key={v}
                 type="button"
                 onClick={() => {
                   onModeChange(v);
                   onClose();
                 }}
                 style={{
-                  display:'flex',alignItems:'center',gap:12,padding:'11px 14px',
+                  width:'100%',display:'flex',alignItems:'center',gap:12,padding:'11px 14px',
                   borderRadius:14,cursor:'pointer',
                   background:isAct?`${accent}14`:C.card2,
                   border:`1px solid ${isAct?`${accent}45`:C.bdr}`,
@@ -1254,9 +1240,9 @@ const ModePickerModal: React.FC<{
                 }}>
                   {icon}
                 </span>
-                <div style={{flex:1,textAlign:'left'}}>
-                  <div style={{display:'flex',alignItems:'center',gap:5}}>
-                    <span style={{display:'block',fontSize:14,fontWeight:600,color:isAct?accent:C.sub}}>{label}</span>
+                <div style={{flex:1,minWidth:0,textAlign:'left'}}>
+                  <div style={{display:'flex',alignItems:'center',gap:5,minWidth:0}}>
+                    <span style={{fontSize:14,fontWeight:600,color:isAct?accent:C.sub,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',minWidth:0}}>{label}</span>
                     {/* Badge hanya untuk mode yang SEDANG BERJALAN */}
                     {isAct && locked && (
                       <span style={{fontSize:9,fontWeight:700,padding:'2px 6px',borderRadius:6,color:accent,background:`${accent}15`,border:`1px solid ${accent}35`,letterSpacing:'0.04em',flexShrink:0,display:'flex',alignItems:'center',gap:3}}>
@@ -1265,41 +1251,16 @@ const ModePickerModal: React.FC<{
                       </span>
                     )}
                   </div>
-                  <span style={{display:'block',fontSize:11,color:C.muted,marginTop:1}}>{desc}</span>
+                  <span style={{display:'block',fontSize:11,color:C.muted,marginTop:1,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{desc}</span>
                 </div>
                 {(isAiLockedRow||isFrLockedRow||isBlitz5sLockedRow) ? (
-                  <Lock style={{width:14,height:14,color:C.amber,flexShrink:0}}/>
-                ) : isAct && (
-                  <Check style={{width:16,height:16,color:accent,flexShrink:0}}/>
+                  <Lock style={{width:15,height:15,color:C.amber,flexShrink:0}}/>
+                ) : isAct ? (
+                  <Check style={{width:17,height:17,color:accent,flexShrink:0}}/>
+                ) : (
+                  <ChevronRight style={{width:15,height:15,color:C.muted,flexShrink:0,opacity:0.55}}/>
                 )}
               </button>
-              {/* Tombol penjelasan — membuka keterangan singkat mode ini */}
-              <button
-                type="button"
-                aria-label={`Penjelasan ${label}`}
-                onClick={() => setInfoOpen(infoShown ? null : v)}
-                style={{
-                  width:38,flexShrink:0,borderRadius:14,cursor:'pointer',
-                  background:infoShown?`${accent}14`:C.card2,
-                  border:`1px solid ${infoShown?`${accent}45`:C.bdr}`,
-                  display:'flex',alignItems:'center',justifyContent:'center',
-                }}
-              >
-                <ChevronDown style={{
-                  width:15,height:15,color:infoShown?accent:C.muted,
-                  transform:infoShown?'rotate(180deg)':'none',transition:'transform 0.18s',
-                }}/>
-              </button>
-              </div>
-              {infoShown && (
-                <div style={{
-                  margin:'6px 0 2px',padding:'11px 13px',borderRadius:12,
-                  background:`${accent}0A`,border:`1px solid ${accent}22`,
-                }}>
-                  <p style={{fontSize:12,lineHeight:1.65,color:C.sub,margin:0}}>{ui(T_LANG, MODE_INFO_KEY[v] ?? 'modeSchedule')}</p>
-                </div>
-              )}
-              </div>
             );
           })}
           {locked && (
@@ -4179,7 +4140,6 @@ export default function DashboardPage() {
                     }}
                   >
                     <div style={{display:'flex',alignItems:'center',gap:6,minWidth:0}}>
-                      <span style={{width:6,height:6,borderRadius:'50%',background:modeAccent(tradingMode),animation:'pulse 1.6s ease-in-out infinite',flexShrink:0}}/>
                       <span style={{fontSize:11,fontWeight:600,color:modeAccent(tradingMode),whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>
                         {{schedule:'Signal Mode',fastrade:'Fastrade FTT',blitz5s:'5st · Blitz 5 Detik',ctc:'Fastrade CTC',aisignal:'AI Signal Mode',indicator:'Analysis Strategy Mode',momentum:'Momentum Mode'}[tradingMode]}
                       </span>
@@ -4337,11 +4297,6 @@ export default function DashboardPage() {
                               }}
                             >
                               <div style={{display:'flex',alignItems:'center',gap:6,minWidth:0}}>
-                                <span style={{
-                                  width:6,height:6,borderRadius:'50%',background:ac,
-                                  animation:'pulse 1.6s ease-in-out infinite',
-                                  flexShrink:0,
-                                }}/>
                                 <span style={{fontWeight:600,color:ac,fontSize:11,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>Signal Mode</span>
                               </div>
                               <Lock style={{width:11,height:11,color:ac,opacity:0.7,flexShrink:0}}/>
@@ -4449,9 +4404,8 @@ export default function DashboardPage() {
                               cursor:'pointer',
                             }}
                           >
-                            <div style={{display:'flex',alignItems:'center',gap:6}}>
-                              <span style={{width:6,height:6,borderRadius:'50%',background:C.muted,opacity:0.5}}/>
-                              <span style={{fontWeight:600,color:C.sub,fontSize:11,whiteSpace:'nowrap'}}>{T('dashboard.modePicker.title')}</span>                            </div>
+                            <div style={{display:'flex',alignItems:'center',gap:6,minWidth:0}}>
+                              <span style={{fontWeight:600,color:C.sub,fontSize:11,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{T('dashboard.modePicker.title')}</span>                            </div>
                             <ChevronDown style={{width:12,height:12,color:C.muted}}/>
                           </button>
                         </div>

@@ -175,6 +175,13 @@ main {
   overflow-x: hidden;
   scrollbar-width: none;
   -ms-overflow-style: none;
+  /* PENTING: `body > *` memberi z-index:1 → <main> jadi stacking context, sehingga
+     modal/popup di dalamnya (z-index 60–110) TERPERANGKAP di bawah BottomNav (dock
+     z-index 40, sibling <main> di root). Akibatnya nav muncul DI DEPAN popup dan
+     terlihat "bertabrakan". Dengan z-index:auto, <main> bukan stacking context lagi →
+     popup position:fixed naik ke root & menutup + mem-blur nav sebagaimana mestinya.
+     body::after kosong/transparan, jadi aman turun sejajar. (selaras dgn koala) */
+  z-index: auto;
 }
 main::-webkit-scrollbar { display: none; }
 
