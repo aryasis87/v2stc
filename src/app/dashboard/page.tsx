@@ -629,7 +629,7 @@ const ActiveEntryBanner: React.FC<{active:boolean;orderKey:string|null;flash:'wi
   if(flash){
     const win = flash==='win'; const col = win?C.cyan:C.coral;
     return (
-      <div className={win?'win-flash':'lose-flash'} style={{position:'relative',overflow:'hidden',display:'flex',alignItems:'center',gap:12,padding:'12px 15px',borderRadius:16,background:`${col}16`,border:`1px solid ${col}45`}}>
+      <div style={{position:'relative',overflow:'hidden',display:'flex',alignItems:'center',gap:12,padding:'12px 15px',borderRadius:16,background:`${col}16`,border:`1px solid ${col}45`,animation:'res-inout 3s ease both'}}>
         <span style={{display:'inline-flex',width:34,height:34,borderRadius:11,alignItems:'center',justifyContent:'center',background:`${col}22`,color:col,fontSize:18,fontWeight:900,flexShrink:0}}>{win?'✓':'✕'}</span>
         <div style={{minWidth:0,flex:1}}>
           <div style={{fontSize:13,fontWeight:800,color:col,letterSpacing:'-0.01em'}}>{win?'POSISI MENANG':'POSISI KALAH'}</div>
@@ -2782,15 +2782,21 @@ export default function DashboardPage() {
     if(tradingMode==='momentum') return { w:momentumStatus?.totalWins??0, l:momentumStatus?.totalLosses??0 };
     return { w:scheduleOrders.filter(o=>/^win$/i.test(o.result||'')).length, l:scheduleOrders.filter(o=>/^los/i.test(o.result||'')).length };
   })();
-  const [entryFlash,setEntryFlash] = useState<'win'|'lose'|null>(null);
-  const prevWLRef = useRef({w:entryWL.w,l:entryWL.l});
+  // Deteksi hasil (menang/kalah) SINKRON saat render → tak ada 1 frame countdown
+  // order berikutnya yang menyelip sebelum kilat muncul. Kilat bertahan PENUH 3
+  // detik & diprioritaskan atas hitung mundur (tak bertabrakan dgn order baru).
+  const flashRef = useRef<{w:number;l:number;until:number;kind:'win'|'lose'|null}>({w:entryWL.w,l:entryWL.l,until:0,kind:null});
+  if(entryWL.w > flashRef.current.w){ flashRef.current.kind='win'; flashRef.current.until=Date.now()+3000; }
+  else if(entryWL.l > flashRef.current.l){ flashRef.current.kind='lose'; flashRef.current.until=Date.now()+3000; }
+  flashRef.current.w=entryWL.w; flashRef.current.l=entryWL.l;
+  const entryFlash: 'win'|'lose'|null = Date.now() < flashRef.current.until ? flashRef.current.kind : null;
+  const [,setFlashTick] = useState(0);
   useEffect(()=>{
-    const p = prevWLRef.current; let f:'win'|'lose'|null=null;
-    if(entryWL.w>p.w) f='win'; else if(entryWL.l>p.l) f='lose';
-    prevWLRef.current={w:entryWL.w,l:entryWL.l};
-    if(f){ setEntryFlash(f); const id=setTimeout(()=>setEntryFlash(null),2600); return ()=>clearTimeout(id); }
-  },[entryWL.w,entryWL.l]);
-  const showEntryBanner = activeEntry.active || !!entryFlash;
+    if(!entryFlash) return;
+    const id = setTimeout(()=>setFlashTick(t=>t+1), Math.max(0, flashRef.current.until - Date.now()) + 60);
+    return ()=>clearTimeout(id);
+  },[entryFlash]);
+  const showEntryBanner = activeEntry.active || entryFlash!=null;
 
   const selectedAsset = assets.find(a=>a.ric===selectedRic)??null;
   const pendingOrders = scheduleOrders.filter(o=>!o.isExecuted&&!o.isSkipped);
@@ -3208,6 +3214,7 @@ export default function DashboardPage() {
     @keyframes pos-sweep   { 0%{transform:translateX(-130%)} 100%{transform:translateX(330%)} }
     @keyframes pos-fill    { 0%{width:0%;opacity:1} 88%{opacity:1} 100%{width:100%;opacity:0} }
     @keyframes pos-fill-run{ from{width:0%} to{width:100%} }
+    @keyframes res-inout  { 0%{opacity:0;transform:scale(.92)} 8%{opacity:1;transform:scale(1)} 90%{opacity:1;transform:scale(1)} 100%{opacity:0;transform:scale(.98)} }
     @keyframes slide-up    { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
     @keyframes fade-in     { from{opacity:0} to{opacity:1} }
     @keyframes profit-slide-up   { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
