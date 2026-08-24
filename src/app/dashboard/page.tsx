@@ -1571,11 +1571,19 @@ const ModeSessionPanel: React.FC<{
     const isAIR  = aiStatus?.botState === 'RUNNING' || (!aiStatus?.botState && aiStatus?.isActive === true);
     const isIndR = indicatorStatus?.isRunning ?? false;
     const isMomR = momentumStatus?.isRunning ?? false;
+    // Engine spesifik didahulukan; FT generik terakhir. Status FT TIDAK membawa
+    // penanda 5st (blitz), jadi utk keluarga-FT hormati mode lokal supaya 5st/
+    // reversal/ctc tak "berubah" jadi fastrade di tampilan.
     if(isRunning)  return 'schedule';
-    if(isFtR)      return (ftStatus as any)?.mode === 'CTC' ? 'ctc' : 'fastrade';
-    if(isAIR)      return 'aisignal';
     if(isIndR)     return 'indicator';
     if(isMomR)     return 'momentum';
+    if(isAIR)      return 'aisignal';
+    if(isFtR) {
+      if((ftStatus as any)?.mode === 'CTC') return 'ctc';
+      if(((ftStatus as any)?.reversalSteps?.length ?? 0) > 0) return 'fastreversal';
+      if(mode === 'blitz5s' || mode === 'fastreversal' || mode === 'ctc') return mode;
+      return 'fastrade';
+    }
     return '';
   })();
   const isAnyRunning = !!runningMode;
@@ -2122,6 +2130,12 @@ export default function DashboardPage() {
   const { settings: _s, loaded: settingsLoaded, update: _upd } = useTradingSettings();
 
   const tradingMode          = _s.tradingMode;
+  // Ref selalu-terkini: loadAll di-memo dgn deps [router], jadi closure-nya
+  // menangkap tradingMode render pertama (default, sebelum settings ter-hydrate).
+  // Deteksi mode di loadAll HARUS baca nilai terbaru lewat ref — kalau tidak,
+  // mode 5st/indicator/dll akan salah dipulihkan jadi 'fastrade'.
+  const tradingModeRef = useRef(tradingMode);
+  tradingModeRef.current = tradingMode;
   const selectedRic          = _s.selectedRic;
   const isDemo               = _s.isDemo;
   // ✅ FIX stale closure: useEffect dengan [] tidak bisa baca isDemo terbaru.
@@ -2475,27 +2489,55 @@ export default function DashboardPage() {
         const momData = momRes.status === 'fulfilled' ? momRes.value : null;
         const schData = schRes.status === 'fulfilled' ? schRes.value : null;
 
-        if (ftData?.isRunning) {
-          // Fast Reversal juga berjalan lewat engine FTT, jadi `mode` dari backend
-          // SELALU 'FTT'. Pembedanya reversalSteps yang ikut dikirim status.
-          // Tanpa pemeriksaan ini, sesi Fast Reversal yang sedang jalan dipulihkan
-          // sebagai 'fastrade' — panel dan setelan yang salah yang tampil, mis.
-          // saat halaman baru dibuka di PC dan state lokal belum termuat.
-          const ftIsReversal =
-            (ftData.reversalSteps?.length ?? 0) > 0 || tradingMode === 'fastreversal';
-          setTradingMode(ftData.mode === 'CTC' ? 'ctc' : (ftIsReversal ? 'fastreversal' : 'fastrade'));
+        // Deteksi ini MEMULIHKAN mode saat state lokal belum termuat (mis. halaman
+        // dibuka segar di perangkat lain). TAPI ia TIDAK BOLEH menimpa mode lokal
+        // yang sudah benar: backend melaporkan semua mode keluarga-FT (fastrade /
+        // ctc / fastreversal / 5st) hanya sebagai 'FTT'/'CTC', dan status /fastrade
+        // bisa basi (isRunning tertinggal true setelah sesi FT lama). Menimpa
+        // membabi buta itulah yang membuat 5st — dan mode lain — tiba-tiba
+        // berpindah sendiri ke FTT setiap dashboard di-mount ulang. Maka:
+        //  1) hormati mode lokal bila sudah konsisten dgn engine yang berjalan;
+        //  2) dahulukan engine spesifik (schedule/ai/indicator/momentum) di atas
+        //     FT yang generik & rawan basi.
+        const runSchedule  = schData?.botState === 'RUNNING' || schData?.botState === 'PAUSED';
+        const runAisignal  = aiData?.botState === 'RUNNING' || (!aiData?.botState && !!aiData?.isActive);
+        const runIndicator = !!indData?.isRunning;
+        const runMomentum  = !!momData?.isRunning;
+        const runFt        = !!ftData?.isRunning;
+        const ftFamily: TradingMode[] = ['fastrade', 'ctc', 'fastreversal', 'blitz5s'];
+
+        const localMode = tradingModeRef.current; // nilai TERBARU (bukan closure basi)
+        const localConsistent =
+          (localMode === 'schedule'  && runSchedule)  ||
+          (localMode === 'aisignal'  && runAisignal)  ||
+          (localMode === 'indicator' && runIndicator) ||
+          (localMode === 'momentum'  && runMomentum)  ||
+          (ftFamily.includes(localMode) && runFt);
+
+        if (localConsistent) {
+          // Mode lokal sudah benar (termasuk 5st/reversal/ctc yang jalan via FT) — jangan diganggu.
           setIsModeChosen(true);
-        } else if (aiData?.botState === 'RUNNING' || (!aiData?.botState && aiData?.isActive)) {
-          setTradingMode('aisignal');
-          setIsModeChosen(true);
-        } else if (indData?.isRunning) {
+        } else if (runIndicator) {
           setTradingMode('indicator');
           setIsModeChosen(true);
-        } else if (momData?.isRunning) {
+        } else if (runMomentum) {
           setTradingMode('momentum');
           setIsModeChosen(true);
-        } else if (schData?.botState === 'RUNNING' || schData?.botState === 'PAUSED') {
+        } else if (runAisignal) {
+          setTradingMode('aisignal');
+          setIsModeChosen(true);
+        } else if (runSchedule) {
           setTradingMode('schedule');
+          setIsModeChosen(true);
+        } else if (runFt) {
+          // Sub-mode FT: pakai penanda status bila ada (CTC / reversalSteps);
+          // kalau tidak, hormati sub-mode FT lokal (mis. 5st) — status /fastrade
+          // TIDAK membawa penanda blitz, jadi lokal satu-satunya sumbernya.
+          const sub: TradingMode =
+            ftData!.mode === 'CTC' ? 'ctc'
+            : (ftData!.reversalSteps?.length ?? 0) > 0 ? 'fastreversal'
+            : (['ctc', 'fastreversal', 'blitz5s'].includes(localMode) ? localMode : 'fastrade');
+          setTradingMode(sub);
           setIsModeChosen(true);
         }
       }
