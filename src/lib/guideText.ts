@@ -206,30 +206,6 @@ const EN: IsiPanduan = {
       ],
     },
     {
-      id: 'appweb',
-      ikon: 'Smartphone',
-      judul: 'App version vs web version',
-      ringkas: 'Same account, same engine — pick whichever is convenient',
-      isi: [
-        {
-          h: 'What is identical',
-          p: 'Both use the same account and show the same balance, history and profit. Settings you change in one place apply to the other. Both run the bot on our server, so a session keeps going even if you close the app or the browser or turn off your device. And once REAL is activated, it works on both.',
-        },
-        {
-          h: 'App: install once on Android',
-          p: 'The Android app keeps AutoTrade one tap away and feels like a native app. You install and update it manually, and it is Android only.',
-        },
-        {
-          h: 'Web: nothing to install',
-          p: 'The web version opens in any browser — no install, always the newest version, and comfortable on a big screen.',
-        },
-        {
-          h: 'Which should you use',
-          p: 'Either one — they do the same thing now. Choose the app if you prefer an icon on your phone, or the web on a computer or a big screen. Whatever you start, the session runs on our server and keeps going on its own.',
-        },
-      ],
-    },
-    {
       id: 'masalah',
       ikon: 'LifeBuoy',
       judul: 'If something goes wrong',
@@ -432,30 +408,6 @@ const ID: IsiPanduan = {
         {
           h: 'Menghentikan sesi',
           p: 'Tekan tombol berhenti di panel kendali. Order yang sedang berjalan tetap diselesaikan sampai hasilnya keluar.',
-        },
-      ],
-    },
-    {
-      id: 'appweb',
-      ikon: 'Smartphone',
-      judul: 'Versi aplikasi vs versi web',
-      ringkas: 'Akun sama, mesin sama — pilih mana yang lebih praktis',
-      isi: [
-        {
-          h: 'Yang sama persis',
-          p: 'Keduanya memakai akun yang sama dan menampilkan saldo, riwayat, serta profit yang sama. Pengaturan yang Anda ubah di satu sisi berlaku juga di sisi lain. Keduanya menjalankan bot di server kami, sehingga sesi tetap berjalan walau aplikasi atau peramban ditutup, bahkan saat perangkat dimatikan. Dan setelah REAL diaktifkan, ia berlaku di keduanya.',
-        },
-        {
-          h: 'Aplikasi: pasang sekali di Android',
-          p: 'Aplikasi Android membuat AutoTrade tinggal satu ketukan dan terasa seperti aplikasi asli. Perlu dipasang & diperbarui manual, serta khusus Android.',
-        },
-        {
-          h: 'Web: tanpa pemasangan',
-          p: 'Versi web terbuka di peramban mana pun — tanpa pemasangan, selalu versi terbaru, dan nyaman di layar besar.',
-        },
-        {
-          h: 'Sebaiknya pakai yang mana',
-          p: 'Keduanya sama saja sekarang — fungsinya identik. Pilih aplikasi bila Anda suka ada ikon di ponsel, atau web di komputer maupun layar besar. Apa pun yang Anda jalankan, sesinya berjalan di server kami dan terus berlanjut sendiri.',
         },
       ],
     },

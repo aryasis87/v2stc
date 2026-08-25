@@ -1,7 +1,7 @@
 'use client';
 
-// Halaman Panduan STC AutoTrade — desain "friendly": hero hangat, tabel
-// komparasi Aplikasi vs Web bercentang, lalu kartu seksi berwarna yang
+// Halaman Panduan STC AutoTrade — desain "friendly": hero hangat, catatan
+// singkat bahwa bot berjalan di server, lalu kartu seksi berwarna yang
 // bisa dibuka-tutup. Isi teks tetap dari guideText (dwibahasa).
 
 import { useState } from 'react';
@@ -10,7 +10,7 @@ import { useLanguage } from '@/lib';
 import { panduan } from '@/lib/guideText';
 import {
   BookOpen, Rocket, UserPlus, Layers, TrendingUp, ShieldCheck, Activity,
-  LifeBuoy, ChevronDown, Info, ExternalLink, Smartphone, Check, Minus, Sparkles, KeyRound,
+  LifeBuoy, ChevronDown, Info, ExternalLink, Smartphone, Sparkles, KeyRound,
 } from 'lucide-react';
 
 const IKON: Record<string, typeof BookOpen> = {
@@ -27,17 +27,6 @@ const ACCENT = 'var(--s-acc)';
 
 // TRADE_URL dipindah ke /webview, yang membukanya di dalam aplikasi.
 
-// Tabel komparasi (dwibahasa ringan lewat flag lang).
-type Cell = 'ok' | 'lim' | 'no';
-const COMPARE: { label: Record<string, string>; app: Cell; web: Cell }[] = [
-  { label: { id: 'Menjalankan bot / order otomatis', en: 'Runs the bot / auto orders' }, app: 'ok', web: 'ok' },
-  { label: { id: 'Trading akun REAL', en: 'REAL account trading' }, app: 'ok', web: 'no' },
-  { label: { id: 'Akun DEMO & latihan', en: 'DEMO account & practice' }, app: 'ok', web: 'ok' },
-  { label: { id: 'Lihat saldo, riwayat & profit', en: 'Balance, history & profit' }, app: 'ok', web: 'ok' },
-  { label: { id: 'Lanjut jalan walau ditutup', en: 'Keeps running when closed' }, app: 'lim', web: 'ok' },
-  { label: { id: 'Tanpa pemasangan', en: 'No install needed' }, app: 'no', web: 'ok' },
-];
-
 export default function PanduanPage() {
   const { language } = useLanguage();
   const lang = language === 'id' ? 'id' : 'en';
@@ -45,13 +34,6 @@ export default function PanduanPage() {
   const BAGIAN = teks.bagian;
   const router = useRouter();
   const [terbuka, setTerbuka] = useState<string | null>('daftar');
-
-  const cell = (v: Cell) =>
-    v === 'ok'
-      ? <span style={{ display: 'inline-flex', width: 22, height: 22, borderRadius: 7, background: 'var(--s-acc-tint)', alignItems: 'center', justifyContent: 'center' }}><Check size={14} strokeWidth={2.6} color={ACCENT} /></span>
-      : v === 'lim'
-        ? <span style={{ fontSize: 10, fontWeight: 800, color: '#f59e0b', letterSpacing: '0.03em' }}>{lang === 'id' ? 'TERBATAS' : 'LIMITED'}</span>
-        : <span style={{ display: 'inline-flex', width: 22, height: 22, borderRadius: 7, background: 'var(--s2)', alignItems: 'center', justifyContent: 'center' }}><Minus size={13} strokeWidth={2.4} color="var(--text-3)" /></span>;
 
   return (
     <div style={S.halaman}>
@@ -76,37 +58,13 @@ export default function PanduanPage() {
           <p style={S.sub}>{teks.pengantar}</p>
         </header>
 
-        {/* TABEL KOMPARASI Aplikasi vs Web */}
-        <div style={S.kompKartu}>
-          <div style={S.kompKepala}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <Layers size={16} strokeWidth={2} color={ACCENT} />
-              <span style={{ fontSize: 14, fontWeight: 700 }}>{lang === 'id' ? 'Aplikasi vs Web' : 'App vs Web'}</span>
-            </div>
-            <span style={{ fontSize: 11, color: 'var(--text-3)' }}>{lang === 'id' ? 'Akun sama, keduanya berguna' : 'Same account, both useful'}</span>
-          </div>
-          <div style={S.kompGrid}>
-            <div style={{ ...S.kompHeadCell, textAlign: 'left', paddingLeft: 14 }}>{lang === 'id' ? 'Kemampuan' : 'Capability'}</div>
-            <div style={{ ...S.kompHeadCell, display: 'flex', gap: 5, justifyContent: 'center', alignItems: 'center' }}><Smartphone size={12} />{lang === 'id' ? 'Aplikasi' : 'App'}</div>
-            <div style={S.kompHeadCell}>Web</div>
-            {COMPARE.map((r, i) => (
-              <ComparisonRow key={i} label={r.label[lang]} app={cell(r.app)} web={cell(r.web)} last={i === COMPARE.length - 1} />
-            ))}
-          </div>
-        </div>
-
-        {/* PERINGATAN PENTING (stabilo) — pemakaian APK saat mode berjalan */}
-        <div style={S.peringatan}>
-          <div style={S.peringatanKepala}>
-            <span style={{ fontSize: 16 }}>⚠️</span>
-            <span style={{ fontSize: 12.5, fontWeight: 800, letterSpacing: '0.02em' }}>{lang === 'id' ? 'PENTING — Saat Bot Berjalan di Aplikasi (APK)' : 'IMPORTANT — While the Bot Runs in the App (APK)'}</span>
-          </div>
-          <p style={S.peringatanTeks}>
-            {lang === 'id' ? (
-              <>Ketika mode aktif/berjalan di aplikasi, <mark style={S.stabilo}>jangan berpindah ke menu lain atau keluar dari aplikasi.</mark> Android dapat menghentikan proses yang tidak sedang dibuka, sehingga <mark style={S.stabilo}>bot/AutoTrade bisa tidak berjalan atau malfungsi.</mark> Biarkan aplikasi tetap terbuka selama sesi. Ingin jalan tanpa ditunggui? Pakai versi web (sesi jalan di server).</>
-            ) : (
-              <>While a mode is active in the app, <mark style={S.stabilo}>do not switch to other menus or leave the app.</mark> Android can suspend apps that are not in the foreground, so <mark style={S.stabilo}>the bot/AutoTrade may stop or malfunction.</mark> Keep the app open on screen during the session. Want it unattended? Use the web version (runs on our server).</>
-            )}
+        {/* CATATAN — bot berjalan di server (aman ditutup) */}
+        <div style={S.serverNote}>
+          <span style={S.serverIkon}><ShieldCheck size={16} strokeWidth={2} color={ACCENT} /></span>
+          <p style={S.serverTeks}>
+            {lang === 'id'
+              ? 'Bot berjalan di server kami, jadi Anda boleh menutup aplikasi, berpindah menu, atau mematikan layar — sesi tetap berjalan sampai selesai atau Anda hentikan. Buka lagi kapan pun untuk memantau hasilnya.'
+              : 'The bot runs on our server, so you can close the app, switch menus, or turn off the screen — the session keeps going until it finishes or you stop it. Reopen anytime to check the results.'}
           </p>
         </div>
 
@@ -170,17 +128,6 @@ export default function PanduanPage() {
   );
 }
 
-function ComparisonRow({ label, app, web, last }: { label: string; app: React.ReactNode; web: React.ReactNode; last: boolean }) {
-  const border = last ? 'none' : '1px solid var(--bdr)';
-  return (
-    <>
-      <div style={{ ...S.kompCell, textAlign: 'left', paddingLeft: 14, borderBottom: border, color: 'var(--text)', fontSize: 12.5 }}>{label}</div>
-      <div style={{ ...S.kompCell, borderBottom: border }}>{app}</div>
-      <div style={{ ...S.kompCell, borderBottom: border }}>{web}</div>
-    </>
-  );
-}
-
 const S: Record<string, React.CSSProperties> = {
   halaman: { position: 'relative', minHeight: '100%', background: 'var(--bg)', color: 'var(--text)', overflowY: 'auto', WebkitOverflowScrolling: 'touch' as never },
   cahaya: { position: 'absolute', top: -140, left: '50%', transform: 'translateX(-50%)', width: 440, height: 300, borderRadius: '50%', background: 'var(--accent, var(--s-acc))', opacity: 0.08, filter: 'blur(90px)', pointerEvents: 'none' },
@@ -191,17 +138,10 @@ const S: Record<string, React.CSSProperties> = {
   judul: { fontSize: 27, fontWeight: 750, letterSpacing: '-0.025em', lineHeight: 1.15, marginBottom: 9 },
   sub: { fontSize: 14, lineHeight: 1.65, color: 'var(--text-2)', maxWidth: 430, margin: '0 auto' },
 
-  // Tabel komparasi
-  kompKartu: { background: 'var(--s1)', border: '1px solid var(--bdr)', borderRadius: 18, overflow: 'hidden', marginBottom: 20 },
-  kompKepala: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', borderBottom: '1px solid var(--bdr)' },
-  kompGrid: { display: 'grid', gridTemplateColumns: '1.5fr 0.9fr 0.9fr' },
-  kompHeadCell: { padding: '10px 8px', textAlign: 'center', fontSize: 11.5, fontWeight: 700, color: 'var(--text-3)', background: 'var(--s2)', borderBottom: '1px solid var(--bdr)' },
-  kompCell: { padding: '13px 8px', textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-
-  peringatan: { borderRadius: 16, overflow: 'hidden', border: '1px solid rgba(245,158,11,0.4)', background: 'rgba(245,158,11,0.08)', marginBottom: 20 },
-  peringatanKepala: { display: 'flex', alignItems: 'center', gap: 8, padding: '11px 14px', background: 'rgba(245,158,11,0.16)', borderBottom: '1px solid rgba(245,158,11,0.35)', color: 'var(--text)' },
-  peringatanTeks: { padding: '13px 14px', fontSize: 13, lineHeight: 1.65, color: 'var(--text)' },
-  stabilo: { background: '#f5b60a', color: '#1a1200', padding: '1px 5px', borderRadius: 5, fontWeight: 700 },
+  // Catatan bot berjalan di server
+  serverNote: { display: 'flex', gap: 11, alignItems: 'flex-start', padding: '13px 15px', borderRadius: 16, background: 'var(--s1)', border: '1px solid var(--bdr)', marginBottom: 20 },
+  serverIkon: { display: 'inline-flex', flexShrink: 0, width: 30, height: 30, borderRadius: 9, alignItems: 'center', justifyContent: 'center', background: 'var(--s-acc-tint)' },
+  serverTeks: { fontSize: 12.5, lineHeight: 1.65, color: 'var(--text-2)' },
 
   daftar: { display: 'flex', flexDirection: 'column', gap: 10 },
   kartu: { background: 'var(--s1)', border: '1px solid var(--bdr)', borderRadius: 18, overflow: 'hidden', transition: 'border-color 0.22s ease, box-shadow 0.22s ease' },

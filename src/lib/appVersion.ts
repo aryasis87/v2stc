@@ -12,8 +12,8 @@
 // DIHAPUS 2026-08-12 atas keputusan pemilik: komponennya tidak pernah dirender
 // dan bucket Supabase-nya tidak pernah dibuat, jadi ia hanya kode mati.
 
-export const APP_VERSION_CODE = 22;  // integer — naikan setiap rilis
-export const APP_VERSION_NAME = '5.2'; // string display
+export const APP_VERSION_CODE = 23;  // integer — naikan setiap rilis
+export const APP_VERSION_NAME = '5.3'; // string display
 
 // 1. Build APK baru
 // 2. Naikkan APP_VERSION_CODE di appVersion.ts → 2, APP_VERSION_NAME → "2.0"  
