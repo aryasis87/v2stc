@@ -251,6 +251,9 @@ export interface FastradeStatus {
   totalWins?: number;
   totalLosses?: number;
   activeOrderId?: string | null;
+  /** Waktu tutup (epoch ms) order aktif — backend mengisi ini (blitz=+5dtk, FTT/CTC=batas menit).
+   *  Dipakai dashboard untuk burst hasil instan, terutama 5st/blitz yang siklusnya pendek. */
+  activeOrderExpireAt?: number | null;
   wsConnected?: boolean;
   phase?: string;
   activeTrend?: string | null;

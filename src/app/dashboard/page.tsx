@@ -2767,7 +2767,11 @@ export default function DashboardPage() {
   const entryExpiryMs = (():number|null=>{
     if(!activeEntry.active) return null;
     if(isSchedRunning||isSchedPaused){ const mon = scheduleOrders.find(o=>o.isExecuted && !o.result && !o.isSkipped); if(mon?.timeInMillis) return mon.timeInMillis + entryDurationSec*1000; }
-    if((tradingMode==='fastrade'||tradingMode==='ctc') && isFtRunning){ const P=entryDurationSec*1000; return Math.ceil(Date.now()/P)*P; }
+    if((tradingMode==='fastrade'||tradingMode==='ctc'||tradingMode==='blitz5s') && isFtRunning){
+      // Backend kini kirim waktu tutup presisi (blitz=+5dtk, FTT/CTC=batas menit).
+      if(ftStatus?.activeOrderExpireAt) return ftStatus.activeOrderExpireAt;
+      const P=entryDurationSec*1000; return Math.ceil(Date.now()/P)*P; // fallback batas menit
+    }
     return null;
   })();
   // ── Burst hasil INSTAN saat hitung mundur entry tutup ─────────────────────
