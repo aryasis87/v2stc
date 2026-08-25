@@ -616,7 +616,7 @@ const OpenPositionTimer: React.FC<{orderKey:string|null|undefined;col:string;com
 // Banner GLOBAL "entry aktif" untuk dashboard utama (di bawah Today Profit).
 // Saat posisi TERBUKA: bar progres mengisi kiri→kanan (0→100%) + timer berjalan.
 // Saat posisi CLOSED: kilat MENANG/KALAH sesaat (`flash`) sebelum hilang.
-const ActiveEntryBanner: React.FC<{active:boolean;orderKey:string|null;flash:'win'|'lose'|null;durationSec:number;expiryMs:number|null;trend:string|null;accent:string;label:string;sub:string}> = ({active,orderKey,flash,durationSec,expiryMs,trend,accent,label,sub}) => {
+const ActiveEntryBanner: React.FC<{active:boolean;orderKey:string|null;flash:'win'|'lose'|null;flashMg?:number;durationSec:number;expiryMs:number|null;trend:string|null;accent:string;label:string;sub:string}> = ({active,orderKey,flash,flashMg,durationSec,expiryMs,trend,accent,label,sub}) => {
   const startRef = useRef<{key:string;t:number}|null>(null);
   const fillRef = useRef<{k:string;d:number}>({k:'',d:0}); // delay animasi bar (stabil per entry)
   const [now,setNow] = useState(()=>Date.now());
@@ -628,13 +628,18 @@ const ActiveEntryBanner: React.FC<{active:boolean;orderKey:string|null;flash:'wi
 
   if(flash){
     const win = flash==='win'; const col = win?C.cyan:C.coral;
+    const mg = !win ? Math.max(0, flashMg ?? 0) : 0; // langkah martingale saat KALAH
+    const amber = '#f59e0b';
     return (
       <div style={{position:'relative',overflow:'hidden',display:'flex',alignItems:'center',gap:12,padding:'12px 15px',borderRadius:16,background:`${col}16`,border:`1px solid ${col}45`,animation:'res-inout 3s ease both'}}>
         <span style={{display:'inline-flex',width:34,height:34,borderRadius:11,alignItems:'center',justifyContent:'center',background:`${col}22`,color:col,fontSize:18,fontWeight:900,flexShrink:0}}>{win?'✓':'✕'}</span>
         <div style={{minWidth:0,flex:1}}>
           <div style={{fontSize:13,fontWeight:800,color:col,letterSpacing:'-0.01em'}}>{win?'POSISI MENANG':'POSISI KALAH'}</div>
-          <div style={{fontSize:11,color:C.muted,marginTop:1,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{sub}</div>
+          <div style={{fontSize:11,color:mg>0?amber:C.muted,marginTop:1,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{mg>0?`Lanjut Martingale · langkah ${mg}`:sub}</div>
         </div>
+        {mg>0 && (
+          <span style={{fontSize:10.5,fontWeight:800,padding:'4px 9px',borderRadius:8,flexShrink:0,color:amber,background:`${amber}1c`,border:`1px solid ${amber}55`,letterSpacing:'0.02em',display:'inline-flex',alignItems:'center',gap:4}}>⤴ MG {mg}</span>
+        )}
       </div>
     );
   }
@@ -2799,14 +2804,27 @@ export default function DashboardPage() {
     if(tradingMode==='momentum') return { w:momentumStatus?.totalWins??0, l:momentumStatus?.totalLosses??0 };
     return { w:scheduleOrders.filter(o=>/^win$/i.test(o.result||'')).length, l:scheduleOrders.filter(o=>/^los/i.test(o.result||'')).length };
   })();
+  // Langkah martingale mode aktif (0 = tanpa martingale). Diambil dari status
+  // mode; saat sebuah order KALAH memicu recovery, martingaleStep sudah naik ke
+  // langkah recovery pada snapshot status yang sama → dipakai kilat KALAH.
+  const entryMgStep = ((): number=>{
+    const st = (tradingMode==='aisignal' ? aiStatus
+      : tradingMode==='indicator' ? indicatorStatus
+      : tradingMode==='momentum' ? momentumStatus
+      : (tradingMode==='fastrade'||tradingMode==='ctc'||tradingMode==='blitz5s') ? ftStatus
+      : scheduleStatus) as { martingaleStep?: number } | null | undefined;
+    return Math.max(0, Number(st?.martingaleStep ?? 0));
+  })();
   // Deteksi hasil (menang/kalah) SINKRON saat render → tak ada 1 frame countdown
   // order berikutnya yang menyelip sebelum kilat muncul. Kilat bertahan PENUH 3
   // detik & diprioritaskan atas hitung mundur (tak bertabrakan dgn order baru).
-  const flashRef = useRef<{w:number;l:number;until:number;kind:'win'|'lose'|null}>({w:entryWL.w,l:entryWL.l,until:0,kind:null});
-  if(entryWL.w > flashRef.current.w){ flashRef.current.kind='win'; flashRef.current.until=Date.now()+3000; }
-  else if(entryWL.l > flashRef.current.l){ flashRef.current.kind='lose'; flashRef.current.until=Date.now()+3000; }
+  const flashRef = useRef<{w:number;l:number;until:number;kind:'win'|'lose'|null;mg:number}>({w:entryWL.w,l:entryWL.l,until:0,kind:null,mg:0});
+  if(entryWL.w > flashRef.current.w){ flashRef.current.kind='win'; flashRef.current.until=Date.now()+3000; flashRef.current.mg=0; }
+  else if(entryWL.l > flashRef.current.l){ flashRef.current.kind='lose'; flashRef.current.until=Date.now()+3000; flashRef.current.mg=entryMgStep; }
   flashRef.current.w=entryWL.w; flashRef.current.l=entryWL.l;
   const entryFlash: 'win'|'lose'|null = Date.now() < flashRef.current.until ? flashRef.current.kind : null;
+  // Langkah martingale yang ditampilkan bersama kilat KALAH (0 = tak martingale).
+  const entryFlashMg: number = entryFlash==='lose' ? flashRef.current.mg : 0;
   const [,setFlashTick] = useState(0);
   useEffect(()=>{
     if(!entryFlash) return;
@@ -3727,6 +3745,7 @@ export default function DashboardPage() {
                   active={activeEntry.active}
                   orderKey={activeEntry.key}
                   flash={entryFlash}
+                  flashMg={entryFlashMg}
                   durationSec={entryDurationSec}
                   expiryMs={entryExpiryMs}
                   trend={activeEntry.trend}
@@ -3981,6 +4000,7 @@ export default function DashboardPage() {
                   active={activeEntry.active}
                   orderKey={activeEntry.key}
                   flash={entryFlash}
+                  flashMg={entryFlashMg}
                   durationSec={entryDurationSec}
                   expiryMs={entryExpiryMs}
                   trend={activeEntry.trend}
@@ -4138,6 +4158,7 @@ export default function DashboardPage() {
                 active={activeEntry.active}
                 orderKey={activeEntry.key}
                 flash={entryFlash}
+                flashMg={entryFlashMg}
                 durationSec={entryDurationSec}
                 expiryMs={entryExpiryMs}
                 trend={activeEntry.trend}
