@@ -1459,44 +1459,18 @@ const RealLockedModal: React.FC<{ open: boolean; onClose: () => void; onRegister
 // ═══════════════════════════════════════════
 // SARAN MODAL TRADING — muncul sekali tiap login segar
 // ═══════════════════════════════════════════
-const ADVICE_STR: Record<string, { title: string; body1: string; body2: string; tip: string; ok: string }> = {
-  id: { title: 'Manajemen Modal', body1: 'Modal awal yang kami sarankan minimal', body2: ', Modal di bawah angka ini berisiko habis sebelum strategi martingale Anda sempat bekerja.', tip: '', ok: 'Saya mengerti' },
-  en: { title: 'Capital Management', body1: 'We recommend a starting capital of at least', body2: '. Below this amount, your balance risks being depleted before your martingale strategy has a chance to work.', tip: '', ok: 'Understood' },
-  ru: { title: 'Управление капиталом', body1: 'Рекомендуемый стартовый капитал — не менее', body2: '. При меньшей сумме депозит рискует обнулиться раньше, чем стратегия мартингейла успеет сработать.', tip: '', ok: 'Понятно' },
-  es: { title: 'Gestión de capital', body1: 'Recomendamos un capital inicial de al menos', body2: '. Por debajo de esta cifra, el saldo corre el riesgo de agotarse antes de que tu estrategia de martingala funcione.', tip: '', ok: 'Entendido' },
-  ms: { title: 'Pengurusan Modal', body1: 'Modal permulaan yang kami sarankan sekurang-kurangnya', body2: '. Di bawah angka ini, modal berisiko habis sebelum strategi martingale anda sempat berhasil.', tip: '', ok: 'Saya faham' },
-};
-
-const CapitalAdviceModal: React.FC<{ open: boolean; onClose: () => void; lang: string; minAmount: number; currUnit: string }> = ({ open, onClose, lang, minAmount, currUnit }) => {
+// Cukup tampilkan poster gambar manajemen modal + tombol tutup (X).
+// Semua deskripsi & angka sudah ada di dalam gambar.
+const CapitalAdviceModal: React.FC<{ open: boolean; onClose: () => void }> = ({ open, onClose }) => {
   if (!open) return null;
-  const S = ADVICE_STR[lang] ?? ADVICE_STR.en;
-  // Rekomendasi modal awal = Rp 1.200.000 (patokan IDR, order minimum 14.000).
-  // Mata uang lain ikut menyesuaikan proporsional terhadap order minimumnya.
-  // (Sebelumnya ≈34,3× = Rp 480.000; dinaikkan 2026-08-18.)
-  const REC_IDR = 1_200_000, MIN_IDR = 14_000;
-  const rec = Math.round(Math.max(minAmount, 1) * (REC_IDR / MIN_IDR));
-  const recLabel = `${currUnit} ${Math.round(rec).toLocaleString('id-ID')}`;
   return (
     <div style={{position:'fixed',inset:0,zIndex:80,display:'flex',alignItems:'center',justifyContent:'center',padding:'16px',animation:'fade-in 0.15s ease'}}>
       <div onClick={onClose} style={{position:'absolute',inset:0,background:'rgba(0,0,0,0.72)',backdropFilter:'blur(10px)',WebkitBackdropFilter:'blur(10px)'}}/>
-      <div style={{position:'relative',width:'100%',maxWidth:400,background:C.bg,borderRadius:20,border:`1px solid ${C.bdr}`,padding:'24px 22px',animation:'slide-up 0.28s cubic-bezier(0.32,0.72,0,1)'}}>
-        <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:14}}>
-          <div style={{width:44,height:44,borderRadius:14,display:'flex',alignItems:'center',justifyContent:'center',background:`${C.sky}14`,border:`1px solid ${C.sky}30`,flexShrink:0}}>
-            <Wallet style={{width:20,height:20,color:C.sky}}/>
-          </div>
-          <p style={{fontSize:16,fontWeight:700,color:C.text}}>{S.title}</p>
-        </div>
-        <p style={{fontSize:13,color:C.sub,lineHeight:1.6}}>
-          {S.body1}{' '}
-          <span style={{fontWeight:800,color:C.sky}}>{recLabel}</span>{S.body2}
-        </p>
-        {S.tip ? (
-          <div style={{display:'flex',alignItems:'flex-start',gap:8,padding:'10px 12px',borderRadius:12,background:C.card2,border:`1px solid ${C.bdr}`,margin:'14px 0 16px'}}>
-            <Info style={{width:13,height:13,color:C.sky,flexShrink:0,marginTop:2}}/>
-            <p style={{fontSize:12,color:C.muted,lineHeight:1.5}}>{S.tip}</p>
-          </div>
-        ) : <div style={{height:18}}/>}
-        <button onClick={onClose} style={{width:'100%',padding:'12px 0',borderRadius:12,background:C.sky,border:'none',cursor:'pointer',fontSize:14,fontWeight:700,color:'#06251b'}}>{S.ok}</button>
+      <div style={{position:'relative',width:'100%',maxWidth:420,animation:'slide-up 0.28s cubic-bezier(0.32,0.72,0,1)'}}>
+        <img src="/manajemenmodalstc.png" alt="Manajemen Modal" style={{display:'block',width:'100%',height:'auto',borderRadius:16}}/>
+        <button onClick={onClose} aria-label="Tutup" style={{position:'absolute',top:10,right:10,width:34,height:34,borderRadius:999,background:'rgba(0,0,0,0.55)',border:'1px solid rgba(255,255,255,0.28)',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',WebkitBackdropFilter:'blur(4px)',backdropFilter:'blur(4px)'}}>
+          <X style={{width:18,height:18,color:'#fff'}}/>
+        </button>
       </div>
     </div>
   );
@@ -3552,7 +3526,7 @@ export default function DashboardPage() {
           onActivate={()=>{ setRealLockOpen(false); router.push('/aktivasi-real'); }}
           lang={language}
         />
-        <CapitalAdviceModal open={adviceOpen} onClose={()=>setAdviceOpen(false)} lang={language} minAmount={currencyConfig.minAmount} currUnit={currencyConfig.currencyUnit}/>
+        <CapitalAdviceModal open={adviceOpen} onClose={()=>setAdviceOpen(false)}/>
         {error&&(
           <div style={{display:'flex',alignItems:'flex-start',gap:9,padding:'10px 14px',borderRadius:8,marginBottom:g,background:C.cord,border:`1px solid rgba(255,69,58,0.2)`,borderLeft:`2px solid ${C.coral}`}}>
             <AlertCircle style={{width:13,height:13,flexShrink:0,marginTop:2,color:C.coral}}/>
