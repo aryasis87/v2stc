@@ -5,6 +5,7 @@
 
 import { useState, useRef } from 'react';
 import { Upload, Check, Loader2, Radio, X, Lock, BadgeCheck, Download } from 'lucide-react';
+import { saveQris } from '@/lib/saveQris';
 
 const PRICE = 'Rp 50.000';
 const API = process.env.NEXT_PUBLIC_API_URL ?? '';
@@ -136,9 +137,9 @@ export default function AktivasiAiSignalPage() {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/qr-pembayaran-terbaru.jpeg" alt="QRIS" style={{ width: 232, maxWidth: '66vw', height: 'auto', display: 'block', borderRadius: 10 }} />
             </div>
-            <a href="/qr-pembayaran-terbaru.jpeg" download="QRIS-StcAutoTrade.jpg" className="aktv-tap" style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 12.5, fontWeight: 700, color: AC, background: 'rgba(16,185,129,0.12)', border: `1px solid ${AC}44`, borderRadius: 10, padding: '9px 16px', textDecoration: 'none' }}>
+            <button type="button" onClick={() => saveQris('/qr-pembayaran-terbaru.jpeg', 'QRIS-StcAutoTrade.jpg')} className="aktv-tap" style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 12.5, fontWeight: 700, color: AC, background: 'rgba(16,185,129,0.12)', border: `1px solid ${AC}44`, borderRadius: 10, padding: '9px 16px', textDecoration: 'none', cursor: 'pointer' }}>
               <Download style={{ width: 15, height: 15 }} /> Unduh QRIS
-            </a>
+            </button>
             <p style={{ fontSize: 12.5, color: '#9aa6a1', textAlign: 'center', lineHeight: 1.55 }}>Scan atau unduh <b style={{ color: '#f4f6f5' }}>QRIS</b>, bayar tepat <b style={{ color: AC }}>{PRICE}</b>, simpan buktinya.</p>
           </div>
           <div style={{ marginTop: 4 }}>

@@ -1429,15 +1429,9 @@ const APK_LOCK_STR: Record<string, { title: string; body: string; hint: string; 
 };
 
 const REAL_ACT_LABEL: Record<string, string> = { id: 'Aktivasi Mode REAL', en: 'Activate REAL Mode', ru: 'Активировать REAL', es: 'Activar Modo REAL', ms: 'Aktifkan Mod REAL' };
-// Jalur GRATIS mode REAL: unduh aplikasi + daftar akun baru (self-register) → REAL terbuka otomatis.
-const REAL_FREE_STR: Record<string, string> = {
-  id: 'Gratis tanpa bayar: unduh aplikasi lalu daftar akun baru — mode REAL otomatis terbuka.',
-  en: 'Free option: download the app then register a new account — REAL mode unlocks automatically.',
-  ru: 'Бесплатно: скачайте приложение и зарегистрируйте новый аккаунт — режим REAL откроется автоматически.',
-  es: 'Gratis: descarga la app y registra una cuenta nueva — el modo REAL se abre automáticamente.',
-  ms: 'Percuma: muat turun aplikasi lalu daftar akaun baharu — mod REAL terbuka automatik.',
-};
-const RealLockedModal: React.FC<{ open: boolean; onClose: () => void; onRegister: () => void; onActivate: () => void; lang: string; reason?: RealLockReason }> = ({ open, onClose, onRegister, onActivate, lang, reason = 'account' }) => {
+// Jalur GRATIS via daftar akun (self-register) DIHAPUS — afiliasi/selfregister
+// sudah dihentikan; mode REAL kini HANYA lewat aktivasi berbayar.
+const RealLockedModal: React.FC<{ open: boolean; onClose: () => void; onRegister?: () => void; onActivate: () => void; lang: string; reason?: RealLockReason }> = ({ open, onClose, onActivate, lang, reason = 'account' }) => {
   if (!open) return null;
   const S = reason === 'platform'
     ? (APK_LOCK_STR[lang] ?? APK_LOCK_STR.en)
@@ -1453,16 +1447,9 @@ const RealLockedModal: React.FC<{ open: boolean; onClose: () => void; onRegister
         </div>
         <p style={{fontSize:16,fontWeight:700,color:C.text,marginBottom:6}}>{S.title}</p>
         <p style={{fontSize:13,color:C.sub,lineHeight:1.5,marginBottom:4}}>{S.body}</p>
-        <p style={{fontSize:12,color:C.muted,lineHeight:1.55,marginBottom:12}}>{S.hint}</p>
-        <div style={{display:'flex',alignItems:'flex-start',gap:8,padding:'10px 12px',borderRadius:12,background:`${C.cyan}12`,border:`1px solid ${C.cyan}30`,marginBottom:16,textAlign:'left'}}>
-          <span style={{fontSize:14,flexShrink:0,marginTop:1}}>🎁</span>
-          <span style={{fontSize:12,fontWeight:600,color:C.cyan,lineHeight:1.45}}>{REAL_FREE_STR[lang] ?? REAL_FREE_STR.en}</span>
-        </div>
+        <p style={{fontSize:12,color:C.muted,lineHeight:1.55,marginBottom:16}}>{S.hint}</p>
         <div style={{display:'flex',gap:8}}>
-          {reason === 'platform' && (
-            <button onClick={onRegister} style={{flex:1,padding:'11px 0',borderRadius:12,background:C.card2,border:`1px solid ${C.bdr}`,cursor:'pointer',fontSize:13,fontWeight:600,color:C.sub}}>{S.cta}</button>
-          )}
-          <button onClick={onActivate} style={{flex:reason==='platform'?1.2:1,padding:'11px 0',borderRadius:12,background:C.cyan,border:'none',cursor:'pointer',fontSize:13,fontWeight:700,color:'#06251b'}}>{REAL_ACT_LABEL[lang] ?? REAL_ACT_LABEL.en}</button>
+          <button onClick={onActivate} style={{flex:1,padding:'11px 0',borderRadius:12,background:C.cyan,border:'none',cursor:'pointer',fontSize:13,fontWeight:700,color:'#06251b'}}>{REAL_ACT_LABEL[lang] ?? REAL_ACT_LABEL.en}</button>
         </div>
       </div>
     </div>

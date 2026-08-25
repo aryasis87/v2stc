@@ -2,7 +2,6 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import Image from 'next/image';
 import { api } from '@/lib/api';
 import { loginToStockity, createSession, lastSessionError, getKnownDeviceId, validate2faOtp } from '@/lib/engine/stockityAuth';
@@ -1205,7 +1204,8 @@ function LoginPageContent() {
                 </div>
               </div>{/* /field-group */}
 
-              {/* Options row: ingat saya (kiri) · daftar akun (kanan) */}
+              {/* Options row: ingat saya. Tautan "daftar akun" DIHAPUS — fitur
+                  self-register/daftar akun sudah tidak berlaku (afiliasi dihentikan). */}
               <div className="opts-row">
                 <label className="remember-row" onClick={() => setRemember(r => !r)}>
                   <div className={`cb-box ${remember ? 'checked' : ''}`}>
@@ -1215,12 +1215,6 @@ function LoginPageContent() {
                   </div>
                   <span className="cb-label">{t('login.rememberMe')}</span>
                 </label>
-                <Link href="/register" className="opts-link">
-                  {t('login.register')}
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                    <path d="M9 18l6-6-6-6"/>
-                  </svg>
-                </Link>
               </div>
 
                 {/* Error */}
