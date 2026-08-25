@@ -69,6 +69,9 @@ let T: (k: string) => string = (k: string) => k;
 let AI_LOCKED = false;
 // Fast Reversal juga terkunci per akun, dengan MASA BERLAKU 30 hari.
 let FR_LOCKED = false;
+// Fast Reversal EKSKLUSIF: hanya user teraktivasi yang boleh MELIHAT & memilihnya
+// di picker mode. true HANYA saat akses FR aktif (bukan sekadar "belum dicek").
+let FR_UNLOCKED = false;
 // Mode 5st (blitz 5 detik) — berbayar per akun, 30 hari.
 let BLITZ5S_LOCKED = false;
 
@@ -1176,7 +1179,8 @@ const ModePickerModal: React.FC<{
     { v: 'aisignal'  as TradingMode, label: 'AI Signal Mode',       icon: <Radio     style={{ width: 16, height: 16 }} />, accent: C.sky,    desc: 'AI Signal Automation' },
     { v: 'indicator' as TradingMode, label: 'Analysis Strategy Mode', icon: <BarChart style={{ width: 16, height: 16 }} />, accent: C.orange, desc: 'Technical Analysis Based' },
     { v: 'momentum'  as TradingMode, label: 'Momentum Mode',        icon: <Waves     style={{ width: 16, height: 16 }} />, accent: C.pink,   desc: 'Parallel Momentum Analysis' },
-  ];
+  // Fast Reversal EKSKLUSIF — hanya muncul di picker bila akun sudah teraktivasi.
+  ].filter(m => m.v !== 'fastreversal' || FR_UNLOCKED);
 
   return (
     <div style={{position:'fixed',inset:0,zIndex:70,display:'flex',alignItems:'center',justifyContent:'center',padding:'16px',animation:'fade-in 0.15s ease'}}>
@@ -1884,6 +1888,7 @@ export default function DashboardPage() {
   // agar user yang punya akses tidak melihat kilatan ikon gembok.
   AI_LOCKED = aiCheckDone && !aiUnlocked;
   FR_LOCKED = frCheckDone && !frUnlocked;
+  FR_UNLOCKED = frUnlocked;
   BLITZ5S_LOCKED = !blitz5sUnlocked;
 
   useEffect(() => {
