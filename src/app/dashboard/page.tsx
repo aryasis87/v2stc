@@ -2594,45 +2594,65 @@ export default function DashboardPage() {
     }
   }, [profitRefreshing]); // eslint-disable-line
 
-  // ── Fast poll 10 detik: trading status + balance (tanpa realtimeProfit — punya poll sendiri) ──
-  // ✅ FIX PERF: realtimeProfit dipisah ke interval 5 detik tersendiri.
-  //    Sebelumnya bundled di sini bersama scheduleLogs(500)+fastradeLogs(500) yang berat —
-  //    Promise.allSettled menunggu request TERLAMBAT, sehingga profit ikut terlambat walau
-  //    realtimeProfit sendiri sudah selesai dalam 150-200ms.
-  // ✅ FIX PERF: balance() dipindah ke dalam batch (paralel) — sebelumnya sequential setelah
-  //    allSettled sehingga menambah +1 RTT (~150ms) ekstra setiap 10 detik.
+  // ── Polling ADAPTIF ala "instan" ─────────────────────────────────────────
+  // Masalah lama: status+log dipoll tiap 10s → menang/kalah & PnL telat muncul
+  // dan balapan dengan hitung mundur entry berikutnya. Sekarang:
+  //   • Batch status RINGAN (tanpa log 500) dipoll cepat 1.5s saat ADA mode
+  //     berjalan, hemat 8s saat idle — menang/kalah (dari *Status) hampir instan.
+  //   • Log berat (scheduleLogs/fastradeLogs 500) punya loop sendiri 6s.
+  //   • Burst hasil menembak SEGERA saat hitung mundur order tutup (lihat bawah).
+  // startTransition tetap dipakai agar update tak mengganggu smooth scroll.
+  const anyRunningRef = useRef(false); // di-sync tiap render; loop (dep []) baca ini
+
+  // Batch status RINGAN — dipanggil loop adaptif & burst hasil. Tanpa log berat.
+  const runStatusBatch = useCallback(async()=>{
+    const results = await Promise.allSettled([
+      api.scheduleStatus(),api.fastradeStatus(),api.getOrders(),
+      api.aiSignalStatus(),api.aiSignalPendingOrders(),
+      api.indicatorStatus(),api.momentumStatus(),api.balance(),
+    ]);
+    if(!isMounted.current)return;
+    React.startTransition(()=>{
+      const [sRes,fRes,oRes,aiRes,aiPendRes,indRes,momRes,balRes] = results;
+      if(sRes.status==='fulfilled'&&!deviceEngineOnRef.current)setScheduleStatus(sRes.value);
+      if(fRes.status==='fulfilled')setFtStatus(fRes.value);
+      if(oRes.status==='fulfilled'&&!deviceEngineOnRef.current)setScheduleOrders(oRes.value);
+      if(aiRes.status==='fulfilled')setAiStatus(aiRes.value);
+      if(aiPendRes.status==='fulfilled')setAiPendingOrders(aiPendRes.value);
+      if(indRes.status==='fulfilled')setIndicatorStatus(indRes.value);
+      if(momRes.status==='fulfilled')setMomentumStatus(momRes.value);
+      if(balRes.status==='fulfilled')setBalance(balRes.value);
+    });
+  },[]); // eslint-disable-line
+
+  // Loop status adaptif (self-scheduling → tak menumpuk saat request lambat).
   useEffect(()=>{
-    const iv=setInterval(async()=>{
-      const results = await Promise.allSettled([
-        api.scheduleStatus(),api.fastradeStatus(),api.getOrders(),
-        api.scheduleLogs(500),   // ✅ FIX: Logs harus ikut di-poll — backend hapus order setelah
-                                 // selesai tanpa nulis result ke ScheduledOrder, result hanya ada
-                                 // di ExecutionLog. Tanpa ini, scheduleLogs selalu stale dan
-                                 // history detection tidak bisa detect WIN/LOSE.
-        api.fastradeLogs(500),
-        api.aiSignalStatus(),api.aiSignalPendingOrders(),
-        api.indicatorStatus(),api.momentumStatus(),
-        api.balance(),           // ✅ Paralel — tidak lagi sequential setelah allSettled
-      ]);
-      if(!isMounted.current)return;
-      // ✅ FIX SCROLL: startTransition menandai semua update ini sebagai "tidak mendesak".
-      //    React akan yield ke scroll/animation frame sebelum memproses update ini,
-      //    sehingga polling tidak pernah meng-interrupt smooth scrolling.
+    let stopped=false; let to:ReturnType<typeof setTimeout>|null=null;
+    const loop=async()=>{
+      if(stopped||!isMounted.current)return;
+      try{ await runStatusBatch(); }catch{/* abaikan */}
+      if(stopped)return;
+      to=setTimeout(loop, anyRunningRef.current?1500:8000);
+    };
+    to=setTimeout(loop, 800);
+    return()=>{stopped=true; if(to)clearTimeout(to);};
+  },[runStatusBatch]);
+
+  // Loop LOG berat terpisah (history + deteksi hasil Signal): 6s saat jalan.
+  useEffect(()=>{
+    let stopped=false; let to:ReturnType<typeof setTimeout>|null=null;
+    const loop=async()=>{
+      if(stopped||!isMounted.current)return;
+      const [logRes,ftlRes]=await Promise.allSettled([api.scheduleLogs(500),api.fastradeLogs(500)]);
+      if(stopped||!isMounted.current)return;
       React.startTransition(()=>{
-        const [sRes,fRes,oRes,logRes,ftlRes,aiRes,aiPendRes,indRes,momRes,balRes] = results;
-        if(sRes.status==='fulfilled'&&!deviceEngineOnRef.current)setScheduleStatus(sRes.value);
-        if(fRes.status==='fulfilled')setFtStatus(fRes.value);
-        if(oRes.status==='fulfilled'&&!deviceEngineOnRef.current)setScheduleOrders(oRes.value);
         if(logRes.status==='fulfilled')setScheduleLogs(logRes.value);
         if(ftlRes.status==='fulfilled')setFtLogs(ftlRes.value);
-        if(aiRes.status==='fulfilled')setAiStatus(aiRes.value);
-        if(aiPendRes.status==='fulfilled')setAiPendingOrders(aiPendRes.value);
-        if(indRes.status==='fulfilled')setIndicatorStatus(indRes.value);
-        if(momRes.status==='fulfilled')setMomentumStatus(momRes.value);
-        if(balRes.status==='fulfilled')setBalance(balRes.value);
       });
-    },10000);
-    return()=>clearInterval(iv);
+      to=setTimeout(loop, anyRunningRef.current?6000:15000);
+    };
+    to=setTimeout(loop, 1000);
+    return()=>{stopped=true; if(to)clearTimeout(to);};
   },[]); // eslint-disable-line
 
   // ── Dedicated profit poll 5 detik — terpisah dari batch status 10 detik ───────
@@ -2643,7 +2663,8 @@ export default function DashboardPage() {
   // ✅ FIX: Menggantikan interval 30 detik yang terlalu jarang.
   // ✅ Gunakan isDemoRef.current agar tidak stale closure (dep []).
   useEffect(()=>{
-    const iv = setInterval(async () => {
+    let stopped=false; let to:ReturnType<typeof setTimeout>|null=null;
+    const tick = async () => {
       if (!isMounted.current) return;
       try {
         const result = await api.realtimeProfit(isDemoRef.current ? 'demo' : 'real');
@@ -2662,10 +2683,17 @@ export default function DashboardPage() {
           setProfitLastUpdated(Date.now());
         });
       } catch (e) {
-        console.warn('[Profit] 5s poll error:', e);
+        console.warn('[Profit] poll error:', e);
       }
-    }, 5_000);
-    return () => clearInterval(iv);
+    };
+    const loop=async()=>{
+      if(stopped)return;
+      await tick();
+      if(stopped)return;
+      to=setTimeout(loop, anyRunningRef.current?1500:5000); // cepat saat mode jalan
+    };
+    to=setTimeout(loop, 1000);
+    return()=>{stopped=true; if(to)clearTimeout(to);};
   },[]); // eslint-disable-line
 
   const botState = scheduleStatus?.botState??'IDLE';
@@ -2697,6 +2725,8 @@ export default function DashboardPage() {
 
   // True jika ADA mode apapun yang sedang berjalan (bukan hanya mode yang dilihat)
   const isAnyModeRunning = isSchedRunning || isSchedPaused || isFtRunning || isAIRunning || isIndRunning || isMomRunning;
+  // Sinkronkan ref agar loop polling adaptif memilih interval cepat/hemat.
+  useEffect(()=>{ anyRunningRef.current = isAnyModeRunning; });
 
   // Deteksi ADA eksekusi entry/posisi TERBUKA (belum ada hasil) lintas SEMUA mode.
   // `key` berubah tiap entry baru agar timer banner reset. Hanya satu mode jalan
@@ -2740,6 +2770,23 @@ export default function DashboardPage() {
     if((tradingMode==='fastrade'||tradingMode==='ctc') && isFtRunning){ const P=entryDurationSec*1000; return Math.ceil(Date.now()/P)*P; }
     return null;
   })();
+  // ── Burst hasil INSTAN saat hitung mundur entry tutup ─────────────────────
+  // Untuk mode dgn expiry pasti (Signal, FTT/CTC): begitu order tutup, tarik
+  // status+profit SEGERA lalu retry cepat sampai hasil masuk — menang/kalah &
+  // PnL tak menunggu siklus poll berikutnya. Ringan (tanpa log berat).
+  useEffect(()=>{
+    if(!entryExpiryMs) return;
+    const delay = Math.max(0, entryExpiryMs - Date.now()) + 150;
+    let cancelled=false;
+    const start=setTimeout(async()=>{
+      for(let i=0;i<7 && !cancelled && isMounted.current;i++){
+        try{ await Promise.allSettled([runStatusBatch(), silentRefreshProfit()]); }catch{/* abaikan */}
+        if(cancelled) break;
+        await new Promise(r=>setTimeout(r,400));
+      }
+    }, delay);
+    return()=>{cancelled=true; clearTimeout(start);};
+  },[entryExpiryMs, runStatusBatch, silentRefreshProfit]);
   // Menang/kalah mode aktif → memicu kilat saat sebuah posisi CLOSED.
   const entryWL = (():{w:number;l:number}=>{
     if(tradingMode==='fastrade'||tradingMode==='ctc'||tradingMode==='blitz5s') return { w:ftStatus?.totalWins??0, l:ftStatus?.totalLosses??0 };
