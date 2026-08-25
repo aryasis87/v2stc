@@ -30,7 +30,7 @@ const EN: IsiPanduan = {
   judulHalaman: 'Running AutoTrade',
   lencana: 'Guide',
   pengantar:
-    'From creating an account to the bot running — nothing needs to be prepared beforehand. Your Stockity account is created automatically when you register.',
+    'From signing in to the bot running — the steps are short. You sign in with your Stockity account, choose a mode, and the bot runs your rules on our server.',
   catatan:
     'The bot runs your rules faster and more consistently — but it does not fix rules that are wrong. A flawed rule will simply be repeated neatly.',
   tautan: 'Open Stockity in a browser',
@@ -39,33 +39,25 @@ const EN: IsiPanduan = {
   bagian: [
     {
       id: 'daftar',
-      ikon: 'UserPlus',
-      judul: 'Creating an account',
-      ringkas: 'The only thing you need to prepare — register once',
+      ikon: 'KeyRound',
+      judul: 'Signing in',
+      ringkas: 'Sign in with your Stockity account — nothing to register here',
       isi: [
         {
-          h: 'One registration is enough',
-          p: 'You do not need a Stockity account beforehand. Once registration succeeds, your Stockity account is created automatically and connected to this app.',
+          h: 'Use your Stockity account',
+          p: 'On the start screen, enter the email and password of your Stockity account. There is no separate registration here — the app connects to the Stockity account you already have.',
         },
         {
-          h: 'Open the registration page',
-          p: 'From the sign-in screen, tap the register link at the bottom. If you are seeing the REAL mode locked message, tap Register Account there — you will be signed out and taken to the registration page.',
+          h: 'Your session is kept safely',
+          p: 'After signing in you stay logged in on this device, so you do not have to type your password every time. Use a password kept for this account only — it is tied directly to your money.',
         },
         {
-          h: 'Enter your email and password',
-          p: 'Use an email you can open right away. Choose a password used only for this account — it is tied directly to your money.',
+          h: 'Make sure the name matches your ID',
+          p: 'The name on your Stockity account is checked during verification and again when withdrawing to your bank account. Even a one-letter difference can hold up a withdrawal later.',
         },
         {
-          h: 'Write your name as it appears on your ID',
-          p: 'The name is checked during verification and again when withdrawing to your bank account. Even a one-letter difference can hold up a withdrawal later.',
-        },
-        {
-          h: 'Ready to use immediately',
-          p: 'After registering you are signed in automatically. Your account starts on the DEMO account — begin there to test your settings. REAL trading is a separate one-time activation (see Access & activation).',
-        },
-        {
-          h: 'Why only through the app',
-          p: 'Registering from a browser is not allowed so that your account is connected from your own device from the start. Opening the registration page in a browser shows only a download link.',
+          h: 'You start on DEMO',
+          p: 'Every account begins on the DEMO account — start there to test your settings with no risk. REAL trading is a separate one-time activation (see Access & activation).',
         },
       ],
     },
@@ -217,23 +209,23 @@ const EN: IsiPanduan = {
       id: 'appweb',
       ikon: 'Smartphone',
       judul: 'App version vs web version',
-      ringkas: 'Same account — each is stronger somewhere else',
+      ringkas: 'Same account, same engine — pick whichever is convenient',
       isi: [
         {
           h: 'What is identical',
-          p: 'Both use the same account and show the same balance, history and profit. Settings you change in one place apply to the other — there is no separate account for the web.',
+          p: 'Both use the same account and show the same balance, history and profit. Settings you change in one place apply to the other. Both run the bot on our server, so a session keeps going even if you close the app or the browser or turn off your device. And once REAL is activated, it works on both.',
         },
         {
-          h: 'App: runs the bot on your device — and can trade REAL',
-          p: 'The app executes orders straight from your device, and it is the only version that can trade a REAL account. Plus: precise, on-device execution. Minus: Android limits apps that are not in the foreground — when the screen turns off or you switch apps, the system can slow it down or stop it; you also install and update it manually, and it is Android only.',
+          h: 'App: install once on Android',
+          p: 'The Android app keeps AutoTrade one tap away and feels like a native app. You install and update it manually, and it is Android only.',
         },
         {
-          h: 'Web: also runs the bot — on our server',
-          p: 'The web version runs the bot too: sessions execute on our server, so they keep going even if you close the browser or turn off your device. Plus: no install, always the newest version, comfortable on a big screen, and great for long unattended sessions. Minus: REAL trading is app-only, so the web runs on the DEMO account (plus full monitoring of everything).',
+          h: 'Web: nothing to install',
+          p: 'The web version opens in any browser — no install, always the newest version, and comfortable on a big screen.',
         },
         {
           h: 'Which should you use',
-          p: 'They complement each other. Use the app to trade a REAL account or for on-device execution. Use the web to run DEMO sessions that keep going on our server even with the browser closed, or to monitor on a big screen.',
+          p: 'Either one — they do the same thing now. Choose the app if you prefer an icon on your phone, or the web on a computer or a big screen. Whatever you start, the session runs on our server and keeps going on its own.',
         },
       ],
     },
@@ -268,7 +260,7 @@ const ID: IsiPanduan = {
   judulHalaman: 'Menjalankan AutoTrade',
   lencana: 'Panduan',
   pengantar:
-    'Mulai dari mendaftar akun sampai bot berjalan. Tidak perlu menyiapkan apa pun lebih dulu — akun Stockity dibuat otomatis saat Anda mendaftar.',
+    'Mulai dari masuk sampai bot berjalan — langkahnya singkat. Anda masuk dengan akun Stockity, pilih mode, lalu bot menjalankan aturan Anda di server kami.',
   catatan:
     'Bot menjalankan aturan Anda lebih cepat dan lebih konsisten — tetapi ia tidak memperbaiki aturan yang keliru. Aturan yang salah akan diulang dengan rapi.',
   tautan: 'Buka Stockity di peramban',
@@ -277,33 +269,25 @@ const ID: IsiPanduan = {
   bagian: [
     {
       id: 'daftar',
-      ikon: 'UserPlus',
-      judul: 'Mendaftar akun',
-      ringkas: 'Satu-satunya yang perlu disiapkan — cukup sekali daftar',
+      ikon: 'KeyRound',
+      judul: 'Masuk ke akun',
+      ringkas: 'Cukup masuk dengan akun Stockity — tak perlu mendaftar di sini',
       isi: [
         {
-          h: 'Cukup daftar sekali di sini',
-          p: 'Anda tidak perlu punya akun Stockity lebih dulu. Setelah pendaftaran berhasil, akun Stockity Anda dibuat otomatis dan langsung tersambung ke aplikasi ini.',
+          h: 'Gunakan akun Stockity Anda',
+          p: 'Di layar masuk, isi email dan kata sandi akun Stockity Anda. Tidak ada pendaftaran terpisah di sini — aplikasi tersambung ke akun Stockity yang sudah Anda miliki.',
         },
         {
-          h: 'Buka halaman daftar',
-          p: 'Dari layar masuk, tekan tautan daftar di bagian bawah. Bila Anda sedang melihat pesan mode REAL terkunci, tekan tombol Daftar Akun pada pesan itu — Anda akan keluar dari akun lama lalu diarahkan ke halaman daftar.',
+          h: 'Sesi tersimpan aman',
+          p: 'Setelah masuk, Anda tetap login di perangkat ini, jadi tidak perlu mengetik kata sandi setiap kali. Gunakan kata sandi khusus untuk akun ini, jangan yang dipakai di layanan lain — akun ini berkaitan langsung dengan uang.',
         },
         {
-          h: 'Isi email dan kata sandi',
-          p: 'Gunakan email yang bisa Anda buka saat itu juga. Kata sandi sebaiknya khusus untuk akun ini, jangan yang dipakai di layanan lain — akun ini berkaitan langsung dengan uang.',
+          h: 'Pastikan nama sesuai dokumen identitas',
+          p: 'Nama pada akun Stockity dicocokkan saat verifikasi dan saat menarik dana ke rekening. Perbedaan satu huruf pun bisa membuat penarikan tertahan di kemudian hari.',
         },
         {
-          h: 'Tulis nama sesuai dokumen identitas',
-          p: 'Nama akan dicocokkan saat verifikasi dan saat menarik dana ke rekening. Perbedaan satu huruf pun bisa membuat penarikan tertahan di kemudian hari.',
-        },
-        {
-          h: 'Akun langsung siap dipakai',
-          p: 'Setelah pendaftaran berhasil, Anda otomatis masuk. Akun dimulai di DEMO — mulailah dari sana untuk menguji pengaturan. Trading akun REAL adalah aktivasi terpisah sekali bayar (lihat Akses & aktivasi).',
-        },
-        {
-          h: 'Kenapa harus lewat aplikasi',
-          p: 'Pendaftaran dari peramban tidak diizinkan agar akun Anda terhubung langsung dari perangkat sendiri sejak awal. Bila membuka halaman daftar di peramban, yang muncul hanya tautan unduh aplikasi.',
+          h: 'Anda mulai di DEMO',
+          p: 'Setiap akun dimulai di DEMO — mulailah dari sana untuk menguji pengaturan tanpa risiko. Trading akun REAL adalah aktivasi terpisah sekali bayar (lihat Akses & aktivasi).',
         },
       ],
     },
@@ -455,23 +439,23 @@ const ID: IsiPanduan = {
       id: 'appweb',
       ikon: 'Smartphone',
       judul: 'Versi aplikasi vs versi web',
-      ringkas: 'Akun sama — masing-masing unggul di hal berbeda',
+      ringkas: 'Akun sama, mesin sama — pilih mana yang lebih praktis',
       isi: [
         {
           h: 'Yang sama persis',
-          p: 'Keduanya memakai akun yang sama dan menampilkan saldo, riwayat, serta profit yang sama. Pengaturan yang Anda ubah di satu sisi berlaku juga di sisi lain — tidak ada akun terpisah untuk web.',
+          p: 'Keduanya memakai akun yang sama dan menampilkan saldo, riwayat, serta profit yang sama. Pengaturan yang Anda ubah di satu sisi berlaku juga di sisi lain. Keduanya menjalankan bot di server kami, sehingga sesi tetap berjalan walau aplikasi atau peramban ditutup, bahkan saat perangkat dimatikan. Dan setelah REAL diaktifkan, ia berlaku di keduanya.',
         },
         {
-          h: 'Aplikasi: menjalankan bot di perangkat — dan bisa akun REAL',
-          p: 'Aplikasi mengeksekusi order langsung dari perangkat Anda, dan hanya versi ini yang bisa trading akun REAL. Plus: eksekusi presisi di perangkat. Minus: Android membatasi aplikasi yang tidak sedang dibuka — saat layar mati atau berpindah aplikasi, prosesnya bisa diperlambat atau dihentikan sistem; selain itu perlu dipasang & diperbarui manual, serta khusus Android.',
+          h: 'Aplikasi: pasang sekali di Android',
+          p: 'Aplikasi Android membuat AutoTrade tinggal satu ketukan dan terasa seperti aplikasi asli. Perlu dipasang & diperbarui manual, serta khusus Android.',
         },
         {
-          h: 'Web: juga menjalankan bot — di server kami',
-          p: 'Versi web tetap menjalankan bot: sesi dieksekusi di server kami, sehingga terus berjalan walau peramban ditutup atau perangkat dimatikan. Plus: tanpa pemasangan, selalu versi terbaru, nyaman di layar besar, dan cocok untuk sesi panjang tanpa ditunggui. Minus: trading REAL khusus aplikasi, jadi web berjalan di akun DEMO (plus pemantauan penuh semuanya).',
+          h: 'Web: tanpa pemasangan',
+          p: 'Versi web terbuka di peramban mana pun — tanpa pemasangan, selalu versi terbaru, dan nyaman di layar besar.',
         },
         {
           h: 'Sebaiknya pakai yang mana',
-          p: 'Keduanya saling melengkapi. Pakai aplikasi untuk trading akun REAL atau eksekusi di perangkat. Pakai web untuk menjalankan sesi DEMO yang tetap lanjut di server kami meski peramban ditutup, atau untuk memantau di layar besar.',
+          p: 'Keduanya sama saja sekarang — fungsinya identik. Pilih aplikasi bila Anda suka ada ikon di ponsel, atau web di komputer maupun layar besar. Apa pun yang Anda jalankan, sesinya berjalan di server kami dan terus berlanjut sendiri.',
         },
       ],
     },
