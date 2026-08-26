@@ -1,11 +1,10 @@
 'use client';
 // Portal publik aktivasi Mode REAL — STC AutoTrade. UI dari AktivasiShell.
-import { ShieldCheck } from 'lucide-react';
 import AktivasiShell from '@/components/AktivasiShell';
 
 export default function AktivasiRealPage() {
   return <AktivasiShell cfg={{
-    Icon: ShieldCheck,
+    iconKey: 'real',
     title: 'Mode REAL',
     tagline: 'Buka trading akun REAL di STC AutoTrade. Sekali bayar, akses seterusnya.',
     price: 'Rp 150.000',

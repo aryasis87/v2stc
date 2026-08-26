@@ -7,16 +7,39 @@
 
 import { useState, useRef } from 'react';
 import { Upload, Check, Loader2, X, Lock, Download, ShieldCheck } from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
 import { saveQris } from '@/lib/saveQris';
 
 const AC = '#10b981';
 const AC2 = '#34d399';
 const API = process.env.NEXT_PUBLIC_API_URL ?? '';
 
+type IconKey = 'real' | 'ai' | 'blitz';
+
+// Glyph fitur KUSTOM (bukan ikon template lucide) — terisi penuh, tampak premium.
+// REAL: perisai + centang tembus (duotone), AI: kilau/sparkle, 5st: petir.
+function FeatureGlyph({ k, size, color }: { k: IconKey; size: number; color: string }) {
+  const c = { width: size, height: size, viewBox: '0 0 24 24', style: { display: 'block' } as React.CSSProperties, 'aria-hidden': true } as const;
+  if (k === 'ai') return (
+    <svg {...c}>
+      <path fill={color} d="M12 1.9c.43 0 .8.29.92.7l1.15 3.86c.26.87.94 1.55 1.81 1.81l3.86 1.15c.41.12.7.49.7.92s-.29.8-.7.92l-3.86 1.15c-.87.26-1.55.94-1.81 1.81l-1.15 3.86c-.12.41-.49.7-.92.7s-.8-.29-.92-.7l-1.15-3.86a2.62 2.62 0 0 0-1.81-1.81l-3.86-1.15c-.41-.12-.7-.49-.7-.92s.29-.8.7-.92l3.86-1.15c.87-.26 1.55-.94 1.81-1.81l1.15-3.86c.12-.41.49-.7.92-.7Z" />
+      <path fill={color} opacity="0.5" d="M18.7 2.1c.2 0 .38.14.44.34l.42 1.4c.12.41.44.73.85.85l1.4.42c.2.06.34.24.34.44s-.14.38-.34.44l-1.4.42c-.41.12-.73.44-.85.85l-.42 1.4c-.06.2-.24.34-.44.34s-.38-.14-.44-.34l-.42-1.4a1.05 1.05 0 0 0-.85-.85l-1.4-.42c-.2-.06-.34-.24-.34-.44s.14-.38.34-.44l1.4-.42c.41-.12.73-.44.85-.85l.42-1.4c.06-.2.24-.34.44-.34Z" />
+    </svg>
+  );
+  if (k === 'blitz') return (
+    <svg {...c}>
+      <path fill={color} d="M14.05 1.83c.53-.62 1.53-.13 1.38.67L14.2 9.1h4.7c.86 0 1.3 1.03.72 1.67l-9.67 10.6c-.53.58-1.47.06-1.28-.7l1.4-6.67H5.1c-.86 0-1.3-1.03-.72-1.67l9.67-10.5Z" />
+    </svg>
+  );
+  return (
+    <svg {...c}>
+      <path fill={color} fillRule="evenodd" clipRule="evenodd" d="M12 1.7c-.28 0-.51.06-.75.16L4.87 4.63A2 2 0 0 0 3.6 6.5v4.72c0 4.72 3.08 9.1 7.66 11.1.5.22 1.06.22 1.56 0 4.58-2 7.66-6.38 7.66-11.1V6.5a2 2 0 0 0-1.27-1.87L12.75 1.86c-.24-.1-.47-.16-.75-.16Zm4.05 7.8a1 1 0 0 0-1.47-1.36l-3.92 4.24-1.56-1.64a1 1 0 1 0-1.45 1.38l2.29 2.42a1 1 0 0 0 1.46-.01l4.65-5.03Z" />
+    </svg>
+  );
+}
+
 export interface AktivasiConfig {
-  /** Ikon fitur (komponen lucide). */
-  Icon: LucideIcon;
+  /** Kunci glyph fitur kustom (bukan ikon template). */
+  iconKey: IconKey;
   /** Nama fitur, mis. "Mode REAL". */
   title: string;
   /** Kalimat pengantar 1 baris. */
@@ -122,7 +145,7 @@ export default function AktivasiShell({ cfg }: { cfg: AktivasiConfig }) {
         {/* HERO */}
         <div style={{ textAlign: 'center', marginBottom: 20 }}>
           <span style={sx.eyebrow}><ShieldCheck style={{ width: 12, height: 12 }} /> PORTAL AKTIVASI · {cfg.brand}</span>
-          <div style={sx.heroIcon}><cfg.Icon style={{ width: 30, height: 30, color: '#04210b' }} strokeWidth={2.2} /></div>
+          <div style={sx.heroIcon}><FeatureGlyph k={cfg.iconKey} size={30} color="#04210b" /></div>
           <h1 style={sx.heroTitle}>Aktivasi {cfg.title}</h1>
           <p style={sx.heroTagline}>{cfg.tagline}</p>
         </div>
@@ -136,7 +159,7 @@ export default function AktivasiShell({ cfg }: { cfg: AktivasiConfig }) {
                 <div style={sx.summaryLabel}>YANG KAMU AKTIFKAN</div>
                 <div style={sx.summaryFeature}>{cfg.title}</div>
               </div>
-              <span style={sx.summaryIcon}><cfg.Icon style={{ width: 18, height: 18, color: AC }} /></span>
+              <span style={sx.summaryIcon}><FeatureGlyph k={cfg.iconKey} size={18} color={AC} /></span>
             </div>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
               <span style={sx.priceBig}>{cfg.price}</span>
