@@ -5,7 +5,7 @@
 // Tema gelap Apple-like, aksen emerald. Alur: ringkasan pesanan → 3 langkah
 // (data → bayar QRIS → unggah bukti) dengan progress, lalu kirim.
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Upload, Check, Loader2, X, Lock, Download, ShieldCheck } from 'lucide-react';
 import { saveQris } from '@/lib/saveQris';
 
@@ -88,8 +88,28 @@ export default function AktivasiShell({ cfg }: { cfg: AktivasiConfig }) {
   const [err, setErr] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
 
+  // Validasi LIVE ID akun: begitu 9 angka terisi, cek ke backend (whitelist_users)
+  // → tampilkan centang bila terdaftar, atau "tidak ditemukan".
+  const [idStatus, setIdStatus] = useState<'idle' | 'checking' | 'ok' | 'notfound' | 'error'>('idle');
+  useEffect(() => {
+    const id = sid.trim();
+    if (id.length < 9) { setIdStatus('idle'); return; }
+    setIdStatus('checking');
+    let cancelled = false;
+    const t = setTimeout(async () => {
+      try {
+        const res = await fetch(`${API}/api/v1/activation/check-id?id=${encodeURIComponent(id)}`);
+        if (cancelled) return;
+        if (!res.ok) { setIdStatus('error'); return; }
+        const j = await res.json();
+        setIdStatus(j?.exists ? 'ok' : 'notfound');
+      } catch { if (!cancelled) setIdStatus('error'); }
+    }, 400);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [sid]);
+
   const dataOk = name.trim().length >= 2 && sid.trim().length >= 3;
-  const valid = dataOk && !!proof;
+  const valid = dataOk && !!proof && idStatus !== 'notfound';
   // Langkah aktif untuk progress: 0=data, 1=bayar, 2=bukti, 3=siap kirim.
   const step = !dataOk ? 0 : !proof ? 2 : 3;
 
@@ -205,8 +225,20 @@ export default function AktivasiShell({ cfg }: { cfg: AktivasiConfig }) {
           <label style={sx.label}>NAMA LENGKAP</label>
           <input value={name} onChange={e => setName(e.target.value)} placeholder="Nama sesuai identitas" className="aktv-in" style={sx.input} />
           <label style={{ ...sx.label, marginTop: 14 }}>ID AKUN STOCKITY</label>
-          <input value={sid} onChange={e => setSid(e.target.value.replace(/[^0-9]/g, ''))} inputMode="numeric" placeholder="mis. 183xxxxxx" className="aktv-in" style={sx.input} />
-          <p style={sx.hint}>ID akun bisa dilihat di profil Stockity kamu.</p>
+          <div style={{ position: 'relative' }}>
+            <input value={sid} onChange={e => setSid(e.target.value.replace(/[^0-9]/g, ''))} inputMode="numeric" placeholder="mis. 183xxxxxx" className="aktv-in" style={{ ...sx.input, paddingRight: 46, borderColor: idStatus === 'ok' ? AC : idStatus === 'notfound' ? '#f87171' : '#1f3a31' }} />
+            <span style={sx.idStatusIcon}>
+              {idStatus === 'checking' && <Loader2 style={{ width: 18, height: 18, color: '#7d8a84', animation: 'spin 1s linear infinite' }} />}
+              {idStatus === 'ok' && <span style={sx.idOk}><Check style={{ width: 13, height: 13, color: '#04210b' }} strokeWidth={3} /></span>}
+              {idStatus === 'notfound' && <X style={{ width: 19, height: 19, color: '#f87171' }} strokeWidth={2.4} />}
+            </span>
+          </div>
+          <p style={{ ...sx.hint, color: idStatus === 'notfound' ? '#f87171' : idStatus === 'ok' ? AC : '#7d8a84' }}>
+            {idStatus === 'notfound' ? 'ID tidak ditemukan — pastikan ID akun Stockity kamu benar.'
+              : idStatus === 'ok' ? 'ID terverifikasi — akun ditemukan.'
+              : idStatus === 'checking' ? 'Memeriksa ID…'
+              : 'ID akun bisa dilihat di profil Stockity kamu.'}
+          </p>
         </div>
 
         {/* LANGKAH 2 · BAYAR */}
@@ -313,6 +345,8 @@ const sx: Record<string, React.CSSProperties> = {
   label: { display: 'block', fontSize: 10.5, fontWeight: 700, letterSpacing: '0.05em', color: '#7d8a84', marginBottom: 7 },
   input: { width: '100%', padding: '14px 15px', borderRadius: 13, border: '1px solid #1f3a31', outline: 'none', fontSize: 16, fontWeight: 500, background: '#0a1210', color: '#f4f6f5' },
   hint: { fontSize: 11.5, color: '#7d8a84', marginTop: 9, lineHeight: 1.5 },
+  idStatusIcon: { position: 'absolute', right: 13, top: '50%', transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', pointerEvents: 'none' },
+  idOk: { width: 22, height: 22, borderRadius: '50%', background: AC, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' },
   qrisFrame: { padding: 13, background: '#fff', borderRadius: 18, boxShadow: '0 10px 26px -16px rgba(0,0,0,0.6)' },
   qrisBtn: { display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 12.5, fontWeight: 700, color: AC, background: 'rgba(16,185,129,0.12)', border: `1px solid ${AC}44`, borderRadius: 11, padding: '9px 16px', cursor: 'pointer' },
   payHead: { fontSize: 10, fontWeight: 700, color: '#7d8a84', textAlign: 'center', letterSpacing: '0.06em', margin: '16px 0 10px' },
