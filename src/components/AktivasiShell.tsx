@@ -6,7 +6,7 @@
 // (data → bayar QRIS → unggah bukti) dengan progress, lalu kirim.
 
 import { useState, useRef, useEffect } from 'react';
-import { Upload, Check, Loader2, X, Lock, Download, ShieldCheck } from 'lucide-react';
+import { Upload, Check, Loader2, X, Lock, Download } from 'lucide-react';
 import { saveQris } from '@/lib/saveQris';
 
 const AC = '#10b981';
@@ -162,10 +162,9 @@ export default function AktivasiShell({ cfg }: { cfg: AktivasiConfig }) {
   return (
     <div style={sx.page}>
       <div style={sx.wrap}>
-        {/* HERO */}
+        {/* HERO — teks saja (tanpa ikon) agar terlihat lebih premium */}
         <div style={{ textAlign: 'center', marginBottom: 20 }}>
-          <span style={sx.eyebrow}><ShieldCheck style={{ width: 12, height: 12 }} /> PORTAL AKTIVASI · {cfg.brand}</span>
-          <div style={sx.heroIcon}><FeatureGlyph k={cfg.iconKey} size={30} color="#04210b" /></div>
+          <span style={sx.eyebrow}>PORTAL AKTIVASI · {cfg.brand}</span>
           <h1 style={sx.heroTitle}>Aktivasi {cfg.title}</h1>
           <p style={sx.heroTagline}>{cfg.tagline}</p>
         </div>
