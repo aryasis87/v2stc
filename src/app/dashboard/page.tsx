@@ -1183,7 +1183,7 @@ const ModePickerModal: React.FC<{
     { v: 'aisignal'  as TradingMode, label: 'AI Signal Mode',       icon: <Radio     style={{ width: 16, height: 16 }} />, accent: C.sky,    desc: 'AI Signal Automation' },
     { v: 'indicator' as TradingMode, label: 'Analysis Strategy Mode', icon: <BarChart style={{ width: 16, height: 16 }} />, accent: C.orange, desc: 'Technical Analysis Based' },
     { v: 'momentum'  as TradingMode, label: 'Momentum Mode',        icon: <Waves     style={{ width: 16, height: 16 }} />, accent: C.pink,   desc: 'Parallel Momentum Analysis' },
-    { v: 'agentalpha' as TradingMode, label: 'Agent Alpha',          icon: <Zap       style={{ width: 16, height: 16 }} />, accent: '#8B5CF6', desc: AGENTALPHA_LOCKED ? 'Eksklusif · WR 85% — aktivasi' : 'Agentic system server' },
+    { v: 'agentalpha' as TradingMode, label: 'Agent Alpha',          icon: <Zap       style={{ width: 16, height: 16 }} />, accent: '#8B5CF6', desc: AGENTALPHA_LOCKED ? 'Eksklusif · WR 90% — aktivasi' : 'Agentic system server' },
   // Fast Reversal EKSKLUSIF — hanya muncul di picker bila akun sudah teraktivasi.
   ].filter(m => m.v !== 'fastreversal' || FR_UNLOCKED);
 
@@ -1232,8 +1232,8 @@ const ModePickerModal: React.FC<{
             .aa-alpha-row{isolation:isolate;animation:aa-halo 3.4s ease-in-out infinite}
             .aa-alpha-row::before{content:'';position:absolute;inset:0;border-radius:inherit;padding:1.4px;background:linear-gradient(115deg,#8b5cf6,#d946ef,#6366f1,#8b5cf6);background-size:300% 100%;-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:aa-brd 4.6s linear infinite;pointer-events:none;z-index:2}
             .aa-alpha-row::after{content:'';position:absolute;top:0;bottom:0;left:0;width:24%;background:linear-gradient(90deg,transparent,rgba(221,190,255,0.30),transparent);transform:translateX(-170%) skewX(-18deg);animation:aa-sweep 4.6s ease-in-out infinite;pointer-events:none;z-index:1}
-            .aa-badge{display:inline-flex;align-items:center;gap:3px;font-size:8.5px;font-weight:800;letter-spacing:0.05em;line-height:1;padding:3px 7px;border-radius:999px;color:#fff;background:linear-gradient(120deg,#7c3aed,#6d28d9);box-shadow:0 2px 9px -3px rgba(124,58,237,0.9);flex-shrink:0;text-shadow:0 1px 2px rgba(0,0,0,0.35)}
-            .aa-badge svg{width:9px;height:9px;color:#fff}
+            .aa-badge{display:inline-flex;align-items:center;gap:3px;font-size:8.5px;font-weight:900;letter-spacing:0.06em;line-height:1;padding:3px 7px;border-radius:999px;color:#fff!important;background:linear-gradient(120deg,#7c3aed,#6d28d9);box-shadow:0 2px 10px -3px rgba(124,58,237,0.95);flex-shrink:0}
+            .aa-badge svg{width:9px;height:9px;color:#fff!important}
             @media (prefers-reduced-motion:reduce){.aa-alpha-row,.aa-alpha-row::before,.aa-alpha-row::after{animation:none}}
           `}</style>
           {MODES.map(({ v, label, icon, accent, desc }) => {
@@ -1242,13 +1242,14 @@ const ModePickerModal: React.FC<{
             const isAiLockedRow = v === 'aisignal' && AI_LOCKED; // fitur terkunci per akun
             const isFrLockedRow = v === 'fastreversal' && FR_LOCKED; // berbayar, 30 hari
             const isBlitz5sLockedRow = v === 'blitz5s' && BLITZ5S_LOCKED; // berbayar, 30 hari
-            const isAlpha = v === 'agentalpha'; // eksklusif → efek kilau merah
-            const isAlphaLockedRow = isAlpha && AGENTALPHA_LOCKED; // terkunci tapi TETAP menarik (tak diredupkan)
+            const isAlpha = v === 'agentalpha'; // eksklusif
+            const isAlphaLockedRow = isAlpha && AGENTALPHA_LOCKED; // terkunci → disable/abu
+            const isAlphaActive = isAlpha && !AGENTALPHA_LOCKED;   // teraktivasi → premium
             return (
               <button
                 key={v}
                 type="button"
-                className={isAlpha ? 'aa-alpha-row' : undefined}
+                className={isAlphaActive ? 'aa-alpha-row' : undefined}
                 onClick={() => {
                   onModeChange(v);
                   onClose();
@@ -1256,8 +1257,8 @@ const ModePickerModal: React.FC<{
                 style={{
                   width:'100%',display:'flex',alignItems:'center',gap:12,padding:'11px 14px',
                   borderRadius:14,cursor:'pointer',position:'relative',overflow:'hidden',
-                  background:isAlpha?'rgba(139,92,246,0.08)':(isAct?`${accent}14`:C.card2),
-                  border:`1px solid ${isAlpha?'transparent':(isAct?`${accent}45`:C.bdr)}`,
+                  background:isAlphaActive?'rgba(139,92,246,0.08)':(isAct?`${accent}14`:C.card2),
+                  border:`1px solid ${isAlphaActive?'transparent':(isAct?`${accent}45`:C.bdr)}`,
                   opacity:(isOtherRunning||isAiLockedRow||isFrLockedRow||isBlitz5sLockedRow)?0.55:1,
                   transition:'background 0.15s,border-color 0.15s',
                 }}
@@ -1265,16 +1266,16 @@ const ModePickerModal: React.FC<{
                 <span style={{
                   width:38,height:38,borderRadius:11,flexShrink:0,
                   display:'flex',alignItems:'center',justifyContent:'center',
-                  background:isAlpha?'linear-gradient(135deg,#8b5cf6,#6366f1)':`${accent}18`,
-                  border:`1px solid ${isAlpha?'transparent':`${accent}25`}`,
-                  color:isAlpha?'#fff':accent,
-                  boxShadow:isAlpha?'0 4px 12px -5px rgba(139,92,246,0.85)':undefined,
+                  background:isAlphaActive?'linear-gradient(135deg,#8b5cf6,#6366f1)':(isAlphaLockedRow?C.card2:`${accent}18`),
+                  border:`1px solid ${isAlphaActive?'transparent':(isAlphaLockedRow?C.bdr:`${accent}25`)}`,
+                  color:isAlphaActive?'#fff':(isAlphaLockedRow?C.muted:accent),
+                  boxShadow:isAlphaActive?'0 4px 12px -5px rgba(139,92,246,0.85)':undefined,
                 }}>
                   {icon}
                 </span>
                 <div style={{flex:1,minWidth:0,textAlign:'left'}}>
                   <div style={{display:'flex',alignItems:'center',gap:5,minWidth:0}}>
-                    <span style={{fontSize:14,fontWeight:600,color:isAct?accent:C.sub,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',minWidth:0}}>{label}</span>
+                    <span style={{fontSize:14,fontWeight:600,color:isAlphaLockedRow?C.muted:(isAct?accent:C.sub),whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',minWidth:0}}>{label}</span>
                     {/* Badge premium eksklusif untuk Agent Alpha */}
                     {isAlpha && (
                       <span className="aa-badge"><Zap style={{width:9,height:9}}/>PRO</span>
@@ -1443,14 +1444,14 @@ const Blitz5sLockedModal: React.FC<{ open: boolean; onClose: () => void; lang: s
 };
 
 // ═══════════════════════════════════════════
-// AGENT ALPHA LOCKED MODAL — mode agentic eksklusif berbayar (Rp 850rb).
-// Popup ini juga PROMOSI: menonjolkan peluang WR 85%.
+// AGENT ALPHA LOCKED MODAL — mode agentic eksklusif berbayar (Rp 850rb / 30 hari).
+// Popup PROMOSI modern: menonjolkan peluang WR 90%.
 // ═══════════════════════════════════════════
 const ALPHA_ACCENT = '#8B5CF6';
-const ALPHA_LOCK_STR: Record<string, { title: string; wr: string; body: string; price: string; hint: string; go: string; close: string }> = {
-  id: { title: 'Agent Alpha — Mode Eksklusif', wr: 'Peluang WR', body: 'Sistem agentic yang dijalankan penuh di server: membaca arah, mengeksekusi, dan kejar-balik otomatis untuk memburu kemenangan.', price: 'Aktivasi Rp 850.000 / 30 hari', hint: 'Lanjut ke portal pembayaran (QRIS). Aktif setelah diverifikasi admin — berlaku 30 hari.', go: 'Aktivasi Sekarang', close: 'Nanti' },
-  en: { title: 'Agent Alpha — Exclusive Mode', wr: 'Win rate up to', body: 'A fully server-run agentic system: it reads direction, executes, and auto reversal-chases to hunt down the win.', price: 'Activation Rp 850,000 / 30 days', hint: 'Continue to the payment portal (QRIS). Active after admin verification — valid for 30 days.', go: 'Activate Now', close: 'Later' },
-  ms: { title: 'Agent Alpha — Mod Eksklusif', wr: 'Peluang menang', body: 'Sistem agentic yang dijalankan penuh di server: membaca arah, melaksana, dan kejar-balik automatik untuk memburu kemenangan.', price: 'Pengaktifan Rp 850,000 / 30 hari', hint: 'Teruskan ke portal pembayaran (QRIS). Aktif selepas disahkan admin — sah 30 hari.', go: 'Aktifkan Sekarang', close: 'Nanti' },
+const ALPHA_LOCK_STR: Record<string, { tag: string; title: string; wr: string; body: string; feats: string[]; price: string; hint: string; go: string; close: string }> = {
+  id: { tag: 'MODE EKSKLUSIF', title: 'Agent Alpha', wr: 'Peluang WR hingga', body: 'Sistem agentic yang dijalankan penuh di server untuk memburu kemenangan.', feats: ['Eksekusi & pembacaan harga di server', 'Kejar-balik otomatis — tanpa martingale manual', 'Berjalan otomatis, respons near-instant'], price: 'Rp 850.000 / 30 hari', hint: 'Bayar via QRIS di portal — aktif ~10 menit setelah diverifikasi.', go: 'Aktivasi Sekarang', close: 'Nanti' },
+  en: { tag: 'EXCLUSIVE MODE', title: 'Agent Alpha', wr: 'Win rate up to', body: 'A fully server-run agentic system built to hunt down the win.', feats: ['Server-side execution & price reading', 'Auto reversal-chase — no manual martingale', 'Runs on its own, near-instant response'], price: 'Rp 850,000 / 30 days', hint: 'Pay via QRIS on the portal — active ~10 min after verification.', go: 'Activate Now', close: 'Later' },
+  ms: { tag: 'MOD EKSKLUSIF', title: 'Agent Alpha', wr: 'Peluang menang hingga', body: 'Sistem agentic yang dijalankan penuh di server untuk memburu kemenangan.', feats: ['Pelaksanaan & bacaan harga di server', 'Kejar-balik automatik — tanpa martingale manual', 'Berjalan sendiri, respons hampir serta-merta'], price: 'Rp 850,000 / 30 hari', hint: 'Bayar via QRIS di portal — aktif ~10 minit selepas disahkan.', go: 'Aktifkan Sekarang', close: 'Nanti' },
 };
 
 const AgentAlphaLockedModal: React.FC<{ open: boolean; onClose: () => void; lang: string; onActivate: () => void }> = ({ open, onClose, lang, onActivate }) => {
@@ -1459,27 +1460,51 @@ const AgentAlphaLockedModal: React.FC<{ open: boolean; onClose: () => void; lang
   return (
     <div style={{position:'fixed',inset:0,zIndex:80,display:'flex',alignItems:'center',justifyContent:'center',padding:'16px',animation:'fade-in 0.15s ease'}}>
       <div onClick={onClose} style={{position:'absolute',inset:0,background:'rgba(0,0,0,0.72)',backdropFilter:'blur(10px)',WebkitBackdropFilter:'blur(10px)'}}/>
-      <div style={{position:'relative',width:'100%',maxWidth:392,overflow:'hidden',background:C.bg,borderRadius:22,border:`1px solid ${ALPHA_ACCENT}44`,padding:'26px 22px 22px',animation:'slide-up 0.28s cubic-bezier(0.32,0.72,0,1)',textAlign:'center',boxShadow:`0 24px 60px -30px ${ALPHA_ACCENT}cc`}}>
-        <div style={{position:'absolute',top:-70,left:'50%',transform:'translateX(-50%)',width:220,height:140,background:`radial-gradient(closest-side, ${ALPHA_ACCENT}33, transparent)`,pointerEvents:'none'}}/>
-        <div style={{position:'relative'}}>
-          <div style={{display:'inline-flex',alignItems:'center',gap:6,fontSize:10.5,fontWeight:800,letterSpacing:'0.09em',color:ALPHA_ACCENT,background:`${ALPHA_ACCENT}18`,border:`1px solid ${ALPHA_ACCENT}40`,borderRadius:99,padding:'5px 12px',marginBottom:16}}>
-            <Zap style={{width:13,height:13}}/> EKSKLUSIF
-          </div>
-          <div style={{display:'flex',flexDirection:'column',alignItems:'center',marginBottom:14}}>
-            <span style={{fontSize:12,fontWeight:700,color:C.sub,letterSpacing:'0.02em'}}>{S.wr}</span>
-            <span style={{fontSize:52,fontWeight:900,lineHeight:1,letterSpacing:'-2px',background:`linear-gradient(180deg, ${ALPHA_ACCENT}, #c4b5fd)`,WebkitBackgroundClip:'text',backgroundClip:'text',WebkitTextFillColor:'transparent'}}>85%</span>
-          </div>
-          <p style={{fontSize:17,fontWeight:800,color:C.text,marginBottom:8,letterSpacing:'-0.3px'}}>{S.title}</p>
-          <p style={{fontSize:13,color:C.sub,lineHeight:1.55,marginBottom:12}}>{S.body}</p>
-          <div style={{fontSize:13.5,fontWeight:800,color:ALPHA_ACCENT,background:`${ALPHA_ACCENT}12`,border:`1px solid ${ALPHA_ACCENT}30`,borderRadius:12,padding:'9px 12px',marginBottom:10}}>{S.price}</div>
-          <p style={{fontSize:11.5,color:C.muted,lineHeight:1.55,marginBottom:18}}>{S.hint}</p>
-          <div style={{display:'flex',gap:8}}>
-            <button onClick={onClose} style={{flex:1,padding:'12px 0',borderRadius:13,background:C.card2,border:`1px solid ${C.bdr}`,cursor:'pointer',fontSize:13,fontWeight:600,color:C.sub}}>{S.close}</button>
-            <button onClick={onActivate}
-               style={{flex:1.6,padding:'12px 0',borderRadius:13,background:ALPHA_ACCENT,border:'none',cursor:'pointer',fontSize:13.5,fontWeight:800,color:'#fff',display:'flex',alignItems:'center',justifyContent:'center',gap:6,boxShadow:`0 10px 24px -12px ${ALPHA_ACCENT}`}}>
-              <Zap style={{width:15,height:15}}/> {S.go}
+      <style>{`@keyframes aa-num{0%,100%{filter:drop-shadow(0 0 10px rgba(139,92,246,0.35))}50%{filter:drop-shadow(0 0 22px rgba(139,92,246,0.65))}}@keyframes aa-bar{to{background-position:200% 0}}`}</style>
+      <div style={{position:'relative',width:'100%',maxWidth:390,overflow:'hidden',background:C.bg,borderRadius:24,border:`1px solid ${ALPHA_ACCENT}3a`,animation:'slide-up 0.3s cubic-bezier(0.32,0.72,0,1)',boxShadow:`0 30px 70px -30px ${ALPHA_ACCENT}dd, 0 2px 8px rgba(0,0,0,0.3)`}}>
+        <div style={{height:4,background:'linear-gradient(90deg,#8b5cf6,#d946ef,#6366f1,#8b5cf6)',backgroundSize:'200% 100%',animation:'aa-bar 3.5s linear infinite'}}/>
+        <div style={{position:'absolute',top:-40,left:'50%',transform:'translateX(-50%)',width:280,height:170,background:`radial-gradient(closest-side, ${ALPHA_ACCENT}2e, transparent)`,pointerEvents:'none'}}/>
+        <div style={{position:'relative',padding:'22px 22px 20px'}}>
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:14}}>
+            <span style={{display:'inline-flex',alignItems:'center',gap:6,fontSize:10,fontWeight:900,letterSpacing:'0.1em',color:'#fff',background:`linear-gradient(120deg,#7c3aed,#6d28d9)`,borderRadius:99,padding:'5px 11px',boxShadow:`0 4px 14px -4px ${ALPHA_ACCENT}`}}>
+              <Zap style={{width:12,height:12,color:'#fff'}}/> {S.tag}
+            </span>
+            <button onClick={onClose} aria-label="Tutup" style={{width:30,height:30,borderRadius:999,background:C.card2,border:`1px solid ${C.bdr}`,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer'}}>
+              <X style={{width:15,height:15,color:C.muted}}/>
             </button>
           </div>
+
+          <div style={{textAlign:'center',marginBottom:2}}>
+            <span style={{fontSize:11.5,fontWeight:700,color:C.sub}}>{S.wr}</span>
+          </div>
+          <div style={{textAlign:'center',marginBottom:12}}>
+            <span style={{fontSize:64,fontWeight:900,lineHeight:1,letterSpacing:'-3px',background:'linear-gradient(180deg,#a78bfa,#7c3aed)',WebkitBackgroundClip:'text',backgroundClip:'text',WebkitTextFillColor:'transparent',animation:'aa-num 2.6s ease-in-out infinite',display:'inline-block'}}>90%</span>
+          </div>
+
+          <p style={{fontSize:19,fontWeight:800,color:C.text,textAlign:'center',letterSpacing:'-0.4px',marginBottom:6}}>{S.title}</p>
+          <p style={{fontSize:12.5,color:C.sub,lineHeight:1.55,textAlign:'center',marginBottom:14,maxWidth:320,marginInline:'auto'}}>{S.body}</p>
+
+          <div style={{display:'flex',flexDirection:'column',gap:8,marginBottom:16}}>
+            {S.feats.map((f) => (
+              <div key={f} style={{display:'flex',alignItems:'flex-start',gap:9,fontSize:12.5,color:C.text,lineHeight:1.4}}>
+                <span style={{flexShrink:0,width:18,height:18,borderRadius:6,background:`${ALPHA_ACCENT}18`,display:'inline-flex',alignItems:'center',justifyContent:'center',marginTop:1}}>
+                  <Check style={{width:11,height:11,color:ALPHA_ACCENT}} strokeWidth={3}/>
+                </span>
+                <span>{f}</span>
+              </div>
+            ))}
+          </div>
+
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:10,padding:'11px 14px',borderRadius:14,background:`${ALPHA_ACCENT}10`,border:`1px solid ${ALPHA_ACCENT}2e`,marginBottom:14}}>
+            <span style={{fontSize:11.5,fontWeight:600,color:C.sub}}>Aktivasi</span>
+            <span style={{fontSize:15,fontWeight:900,color:C.text,letterSpacing:'-0.3px'}}>{S.price}</span>
+          </div>
+
+          <button onClick={onActivate}
+             style={{width:'100%',padding:'14px 0',borderRadius:14,background:`linear-gradient(120deg,#7c3aed,#6d28d9)`,border:'none',cursor:'pointer',fontSize:14.5,fontWeight:800,color:'#fff',display:'flex',alignItems:'center',justifyContent:'center',gap:7,boxShadow:`0 12px 28px -12px ${ALPHA_ACCENT}`}}>
+            <Zap style={{width:16,height:16}}/> {S.go}
+          </button>
+          <p style={{fontSize:11,color:C.muted,lineHeight:1.5,textAlign:'center',marginTop:11}}>{S.hint}</p>
         </div>
       </div>
     </div>
@@ -1641,7 +1666,7 @@ const ModeSessionPanel: React.FC<{
     { v: 'aisignal'  as TradingMode, label: 'AI Signal Mode',       icon: <Radio     style={{ width: 12, height: 12 }} />, accent: C.sky,    desc: 'AI Signal Automation' },
     { v: 'indicator' as TradingMode, label: 'Analysis Strategy Mode', icon: <BarChart style={{ width: 12, height: 12 }} />, accent: C.orange, desc: 'Technical Analysis Based' },
     { v: 'momentum'  as TradingMode, label: 'Momentum Mode',        icon: <Waves     style={{ width: 12, height: 12 }} />, accent: C.pink,   desc: 'Parallel Momentum Analysis' },
-    { v: 'agentalpha' as TradingMode, label: 'Agent Alpha',          icon: <Zap       style={{ width: 12, height: 12 }} />, accent: '#8B5CF6', desc: AGENTALPHA_LOCKED ? 'Eksklusif · WR 85% — aktivasi' : 'Agentic system server' },
+    { v: 'agentalpha' as TradingMode, label: 'Agent Alpha',          icon: <Zap       style={{ width: 12, height: 12 }} />, accent: '#8B5CF6', desc: AGENTALPHA_LOCKED ? 'Eksklusif · WR 90% — aktivasi' : 'Agentic system server' },
   ];
 
   const active = MODE_LIST.find(m => m.v === mode)!;
@@ -3031,7 +3056,7 @@ export default function DashboardPage() {
     // sebagai Fastrade FTT dengan toggle 5st menyala (eksekusi blitz 5 detik).
     if (m === 'blitz5s' && !blitz5sUnlocked) { setBlitz5sLockOpen(true); return; }
     // Agent Alpha — mode agentic eksklusif berbayar (Rp 850rb). Belum aktivasi →
-    // tampilkan popup promo WR 85% + arahkan ke portal, JANGAN pindah mode.
+    // tampilkan popup promo WR 90% + arahkan ke portal, JANGAN pindah mode.
     if (m === 'agentalpha' && !agentAlphaUnlocked) { setAlphaLockOpen(true); return; }
     // Izinkan ganti pilihan mode kapan saja (proteksi start ada di handleStart)
     if(m!==tradingMode) setTradingMode(m);

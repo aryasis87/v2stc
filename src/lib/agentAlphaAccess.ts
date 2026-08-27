@@ -1,6 +1,6 @@
 // lib/agentAlphaAccess.ts
 // ─────────────────────────────────────────────
-// Akses mode AGENT ALPHA (agentic reversal-chase, WR ~85%) per user — fitur
+// Akses mode AGENT ALPHA (agentic reversal-chase, WR ~90%) per user — fitur
 // BERBAYAR terkunci, pola sama dgn 5st/Fast Reversal. Langganan Rp 850.000 /
 // 30 hari — lalu OTOMATIS kedaluwarsa (perlu aktivasi ulang).
 //
@@ -25,7 +25,7 @@ const AGENTALPHA_DURATION_MS = AGENTALPHA_DURATION_DAYS * 24 * 60 * 60 * 1000;
 export const AGENTALPHA_PRICE = 850_000;
 
 /** Peluang menang yang dipromosikan (persen). */
-export const AGENTALPHA_WR = 85;
+export const AGENTALPHA_WR = 90;
 
 /** Email kontak resmi untuk permintaan aktivasi */
 export const AGENTALPHA_CONTACT_EMAIL = 'supportstockity@gmail.com';
