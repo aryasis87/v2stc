@@ -1180,7 +1180,7 @@ const ModePickerModal: React.FC<{
     { v: 'aisignal'  as TradingMode, label: 'AI Signal Mode',       icon: <Radio     style={{ width: 16, height: 16 }} />, accent: C.sky,    desc: 'AI Signal Automation' },
     { v: 'indicator' as TradingMode, label: 'Analysis Strategy Mode', icon: <BarChart style={{ width: 16, height: 16 }} />, accent: C.orange, desc: 'Technical Analysis Based' },
     { v: 'momentum'  as TradingMode, label: 'Momentum Mode',        icon: <Waves     style={{ width: 16, height: 16 }} />, accent: C.pink,   desc: 'Parallel Momentum Analysis' },
-    { v: 'agentalpha' as TradingMode, label: 'Agent Alpha',          icon: <Zap       style={{ width: 16, height: 16 }} />, accent: '#8B5CF6', desc: 'Kejar-balik arah · ×1.5' },
+    { v: 'agentalpha' as TradingMode, label: 'Agent Alpha',          icon: <Zap       style={{ width: 16, height: 16 }} />, accent: '#8B5CF6', desc: 'Agentic system server' },
   // Fast Reversal EKSKLUSIF — hanya muncul di picker bila akun sudah teraktivasi.
   ].filter(m => m.v !== 'fastreversal' || FR_UNLOCKED);
 
@@ -1570,7 +1570,7 @@ const ModeSessionPanel: React.FC<{
     { v: 'aisignal'  as TradingMode, label: 'AI Signal Mode',       icon: <Radio     style={{ width: 12, height: 12 }} />, accent: C.sky,    desc: 'AI Signal Automation' },
     { v: 'indicator' as TradingMode, label: 'Analysis Strategy Mode', icon: <BarChart style={{ width: 12, height: 12 }} />, accent: C.orange, desc: 'Technical Analysis Based' },
     { v: 'momentum'  as TradingMode, label: 'Momentum Mode',        icon: <Waves     style={{ width: 12, height: 12 }} />, accent: C.pink,   desc: 'Parallel Momentum Analysis' },
-    { v: 'agentalpha' as TradingMode, label: 'Agent Alpha',          icon: <Zap       style={{ width: 12, height: 12 }} />, accent: '#8B5CF6', desc: 'Kejar-balik arah · ×1.5' },
+    { v: 'agentalpha' as TradingMode, label: 'Agent Alpha',          icon: <Zap       style={{ width: 12, height: 12 }} />, accent: '#8B5CF6', desc: 'Agentic system server' },
   ];
 
   const active = MODE_LIST.find(m => m.v === mode)!;

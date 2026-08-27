@@ -800,9 +800,9 @@ export const SettingsCard: React.FC<{
               <p style={{ fontSize:12,fontWeight:600,color:C.text,marginBottom:10 }}>{T('dashboard.martingale.compensation')}</p>
               <div style={{ display:'flex',gap:8 }}>
                 {/* Toggle card */}
-                <button disabled={disabled} onClick={()=>set('enabled',!martingale.enabled)} style={{
-                  flex:1,height:44,borderRadius:12,cursor:'pointer',display:'flex',alignItems:'center',gap:8,padding:'0 12px',
-                  background:martingale.enabled?`${C.cyan}18`:C.card2,border:`1px solid ${martingale.enabled?`${C.cyan}60`:C.bdr}`,transition:'all 0.15s',
+                <button disabled={disabled||mode==='agentalpha'} onClick={()=>set('enabled',!martingale.enabled)} title={mode==='agentalpha'?'Agent Alpha mengatur penggandaan otomatis (×1.5)':undefined} style={{
+                  flex:1,height:44,borderRadius:12,cursor:mode==='agentalpha'?'not-allowed':'pointer',display:'flex',alignItems:'center',gap:8,padding:'0 12px',
+                  background:martingale.enabled?`${C.cyan}18`:C.card2,border:`1px solid ${martingale.enabled?`${C.cyan}60`:C.bdr}`,transition:'all 0.15s',opacity:mode==='agentalpha'?0.45:1,
                 }}>
                   <div style={{ width:16,height:16,borderRadius:'50%',flexShrink:0,background:martingale.enabled?C.cyan:'transparent',border:`1.5px solid ${martingale.enabled?C.cyan:C.muted}`,display:'flex',alignItems:'center',justifyContent:'center' }}>
                     {martingale.enabled&&<span style={{ width:6,height:6,borderRadius:'50%',background:'#fff' }}/>}
@@ -810,7 +810,7 @@ export const SettingsCard: React.FC<{
                   <span style={{ fontSize:11,fontWeight:700,color:C.text,letterSpacing:'0.02em' }}>Martingale</span>
                 </button>
                 {/* Max Steps card — opens dialog */}
-                <button disabled={disabled||!martingale.enabled} onClick={()=>{ if(martingale.enabled) setShowMartingaleDialog(true); }} style={{
+                <button disabled={disabled||!martingale.enabled||mode==='agentalpha'} onClick={()=>{ if(martingale.enabled) setShowMartingaleDialog(true); }} style={{
                   flex:1,height:44,borderRadius:12,cursor:martingale.enabled?'pointer':'not-allowed',
                   display:'flex',alignItems:'center',justifyContent:'space-between',padding:'0 12px',
                   background:C.card2,border:`1px solid ${martingale.enabled&&!martingale.alwaysSignal?`${C.amber}45`:C.bdr}`,
