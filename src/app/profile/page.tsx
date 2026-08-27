@@ -1063,9 +1063,9 @@ const Blitz5sManager: React.FC<{ open: boolean; onClose: () => void }> = ({ open
 };
 
 // ─────────────────────────────────────────────
-// AGENT ALPHA MANAGER — aktivasi mode agentic eksklusif (Rp 850rb, SEKALI BAYAR).
-// Beda dari 5st: akses seumur hidup → tak ada masa berlaku/perpanjangan bulanan.
-// Toggle ON = aktif selamanya, OFF = cabut. Penyimpanan app_config 'agentalpha_access'.
+// AGENT ALPHA MANAGER — aktivasi mode agentic eksklusif (Rp 850rb / 30 hari).
+// Pola sama dgn 5st: langganan 30 hari, lalu kedaluwarsa (perlu aktivasi ulang).
+// Toggle ON = aktif 30 hari, OFF = cabut. Penyimpanan app_config 'agentalpha_access'.
 // ─────────────────────────────────────────────
 const AgentAlphaManager: React.FC<{ open: boolean; onClose: () => void }> = ({ open, onClose }) => {
   const [users, setUsers]     = useState<AiWlUser[]>([]);

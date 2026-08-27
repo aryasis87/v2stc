@@ -75,7 +75,7 @@ let FR_LOCKED = false;
 let FR_UNLOCKED = false;
 // Mode 5st (blitz 5 detik) — berbayar per akun, 30 hari.
 let BLITZ5S_LOCKED = false;
-// Mode Agent Alpha — agentic eksklusif berbayar (Rp 850rb, sekali bayar).
+// Mode Agent Alpha — agentic eksklusif berbayar (Rp 850rb / 30 hari).
 let AGENTALPHA_LOCKED = false;
 
 // TradingMode kini dari ./theme (dipakai bersama berkas hasil pemecahan).
@@ -1490,11 +1490,11 @@ const AgentAlphaLockedModal: React.FC<{ open: boolean; onClose: () => void; lang
 // REAL LOCKED MODAL — v4: mode REAL hanya utk akun baru via selfregister
 // ═══════════════════════════════════════════
 const REAL_LOCK_STR: Record<string, { title: string; body: string; hint: string; cta: string; close: string }> = {
-  id: { title: 'Mode REAL Terkunci',   body: 'Akun Anda saat ini hanya dapat menggunakan mode DEMO.', hint: 'Buka mode REAL dengan aktivasi sekali bayar Rp 150.000. Isi data & bukti pembayaran di portal, admin akan mengaktifkannya.', cta: 'Aktivasi Mode REAL', close: 'Tutup' },
-  en: { title: 'REAL Mode Locked',     body: 'Your account can currently use DEMO mode only.', hint: 'Unlock REAL mode with a one-time Rp 150,000 activation. Fill in your details & payment proof on the portal and an admin will activate it.', cta: 'Activate REAL Mode', close: 'Close' },
-  ru: { title: 'Режим REAL заблокирован', body: 'Ваш аккаунт сейчас может использовать только режим ДЕМО.', hint: 'Откройте режим REAL разовой активацией за Rp 150 000. Заполните данные и чек оплаты на портале — админ активирует.', cta: 'Активировать REAL', close: 'Закрыть' },
-  es: { title: 'Modo REAL bloqueado',  body: 'Tu cuenta actualmente solo puede usar el modo DEMO.', hint: 'Desbloquea el modo REAL con una activación única de Rp 150.000. Completa tus datos y comprobante en el portal y un admin lo activará.', cta: 'Activar Modo REAL', close: 'Cerrar' },
-  ms: { title: 'Mod REAL Dikunci',     body: 'Akaun anda buat masa ini hanya boleh menggunakan mod DEMO.', hint: 'Buka mod REAL dengan pengaktifan sekali bayar Rp 150,000. Isi maklumat & bukti pembayaran di portal, admin akan mengaktifkannya.', cta: 'Aktifkan Mod REAL', close: 'Tutup' },
+  id: { title: 'Mode REAL Terkunci',   body: 'Akun Anda saat ini hanya dapat menggunakan mode DEMO.', hint: 'Buka mode REAL dengan aktivasi Rp 150.000 (berlaku 30 hari). Isi data & bukti pembayaran di portal, admin akan mengaktifkannya.', cta: 'Aktivasi Mode REAL', close: 'Tutup' },
+  en: { title: 'REAL Mode Locked',     body: 'Your account can currently use DEMO mode only.', hint: 'Unlock REAL mode with a Rp 150,000 / 30-day activation. Fill in your details & payment proof on the portal and an admin will activate it.', cta: 'Activate REAL Mode', close: 'Close' },
+  ru: { title: 'Режим REAL заблокирован', body: 'Ваш аккаунт сейчас может использовать только режим ДЕМО.', hint: 'Откройте режим REAL активацией за Rp 150 000 (30 дней). Заполните данные и чек оплаты на портале — админ активирует.', cta: 'Активировать REAL', close: 'Закрыть' },
+  es: { title: 'Modo REAL bloqueado',  body: 'Tu cuenta actualmente solo puede usar el modo DEMO.', hint: 'Desbloquea el modo REAL con una activación de Rp 150.000 (30 días). Completa tus datos y comprobante en el portal y un admin lo activará.', cta: 'Activar Modo REAL', close: 'Cerrar' },
+  ms: { title: 'Mod REAL Dikunci',     body: 'Akaun anda buat masa ini hanya boleh menggunakan mod DEMO.', hint: 'Buka mod REAL dengan pengaktifan Rp 150,000 (sah 30 hari). Isi maklumat & bukti pembayaran di portal, admin akan mengaktifkannya.', cta: 'Aktifkan Mod REAL', close: 'Tutup' },
 };
 
 // v4: alasan REAL terkunci — 'account' (belum daftar afiliasi) atau 'platform'
@@ -1503,8 +1503,8 @@ const REAL_LOCK_STR: Record<string, { title: string; body: string; hint: string;
 type RealLockReason = 'account' | 'platform';
 
 const APK_LOCK_STR: Record<string, { title: string; body: string; hint: string; cta: string; close: string }> = {
-  id: { title: 'Aktifkan Mode REAL', body: 'Akun Anda saat ini masih DEMO. Buka mode REAL dengan aktivasi sekali bayar Rp 150.000.', hint: 'Aktivasi bisa dilakukan langsung di sini — TANPA perlu mengunduh atau memakai aplikasi Android. Setelah aktif, mode REAL bisa dipakai di versi web maupun aplikasi.', cta: 'Download Aplikasi', close: 'Tutup' },
-  en: { title: 'Activate REAL Mode', body: 'Your account is currently on DEMO. Unlock REAL mode with a one-time Rp 150,000 activation.', hint: 'You can activate right here — with NO need to download or use the Android app. Once active, REAL mode works on both the web and the app.', cta: 'Download App', close: 'Close' },
+  id: { title: 'Aktifkan Mode REAL', body: 'Akun Anda saat ini masih DEMO. Buka mode REAL dengan aktivasi Rp 150.000 (berlaku 30 hari).', hint: 'Aktivasi bisa dilakukan langsung di sini — TANPA perlu mengunduh atau memakai aplikasi Android. Setelah aktif, mode REAL bisa dipakai di versi web maupun aplikasi.', cta: 'Download Aplikasi', close: 'Tutup' },
+  en: { title: 'Activate REAL Mode', body: 'Your account is currently on DEMO. Unlock REAL mode with a Rp 150,000 / 30-day activation.', hint: 'You can activate right here — with NO need to download or use the Android app. Once active, REAL mode works on both the web and the app.', cta: 'Download App', close: 'Close' },
   ru: { title: 'Откройте в приложении Android', body: 'Режим REAL работает только в приложении STC AutoTrade для Android.', hint: 'В приложении сделки исполняются напрямую с вашего устройства — безопаснее и соответствует правилам платформы. Веб-версия остаётся для режима ДЕМО и мониторинга.', cta: 'Скачать приложение', close: 'Закрыть' },
   es: { title: 'Ábrelo en la app de Android', body: 'El modo REAL solo funciona en la app STC AutoTrade para Android.', hint: 'En la app, las órdenes se ejecutan desde la conexión de tu propio dispositivo: más seguro y conforme a las reglas de la plataforma. La versión web sigue disponible para el modo DEMO y seguimiento.', cta: 'Descargar app', close: 'Cerrar' },
   ms: { title: 'Buka dalam Aplikasi Android', body: 'Mod REAL hanya berjalan dalam aplikasi STC AutoTrade untuk Android.', hint: 'Dalam aplikasi, pesanan dilaksanakan terus dari sambungan peranti anda sendiri — lebih selamat dan mematuhi peraturan platform. Versi web kekal untuk mod DEMO dan pemantauan.', cta: 'Muat Turun Aplikasi', close: 'Tutup' },
@@ -1880,7 +1880,7 @@ export default function DashboardPage() {
   const [blitz5sUnlocked, setBlitz5sUnlocked] = useState(false);
   const [blitz5sCheckDone, setBlitz5sCheckDone] = useState(false);
   const [blitz5sExpiry,   setBlitz5sExpiry]   = useState<number|null>(null);
-  // ── Kunci mode Agent Alpha — fitur berbayar eksklusif (Rp 850rb, sekali bayar) ──
+  // ── Kunci mode Agent Alpha — fitur berbayar eksklusif (Rp 850rb / 30 hari) ──
   const [agentAlphaUnlocked,  setAgentAlphaUnlocked]  = useState(false);
   const [agentAlphaCheckDone, setAgentAlphaCheckDone] = useState(false);
 
