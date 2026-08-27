@@ -1,8 +1,8 @@
 // lib/agentAlphaAccess.ts
 // ─────────────────────────────────────────────
 // Akses mode AGENT ALPHA (agentic reversal-chase, WR ~85%) per user — fitur
-// BERBAYAR terkunci, pola sama dgn 5st/Fast Reversal. Aktivasi SEKALI BAYAR
-// Rp 850.000 (bukan langganan) — disimpan dengan expiry "seumur hidup".
+// BERBAYAR terkunci, pola sama dgn 5st/Fast Reversal. Langganan Rp 850.000 /
+// 30 hari — lalu OTOMATIS kedaluwarsa (perlu aktivasi ulang).
 //
 // Penyimpanan: app_config key 'agentalpha_access' = JSON object
 //   { "<stockity_user_id>": <expiresAt epoch ms>, ... }
@@ -17,8 +17,9 @@ import { bacaPetaAkses, masihBerlaku, type EntriAkses } from './aksesFitur';
 
 const KEY = 'agentalpha_access';
 
-/** Aktivasi SEKALI BAYAR — disimpan sbg expiry "seumur hidup" (~50 tahun). */
-const AGENTALPHA_LIFETIME_MS = 50 * 365 * 24 * 60 * 60 * 1000;
+/** Durasi aktivasi Agent Alpha (hari). Ditagih bulanan. */
+export const AGENTALPHA_DURATION_DAYS = 30;
+const AGENTALPHA_DURATION_MS = AGENTALPHA_DURATION_DAYS * 24 * 60 * 60 * 1000;
 
 /** Harga aktivasi Agent Alpha (Rupiah). */
 export const AGENTALPHA_PRICE = 850_000;
@@ -32,9 +33,9 @@ export const AGENTALPHA_CONTACT_EMAIL = 'supportstockity@gmail.com';
 /** Peta userId → expiresAt (epoch ms). Aktif jika expiresAt > sekarang. */
 export type AgentAlphaAccessMap = Record<string, number>;
 
-/** expiresAt untuk aktivasi baru (sekali bayar → seumur hidup) */
+/** expiresAt untuk aktivasi baru (sekarang + 30 hari) */
 export function agentAlphaExpiryFromNow(): number {
-  return Date.now() + AGENTALPHA_LIFETIME_MS;
+  return Date.now() + AGENTALPHA_DURATION_MS;
 }
 
 /** Entri akses satu pengguna — dipakai pemberitahuan aktivasi di dashboard. */

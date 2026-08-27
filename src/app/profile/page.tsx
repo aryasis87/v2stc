@@ -1154,7 +1154,7 @@ const AgentAlphaManager: React.FC<{ open: boolean; onClose: () => void }> = ({ o
             </div>
             <div style={{ flex: 1 }}>
               <p style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-1)', letterSpacing: -0.3 }}>Aktivasi Agent Alpha</p>
-              <p style={{ fontSize: 12, color: 'var(--text-3)' }}>{activeCount} user aktif · sekali bayar · Rp 850rb</p>
+              <p style={{ fontSize: 12, color: 'var(--text-3)' }}>{activeCount} user aktif · 30 hari · Rp 850rb</p>
             </div>
             <button onClick={saving ? undefined : onClose} style={{ width: 30, height: 30, borderRadius: '50%', background: 'var(--press)', border: 'none', cursor: saving ? 'default' : 'pointer', color: 'var(--text-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -1221,7 +1221,7 @@ const AgentAlphaManager: React.FC<{ open: boolean; onClose: () => void }> = ({ o
               {saving ? 'Menyimpan…' : 'Simpan Perubahan'}
             </button>
             <p style={{ fontSize: 11, color: 'var(--text-3)', lineHeight: 1.5 }}>
-              Aktivasi sekali bayar — akses Agent Alpha berlaku seterusnya sampai dicabut.
+              Langganan 30 hari — akses Agent Alpha otomatis kedaluwarsa, perlu aktivasi ulang.
             </p>
           </div>
         </div>
