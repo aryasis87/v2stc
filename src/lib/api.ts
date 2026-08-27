@@ -1265,6 +1265,10 @@ export const api = {
     req<MomentumConfig>('PUT', '/momentum/config/account', { isDemoAccount }),
   momentumStart:        () => req<{ message: string }>('POST', '/momentum/start'),
   momentumStop:         () => req<{ message: string }>('POST', '/momentum/stop'),
+  agentAlphaStart:      (cfg: { asset: { ric: string; name: string }; baseAmount: number; isDemoAccount: boolean; currency?: string }) => req<{ message: string; status: string }>('POST', '/agentalpha/start', cfg),
+  agentAlphaStop:       () => req<{ message: string }>('POST', '/agentalpha/stop'),
+  agentAlphaStatus:     async (): Promise<any> => (await deviceAuth()) ? { isRunning: false, botState: 'STOPPED' } : req<any>('GET', '/agentalpha/status'),
+  agentAlphaLogs:       async (limit = 100): Promise<any[]> => (await deviceAuth()) ? [] : req<any[]>('GET', `/agentalpha/logs?limit=${limit}`),
   momentumStatus:       async (): Promise<MomentumStatus> => (await deviceAuth()) ? deviceModeStatus('momentum') : req<MomentumStatus>('GET', '/momentum/status'),
   momentumLogs:         async (limit = 100): Promise<MomentumLog[]> => (await deviceAuth()) ? deviceModeLogs('MOMENTUM', limit) : req<MomentumLog[]>('GET', `/momentum/logs?limit=${limit}`),
 

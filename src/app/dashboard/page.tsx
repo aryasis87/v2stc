@@ -203,10 +203,10 @@ const RealtimeClockDesktop: React.FC = () => {
 // ═══════════════════════════════════════════
 const MODE_LABELS: Record<string, string> = {
   schedule: 'Signal', fastrade: 'FTT', indicator: 'Indikator',
-  momentum: 'Momentum', aisignal: 'AI',
+  momentum: 'Momentum', aisignal: 'AI', agentalpha: 'Agent Alpha',
 };
 const MODE_COLORS: Record<string, string> = {
-  schedule: '#10B981', fastrade: '#10B981', ctc: '#BF5AF2',
+  schedule: '#10B981', fastrade: '#10B981', ctc: '#BF5AF2', agentalpha: '#8B5CF6',
   aisignal: '#34D399', indicator: '#FF6B35', momentum: '#FF375F',
 };
 
@@ -1093,6 +1093,7 @@ const MobileSessionSheet: React.FC<{
     schedule:'Signal Mode', fastrade:'Fastrade FTT Mode', ctc:'Fastrade CTC',
     fastreversal:'Fast Reversal', blitz5s:'5st · Blitz 5 Detik',
     aisignal:'AI Signal Mode', indicator:'Analysis Strategy Mode', momentum:'Momentum Mode',
+    agentalpha:'Agent Alpha',
   };
 
   if (!open) return null;
@@ -1179,6 +1180,7 @@ const ModePickerModal: React.FC<{
     { v: 'aisignal'  as TradingMode, label: 'AI Signal Mode',       icon: <Radio     style={{ width: 16, height: 16 }} />, accent: C.sky,    desc: 'AI Signal Automation' },
     { v: 'indicator' as TradingMode, label: 'Analysis Strategy Mode', icon: <BarChart style={{ width: 16, height: 16 }} />, accent: C.orange, desc: 'Technical Analysis Based' },
     { v: 'momentum'  as TradingMode, label: 'Momentum Mode',        icon: <Waves     style={{ width: 16, height: 16 }} />, accent: C.pink,   desc: 'Parallel Momentum Analysis' },
+    { v: 'agentalpha' as TradingMode, label: 'Agent Alpha',          icon: <Zap       style={{ width: 16, height: 16 }} />, accent: '#8B5CF6', desc: 'Kejar-balik arah · ×1.5' },
   // Fast Reversal EKSKLUSIF — hanya muncul di picker bila akun sudah teraktivasi.
   ].filter(m => m.v !== 'fastreversal' || FR_UNLOCKED);
 
@@ -1568,6 +1570,7 @@ const ModeSessionPanel: React.FC<{
     { v: 'aisignal'  as TradingMode, label: 'AI Signal Mode',       icon: <Radio     style={{ width: 12, height: 12 }} />, accent: C.sky,    desc: 'AI Signal Automation' },
     { v: 'indicator' as TradingMode, label: 'Analysis Strategy Mode', icon: <BarChart style={{ width: 12, height: 12 }} />, accent: C.orange, desc: 'Technical Analysis Based' },
     { v: 'momentum'  as TradingMode, label: 'Momentum Mode',        icon: <Waves     style={{ width: 12, height: 12 }} />, accent: C.pink,   desc: 'Parallel Momentum Analysis' },
+    { v: 'agentalpha' as TradingMode, label: 'Agent Alpha',          icon: <Zap       style={{ width: 12, height: 12 }} />, accent: '#8B5CF6', desc: 'Kejar-balik arah · ×1.5' },
   ];
 
   const active = MODE_LIST.find(m => m.v === mode)!;
@@ -2090,6 +2093,7 @@ export default function DashboardPage() {
   const [aiPendingOrders,setAiPendingOrders] = useState<AISignalOrder[]>([]);
   const [indicatorStatus,setIndicatorStatus] = useState<IndicatorStatus|null>(null);
   const [momentumStatus,setMomentumStatus] = useState<MomentumStatus|null>(null);
+  const [agentAlphaStatus,setAgentAlphaStatus] = useState<any>(null);
   const [todayProfitData,setTodayProfitData] = useState<TodayProfitSummary|null>(null);
   const [profitRefreshing,setProfitRefreshing] = useState(false);
   const [profitLastUpdated,setProfitLastUpdated] = useState<number|null>(null);
@@ -2620,10 +2624,11 @@ export default function DashboardPage() {
       api.scheduleStatus(),api.fastradeStatus(),api.getOrders(),
       api.aiSignalStatus(),api.aiSignalPendingOrders(),
       api.indicatorStatus(),api.momentumStatus(),api.balance(),
+      api.agentAlphaStatus(),
     ]);
     if(!isMounted.current)return;
     React.startTransition(()=>{
-      const [sRes,fRes,oRes,aiRes,aiPendRes,indRes,momRes,balRes] = results;
+      const [sRes,fRes,oRes,aiRes,aiPendRes,indRes,momRes,balRes,aaRes] = results;
       if(sRes.status==='fulfilled'&&!deviceEngineOnRef.current)setScheduleStatus(sRes.value);
       if(fRes.status==='fulfilled')setFtStatus(fRes.value);
       if(oRes.status==='fulfilled'&&!deviceEngineOnRef.current)setScheduleOrders(oRes.value);
@@ -2632,6 +2637,7 @@ export default function DashboardPage() {
       if(indRes.status==='fulfilled')setIndicatorStatus(indRes.value);
       if(momRes.status==='fulfilled')setMomentumStatus(momRes.value);
       if(balRes.status==='fulfilled')setBalance(balRes.value);
+      if(aaRes.status==='fulfilled')setAgentAlphaStatus(aaRes.value);
     });
   },[]); // eslint-disable-line
 
@@ -2712,6 +2718,7 @@ export default function DashboardPage() {
   const isAIRunning = aiStatus?.botState === 'RUNNING' || (!aiStatus?.botState && aiStatus?.isActive === true);
   const isIndRunning = indicatorStatus?.isRunning??false;
   const isMomRunning = momentumStatus?.isRunning??false;
+  const isAgentAlphaRunning = agentAlphaStatus?.isRunning??false;
 
   const blockedModes: TradingMode[] = (()=>{
     const b: TradingMode[] = [];
@@ -2721,6 +2728,10 @@ export default function DashboardPage() {
     if(isAIRunning){b.push('schedule','fastrade','blitz5s','ctc','indicator','momentum');}
     if(isIndRunning){b.push('schedule','fastrade','blitz5s','ctc','aisignal','momentum');}
     if(isMomRunning){b.push('schedule','fastrade','blitz5s','ctc','aisignal','indicator');}
+    // Agent Alpha berjalan → blokir semua mode lain; & sebaliknya, saat mode lain
+    // berjalan blokir Agent Alpha juga (dijaga juga oleh gerbang start).
+    if(isAgentAlphaRunning){b.push('schedule','fastrade','blitz5s','ctc','fastreversal','aisignal','indicator','momentum');}
+    if(isSchedRunning||isSchedPaused||isFtRunning||isAIRunning||isIndRunning||isMomRunning){b.push('agentalpha');}
     return b.filter((v,i,a)=>a.indexOf(v)===i);
   })();
 
@@ -2730,11 +2741,12 @@ export default function DashboardPage() {
     if(tradingMode==='aisignal') return isAIRunning;
     if(tradingMode==='indicator') return isIndRunning;
     if(tradingMode==='momentum') return isMomRunning;
+    if(tradingMode==='agentalpha') return isAgentAlphaRunning;
     return false;
   })();
 
   // True jika ADA mode apapun yang sedang berjalan (bukan hanya mode yang dilihat)
-  const isAnyModeRunning = isSchedRunning || isSchedPaused || isFtRunning || isAIRunning || isIndRunning || isMomRunning;
+  const isAnyModeRunning = isSchedRunning || isSchedPaused || isFtRunning || isAIRunning || isIndRunning || isMomRunning || isAgentAlphaRunning;
   // Sinkronkan ref agar loop polling adaptif memilih interval cepat/hemat.
   useEffect(()=>{ anyRunningRef.current = isAnyModeRunning; });
 
@@ -2755,7 +2767,7 @@ export default function DashboardPage() {
       if(ao) return { active:true, key:`ai-${ao.id}`, trend:ao.trend };
       if((aiStatus?.monitoringStatus?.active_monitoring_count??0)>0) return { active:true, key:`ai-mon-${aiStatus?.monitoringStatus?.active_monitoring_count}`, trend:null };
     }
-    for(const [run,st,pfx] of [[isIndRunning,indicatorStatus,'ind'],[isMomRunning,momentumStatus,'mom']] as const){
+    for(const [run,st,pfx] of [[isIndRunning,indicatorStatus,'ind'],[isMomRunning,momentumStatus,'mom'],[isAgentAlphaRunning,agentAlphaStatus,'aa']] as const){
       if(!run||!st) continue;
       const tr=((st as any).activeTrend ?? (st as any).currentTrend ?? (st as any).lastTrend ?? null);
       const oid=(st as any).activeOrderId; const ph=String((st as any).phase||(st as any).lastStatus||'');
@@ -2807,6 +2819,7 @@ export default function DashboardPage() {
     if(tradingMode==='aisignal') return { w:aiStatus?.totalWins??0, l:aiStatus?.totalLosses??0 };
     if(tradingMode==='indicator') return { w:indicatorStatus?.totalWins??0, l:indicatorStatus?.totalLosses??0 };
     if(tradingMode==='momentum') return { w:momentumStatus?.totalWins??0, l:momentumStatus?.totalLosses??0 };
+    if(tradingMode==='agentalpha') return { w:agentAlphaStatus?.totalWins??0, l:agentAlphaStatus?.totalLosses??0 };
     return { w:scheduleOrders.filter(o=>/^win$/i.test(o.result||'')).length, l:scheduleOrders.filter(o=>/^los/i.test(o.result||'')).length };
   })();
   // Langkah martingale mode aktif (0 = tanpa martingale). Diambil dari status
@@ -2815,6 +2828,7 @@ export default function DashboardPage() {
   const entryMgStep = ((): number=>{
     const st = (tradingMode==='aisignal' ? aiStatus
       : tradingMode==='indicator' ? indicatorStatus
+      : tradingMode==='agentalpha' ? agentAlphaStatus
       : tradingMode==='momentum' ? momentumStatus
       : (tradingMode==='fastrade'||tradingMode==='ctc'||tradingMode==='blitz5s') ? ftStatus
       : scheduleStatus) as { martingaleStep?: number } | null | undefined;
@@ -2848,6 +2862,7 @@ export default function DashboardPage() {
     if(tradingMode==='aisignal') return aiStatus?.sessionPnL??0;
     if(tradingMode==='indicator') return indicatorStatus?.sessionPnL??0;
     if(tradingMode==='momentum') return momentumStatus?.sessionPnL??0;
+    if(tradingMode==='agentalpha') return agentAlphaStatus?.sessionPnL??0;
     return 0;
   })();
 
@@ -3066,7 +3081,8 @@ export default function DashboardPage() {
       ((tradingMode!=='fastrade'&&tradingMode!=='ctc'&&tradingMode!=='fastreversal'&&tradingMode!=='blitz5s')&&isFtRunning)||
       (tradingMode!=='aisignal'&&isAIRunning)||
       (tradingMode!=='indicator'&&isIndRunning)||
-      (tradingMode!=='momentum'&&isMomRunning)
+      (tradingMode!=='momentum'&&isMomRunning)||
+      (tradingMode!=='agentalpha'&&isAgentAlphaRunning)
     );
     if(otherRunning){showBlock(T('dashboard.modePicker.stopActiveFirst'));return;}
     setActionLoading(true);setError(null);
@@ -3168,6 +3184,12 @@ export default function DashboardPage() {
           bbSarBreakEnabled:true,
         });
         await api.momentumStart();
+      } else if(tradingMode==='agentalpha'){
+        await api.agentAlphaStart({
+          asset:{ ric:selectedRic, name:selectedAsset?.name??selectedRic },
+          baseAmount:amount,
+          isDemoAccount:isDemo,
+        });
       }
       await loadAll(true);
     }catch(e:any){setError(e?.message??T('dashboard.errors.startFailed'));}
@@ -3207,6 +3229,8 @@ export default function DashboardPage() {
       else if(isIndRunning) await api.indicatorStop();
       if(tradingMode==='momentum') await api.momentumStop();
       else if(isMomRunning) await api.momentumStop();
+      if(tradingMode==='agentalpha') await api.agentAlphaStop();
+      else if(isAgentAlphaRunning) await api.agentAlphaStop();
       await loadAll(true);
     }catch(e:any){setError(e?.message??T('dashboard.errors.stopFailed'));}
     finally{setActionLoading(false);}
