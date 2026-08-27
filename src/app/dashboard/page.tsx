@@ -1222,10 +1222,11 @@ const ModePickerModal: React.FC<{
         {/* mode list */}
         <div style={{padding:'12px',display:'flex',flexDirection:'column',gap:6}}>
           <style>{`
-            @keyframes aa-glow{0%,100%{box-shadow:0 0 9px -2px rgba(239,68,68,0.45),inset 0 0 0 0 rgba(239,68,68,0)}50%{box-shadow:0 0 18px 0 rgba(239,68,68,0.75),inset 0 0 0 1px rgba(239,68,68,0.35)}}
-            @keyframes aa-sheen{0%{transform:translateX(-140%) skewX(-18deg)}100%{transform:translateX(320%) skewX(-18deg)}}
-            .aa-alpha-row{animation:aa-glow 2s ease-in-out infinite}
-            .aa-alpha-row::before{content:'';position:absolute;top:0;left:0;width:36%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,90,90,0.30),transparent);animation:aa-sheen 2.6s linear infinite;pointer-events:none}
+            @keyframes aa-glow{0%,100%{box-shadow:0 0 7px -3px rgba(239,68,68,0.40)}50%{box-shadow:0 0 14px -1px rgba(239,68,68,0.58)}}
+            @keyframes aa-shine{0%{transform:translateX(-130%) skewX(-14deg)}55%,100%{transform:translateX(600%) skewX(-14deg)}}
+            .aa-alpha-row{animation:aa-glow 2.8s ease-in-out infinite}
+            .aa-alpha-row::before{content:'';position:absolute;top:0;bottom:0;left:0;width:20%;background:linear-gradient(90deg,transparent,rgba(255,160,160,0.22),transparent);transform:translateX(-130%) skewX(-14deg);animation:aa-shine 3.4s ease-in-out infinite;pointer-events:none;will-change:transform}
+            @media (prefers-reduced-motion:reduce){.aa-alpha-row,.aa-alpha-row::before{animation:none}}
           `}</style>
           {MODES.map(({ v, label, icon, accent, desc }) => {
             const isAct = mode === v;
