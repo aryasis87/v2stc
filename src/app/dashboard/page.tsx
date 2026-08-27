@@ -1225,11 +1225,17 @@ const ModePickerModal: React.FC<{
         {/* mode list */}
         <div style={{padding:'12px',display:'flex',flexDirection:'column',gap:6}}>
           <style>{`
-            @keyframes aa-glow{0%,100%{box-shadow:0 0 7px -3px rgba(239,68,68,0.40)}50%{box-shadow:0 0 14px -1px rgba(239,68,68,0.58)}}
-            @keyframes aa-shine{0%{transform:translateX(-130%) skewX(-14deg)}55%,100%{transform:translateX(600%) skewX(-14deg)}}
-            .aa-alpha-row{animation:aa-glow 2.8s ease-in-out infinite}
-            .aa-alpha-row::before{content:'';position:absolute;top:0;bottom:0;left:0;width:20%;background:linear-gradient(90deg,transparent,rgba(255,160,160,0.22),transparent);transform:translateX(-130%) skewX(-14deg);animation:aa-shine 3.4s ease-in-out infinite;pointer-events:none;will-change:transform}
-            @media (prefers-reduced-motion:reduce){.aa-alpha-row,.aa-alpha-row::before{animation:none}}
+            /* Agent Alpha — treatment premium: border gradien mengalir + halo lembut + sapuan cahaya + badge PRO */
+            @keyframes aa-brd{to{background-position:300% 0}}
+            @keyframes aa-halo{0%,100%{box-shadow:0 5px 18px -12px rgba(139,92,246,0.55)}50%{box-shadow:0 0 15px -3px rgba(139,92,246,0.34),0 6px 22px -10px rgba(139,92,246,0.7)}}
+            @keyframes aa-sweep{0%{transform:translateX(-170%) skewX(-18deg)}58%,100%{transform:translateX(360%) skewX(-18deg)}}
+            .aa-alpha-row{isolation:isolate;animation:aa-halo 3.4s ease-in-out infinite}
+            .aa-alpha-row::before{content:'';position:absolute;inset:0;border-radius:inherit;padding:1.4px;background:linear-gradient(115deg,#8b5cf6,#d946ef,#6366f1,#8b5cf6);background-size:300% 100%;-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:aa-brd 4.6s linear infinite;pointer-events:none;z-index:2}
+            .aa-alpha-row::after{content:'';position:absolute;top:0;bottom:0;left:0;width:24%;background:linear-gradient(90deg,transparent,rgba(221,190,255,0.30),transparent);transform:translateX(-170%) skewX(-18deg);animation:aa-sweep 4.6s ease-in-out infinite;pointer-events:none;z-index:1}
+            .aa-badge{display:inline-flex;align-items:center;gap:3px;font-size:8.5px;font-weight:800;letter-spacing:0.05em;line-height:1;padding:3px 6px;border-radius:999px;color:#fff;background:linear-gradient(115deg,#8b5cf6,#d946ef,#6366f1);background-size:220% 100%;animation:aa-brd 3s linear infinite;box-shadow:0 2px 9px -3px rgba(139,92,246,0.9);position:relative;overflow:hidden;flex-shrink:0}
+            .aa-badge svg{width:9px;height:9px}
+            .aa-badge::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.6),transparent);transform:translateX(-150%) skewX(-18deg);animation:aa-sweep 3s ease-in-out infinite}
+            @media (prefers-reduced-motion:reduce){.aa-alpha-row,.aa-alpha-row::before,.aa-alpha-row::after,.aa-badge,.aa-badge::after{animation:none}}
           `}</style>
           {MODES.map(({ v, label, icon, accent, desc }) => {
             const isAct = mode === v;
@@ -1251,8 +1257,8 @@ const ModePickerModal: React.FC<{
                 style={{
                   width:'100%',display:'flex',alignItems:'center',gap:12,padding:'11px 14px',
                   borderRadius:14,cursor:'pointer',position:'relative',overflow:'hidden',
-                  background:isAlpha?'rgba(239,68,68,0.09)':(isAct?`${accent}14`:C.card2),
-                  border:`1px solid ${isAlpha?'rgba(239,68,68,0.5)':(isAct?`${accent}45`:C.bdr)}`,
+                  background:isAlpha?'rgba(139,92,246,0.08)':(isAct?`${accent}14`:C.card2),
+                  border:`1px solid ${isAlpha?'transparent':(isAct?`${accent}45`:C.bdr)}`,
                   opacity:(isOtherRunning||isAiLockedRow||isFrLockedRow||isBlitz5sLockedRow)?0.55:1,
                   transition:'background 0.15s,border-color 0.15s',
                 }}
@@ -1260,13 +1266,20 @@ const ModePickerModal: React.FC<{
                 <span style={{
                   width:38,height:38,borderRadius:11,flexShrink:0,
                   display:'flex',alignItems:'center',justifyContent:'center',
-                  background:`${accent}18`,border:`1px solid ${accent}25`,color:accent,
+                  background:isAlpha?'linear-gradient(135deg,#8b5cf6,#6366f1)':`${accent}18`,
+                  border:`1px solid ${isAlpha?'transparent':`${accent}25`}`,
+                  color:isAlpha?'#fff':accent,
+                  boxShadow:isAlpha?'0 4px 12px -5px rgba(139,92,246,0.85)':undefined,
                 }}>
                   {icon}
                 </span>
                 <div style={{flex:1,minWidth:0,textAlign:'left'}}>
                   <div style={{display:'flex',alignItems:'center',gap:5,minWidth:0}}>
                     <span style={{fontSize:14,fontWeight:600,color:isAct?accent:C.sub,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',minWidth:0}}>{label}</span>
+                    {/* Badge premium eksklusif untuk Agent Alpha */}
+                    {isAlpha && (
+                      <span className="aa-badge"><Zap style={{width:9,height:9}}/>PRO</span>
+                    )}
                     {/* Badge hanya untuk mode yang SEDANG BERJALAN */}
                     {isAct && locked && (
                       <span style={{fontSize:9,fontWeight:700,padding:'2px 6px',borderRadius:6,color:accent,background:`${accent}15`,border:`1px solid ${accent}35`,letterSpacing:'0.04em',flexShrink:0,display:'flex',alignItems:'center',gap:3}}>
