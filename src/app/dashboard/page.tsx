@@ -1221,25 +1221,33 @@ const ModePickerModal: React.FC<{
         )}
         {/* mode list */}
         <div style={{padding:'12px',display:'flex',flexDirection:'column',gap:6}}>
+          <style>{`
+            @keyframes aa-glow{0%,100%{box-shadow:0 0 9px -2px rgba(239,68,68,0.45),inset 0 0 0 0 rgba(239,68,68,0)}50%{box-shadow:0 0 18px 0 rgba(239,68,68,0.75),inset 0 0 0 1px rgba(239,68,68,0.35)}}
+            @keyframes aa-sheen{0%{transform:translateX(-140%) skewX(-18deg)}100%{transform:translateX(320%) skewX(-18deg)}}
+            .aa-alpha-row{animation:aa-glow 2s ease-in-out infinite}
+            .aa-alpha-row::before{content:'';position:absolute;top:0;left:0;width:36%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,90,90,0.30),transparent);animation:aa-sheen 2.6s linear infinite;pointer-events:none}
+          `}</style>
           {MODES.map(({ v, label, icon, accent, desc }) => {
             const isAct = mode === v;
             const isOtherRunning = locked && !isAct; // mode lain sedang berjalan
             const isAiLockedRow = v === 'aisignal' && AI_LOCKED; // fitur terkunci per akun
             const isFrLockedRow = v === 'fastreversal' && FR_LOCKED; // berbayar, 30 hari
             const isBlitz5sLockedRow = v === 'blitz5s' && BLITZ5S_LOCKED; // berbayar, 30 hari
+            const isAlpha = v === 'agentalpha'; // eksklusif → efek kilau merah
             return (
               <button
                 key={v}
                 type="button"
+                className={isAlpha ? 'aa-alpha-row' : undefined}
                 onClick={() => {
                   onModeChange(v);
                   onClose();
                 }}
                 style={{
                   width:'100%',display:'flex',alignItems:'center',gap:12,padding:'11px 14px',
-                  borderRadius:14,cursor:'pointer',
-                  background:isAct?`${accent}14`:C.card2,
-                  border:`1px solid ${isAct?`${accent}45`:C.bdr}`,
+                  borderRadius:14,cursor:'pointer',position:'relative',overflow:'hidden',
+                  background:isAlpha?'rgba(239,68,68,0.09)':(isAct?`${accent}14`:C.card2),
+                  border:`1px solid ${isAlpha?'rgba(239,68,68,0.5)':(isAct?`${accent}45`:C.bdr)}`,
                   opacity:(isOtherRunning||isAiLockedRow||isFrLockedRow||isBlitz5sLockedRow)?0.55:1,
                   transition:'background 0.15s,border-color 0.15s',
                 }}
