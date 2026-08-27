@@ -22,6 +22,7 @@ import { computeBestConfig, type BestConfigResult } from '@/lib/bestConfig';
 import { isAiSignalUnlocked } from '@/lib/aiSignalAccess';
 import { isFastReversalUnlocked, getFastReversalExpiry, getFastReversalEntry, FAST_REVERSAL_CONTACT_EMAIL } from '@/lib/fastReversalAccess';
 import { isBlitz5sUnlocked, getBlitz5sExpiry } from '@/lib/blitz5sAccess';
+import { isAgentAlphaUnlocked } from '@/lib/agentAlphaAccess';
 import { getAiSignalEntry } from '@/lib/aiSignalAccess';
 import { sessionBeacon } from '@/lib/sessionBeacon';
 import { getRealAccessAt } from '@/lib/realAccess';
@@ -74,6 +75,8 @@ let FR_LOCKED = false;
 let FR_UNLOCKED = false;
 // Mode 5st (blitz 5 detik) — berbayar per akun, 30 hari.
 let BLITZ5S_LOCKED = false;
+// Mode Agent Alpha — agentic eksklusif berbayar (Rp 850rb, sekali bayar).
+let AGENTALPHA_LOCKED = false;
 
 // TradingMode kini dari ./theme (dipakai bersama berkas hasil pemecahan).
 // FastTradeTimeframe dipindah ke ./theme (dipakai bersama SettingsCard).
@@ -1180,7 +1183,7 @@ const ModePickerModal: React.FC<{
     { v: 'aisignal'  as TradingMode, label: 'AI Signal Mode',       icon: <Radio     style={{ width: 16, height: 16 }} />, accent: C.sky,    desc: 'AI Signal Automation' },
     { v: 'indicator' as TradingMode, label: 'Analysis Strategy Mode', icon: <BarChart style={{ width: 16, height: 16 }} />, accent: C.orange, desc: 'Technical Analysis Based' },
     { v: 'momentum'  as TradingMode, label: 'Momentum Mode',        icon: <Waves     style={{ width: 16, height: 16 }} />, accent: C.pink,   desc: 'Parallel Momentum Analysis' },
-    { v: 'agentalpha' as TradingMode, label: 'Agent Alpha',          icon: <Zap       style={{ width: 16, height: 16 }} />, accent: '#8B5CF6', desc: 'Agentic system server' },
+    { v: 'agentalpha' as TradingMode, label: 'Agent Alpha',          icon: <Zap       style={{ width: 16, height: 16 }} />, accent: '#8B5CF6', desc: AGENTALPHA_LOCKED ? 'Eksklusif · WR 85% — aktivasi' : 'Agentic system server' },
   // Fast Reversal EKSKLUSIF — hanya muncul di picker bila akun sudah teraktivasi.
   ].filter(m => m.v !== 'fastreversal' || FR_UNLOCKED);
 
@@ -1235,6 +1238,7 @@ const ModePickerModal: React.FC<{
             const isFrLockedRow = v === 'fastreversal' && FR_LOCKED; // berbayar, 30 hari
             const isBlitz5sLockedRow = v === 'blitz5s' && BLITZ5S_LOCKED; // berbayar, 30 hari
             const isAlpha = v === 'agentalpha'; // eksklusif → efek kilau merah
+            const isAlphaLockedRow = isAlpha && AGENTALPHA_LOCKED; // terkunci tapi TETAP menarik (tak diredupkan)
             return (
               <button
                 key={v}
@@ -1275,6 +1279,8 @@ const ModePickerModal: React.FC<{
                 </div>
                 {(isAiLockedRow||isFrLockedRow||isBlitz5sLockedRow) ? (
                   <Lock style={{width:15,height:15,color:C.amber,flexShrink:0}}/>
+                ) : isAlphaLockedRow ? (
+                  <Lock style={{width:15,height:15,color:'#8B5CF6',flexShrink:0}}/>
                 ) : isAct ? (
                   <Check style={{width:17,height:17,color:accent,flexShrink:0}}/>
                 ) : (
@@ -1418,6 +1424,50 @@ const Blitz5sLockedModal: React.FC<{ open: boolean; onClose: () => void; lang: s
              style={{flex:1.4,padding:'11px 0',borderRadius:12,background:C.sky,border:'none',cursor:'pointer',fontSize:13,fontWeight:700,color:'#ffffff',display:'flex',alignItems:'center',justifyContent:'center'}}>
             {S.go}
           </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ═══════════════════════════════════════════
+// AGENT ALPHA LOCKED MODAL — mode agentic eksklusif berbayar (Rp 850rb).
+// Popup ini juga PROMOSI: menonjolkan peluang WR 85%.
+// ═══════════════════════════════════════════
+const ALPHA_ACCENT = '#8B5CF6';
+const ALPHA_LOCK_STR: Record<string, { title: string; wr: string; body: string; price: string; hint: string; go: string; close: string }> = {
+  id: { title: 'Agent Alpha — Mode Eksklusif', wr: 'Peluang WR', body: 'Sistem agentic yang dijalankan penuh di server: membaca arah, mengeksekusi, dan kejar-balik otomatis untuk memburu kemenangan.', price: 'Aktivasi sekali bayar Rp 850.000', hint: 'Lanjut ke portal pembayaran (QRIS). Aktif setelah diverifikasi admin — akses seterusnya.', go: 'Aktivasi Sekarang', close: 'Nanti' },
+  en: { title: 'Agent Alpha — Exclusive Mode', wr: 'Win rate up to', body: 'A fully server-run agentic system: it reads direction, executes, and auto reversal-chases to hunt down the win.', price: 'One-time activation Rp 850,000', hint: 'Continue to the payment portal (QRIS). Active after admin verification — lifetime access.', go: 'Activate Now', close: 'Later' },
+  ms: { title: 'Agent Alpha — Mod Eksklusif', wr: 'Peluang menang', body: 'Sistem agentic yang dijalankan penuh di server: membaca arah, melaksana, dan kejar-balik automatik untuk memburu kemenangan.', price: 'Pengaktifan bayar sekali Rp 850,000', hint: 'Teruskan ke portal pembayaran (QRIS). Aktif selepas disahkan admin — akses selamanya.', go: 'Aktifkan Sekarang', close: 'Nanti' },
+};
+
+const AgentAlphaLockedModal: React.FC<{ open: boolean; onClose: () => void; lang: string; onActivate: () => void }> = ({ open, onClose, lang, onActivate }) => {
+  if (!open) return null;
+  const S = ALPHA_LOCK_STR[lang] ?? ALPHA_LOCK_STR.id;
+  return (
+    <div style={{position:'fixed',inset:0,zIndex:80,display:'flex',alignItems:'center',justifyContent:'center',padding:'16px',animation:'fade-in 0.15s ease'}}>
+      <div onClick={onClose} style={{position:'absolute',inset:0,background:'rgba(0,0,0,0.72)',backdropFilter:'blur(10px)',WebkitBackdropFilter:'blur(10px)'}}/>
+      <div style={{position:'relative',width:'100%',maxWidth:392,overflow:'hidden',background:C.bg,borderRadius:22,border:`1px solid ${ALPHA_ACCENT}44`,padding:'26px 22px 22px',animation:'slide-up 0.28s cubic-bezier(0.32,0.72,0,1)',textAlign:'center',boxShadow:`0 24px 60px -30px ${ALPHA_ACCENT}cc`}}>
+        <div style={{position:'absolute',top:-70,left:'50%',transform:'translateX(-50%)',width:220,height:140,background:`radial-gradient(closest-side, ${ALPHA_ACCENT}33, transparent)`,pointerEvents:'none'}}/>
+        <div style={{position:'relative'}}>
+          <div style={{display:'inline-flex',alignItems:'center',gap:6,fontSize:10.5,fontWeight:800,letterSpacing:'0.09em',color:ALPHA_ACCENT,background:`${ALPHA_ACCENT}18`,border:`1px solid ${ALPHA_ACCENT}40`,borderRadius:99,padding:'5px 12px',marginBottom:16}}>
+            <Zap style={{width:13,height:13}}/> EKSKLUSIF
+          </div>
+          <div style={{display:'flex',flexDirection:'column',alignItems:'center',marginBottom:14}}>
+            <span style={{fontSize:12,fontWeight:700,color:C.sub,letterSpacing:'0.02em'}}>{S.wr}</span>
+            <span style={{fontSize:52,fontWeight:900,lineHeight:1,letterSpacing:'-2px',background:`linear-gradient(180deg, ${ALPHA_ACCENT}, #c4b5fd)`,WebkitBackgroundClip:'text',backgroundClip:'text',WebkitTextFillColor:'transparent'}}>85%</span>
+          </div>
+          <p style={{fontSize:17,fontWeight:800,color:C.text,marginBottom:8,letterSpacing:'-0.3px'}}>{S.title}</p>
+          <p style={{fontSize:13,color:C.sub,lineHeight:1.55,marginBottom:12}}>{S.body}</p>
+          <div style={{fontSize:13.5,fontWeight:800,color:ALPHA_ACCENT,background:`${ALPHA_ACCENT}12`,border:`1px solid ${ALPHA_ACCENT}30`,borderRadius:12,padding:'9px 12px',marginBottom:10}}>{S.price}</div>
+          <p style={{fontSize:11.5,color:C.muted,lineHeight:1.55,marginBottom:18}}>{S.hint}</p>
+          <div style={{display:'flex',gap:8}}>
+            <button onClick={onClose} style={{flex:1,padding:'12px 0',borderRadius:13,background:C.card2,border:`1px solid ${C.bdr}`,cursor:'pointer',fontSize:13,fontWeight:600,color:C.sub}}>{S.close}</button>
+            <button onClick={onActivate}
+               style={{flex:1.6,padding:'12px 0',borderRadius:13,background:ALPHA_ACCENT,border:'none',cursor:'pointer',fontSize:13.5,fontWeight:800,color:'#fff',display:'flex',alignItems:'center',justifyContent:'center',gap:6,boxShadow:`0 10px 24px -12px ${ALPHA_ACCENT}`}}>
+              <Zap style={{width:15,height:15}}/> {S.go}
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -1579,7 +1629,7 @@ const ModeSessionPanel: React.FC<{
     { v: 'aisignal'  as TradingMode, label: 'AI Signal Mode',       icon: <Radio     style={{ width: 12, height: 12 }} />, accent: C.sky,    desc: 'AI Signal Automation' },
     { v: 'indicator' as TradingMode, label: 'Analysis Strategy Mode', icon: <BarChart style={{ width: 12, height: 12 }} />, accent: C.orange, desc: 'Technical Analysis Based' },
     { v: 'momentum'  as TradingMode, label: 'Momentum Mode',        icon: <Waves     style={{ width: 12, height: 12 }} />, accent: C.pink,   desc: 'Parallel Momentum Analysis' },
-    { v: 'agentalpha' as TradingMode, label: 'Agent Alpha',          icon: <Zap       style={{ width: 12, height: 12 }} />, accent: '#8B5CF6', desc: 'Agentic system server' },
+    { v: 'agentalpha' as TradingMode, label: 'Agent Alpha',          icon: <Zap       style={{ width: 12, height: 12 }} />, accent: '#8B5CF6', desc: AGENTALPHA_LOCKED ? 'Eksklusif · WR 85% — aktivasi' : 'Agentic system server' },
   ];
 
   const active = MODE_LIST.find(m => m.v === mode)!;
@@ -1818,6 +1868,9 @@ export default function DashboardPage() {
   const [blitz5sUnlocked, setBlitz5sUnlocked] = useState(false);
   const [blitz5sCheckDone, setBlitz5sCheckDone] = useState(false);
   const [blitz5sExpiry,   setBlitz5sExpiry]   = useState<number|null>(null);
+  // ── Kunci mode Agent Alpha — fitur berbayar eksklusif (Rp 850rb, sekali bayar) ──
+  const [agentAlphaUnlocked,  setAgentAlphaUnlocked]  = useState(false);
+  const [agentAlphaCheckDone, setAgentAlphaCheckDone] = useState(false);
 
   // Pemberitahuan aktivasi fitur berbayar — muncul SEKALI per kejadian.
   // Kunci penanda memuat stempel waktu, jadi perpanjangan memunculkannya lagi.
@@ -1855,6 +1908,7 @@ export default function DashboardPage() {
   const [frCheckDone, setFrCheckDone] = useState(false);
   const [aiLockOpen,  setAiLockOpen]  = useState(false);
   const [blitz5sLockOpen, setBlitz5sLockOpen] = useState(false);
+  const [alphaLockOpen, setAlphaLockOpen] = useState(false);
   const [frLockOpen,  setFrLockOpen]  = useState(false);
   const [adviceOpen,  setAdviceOpen]  = useState(false);
   // ── v4: akses mode REAL (user lama demo-only) ─────────────────────────────
@@ -1902,6 +1956,7 @@ export default function DashboardPage() {
   FR_LOCKED = frCheckDone && !frUnlocked;
   FR_UNLOCKED = frUnlocked;
   BLITZ5S_LOCKED = !blitz5sUnlocked;
+  AGENTALPHA_LOCKED = agentAlphaCheckDone && !agentAlphaUnlocked;
 
   useEffect(() => {
     let cancelled = false;
@@ -1913,19 +1968,21 @@ export default function DashboardPage() {
           const mail = await storage.get(SESSION_KEYS.EMAIL);
           if (!cancelled) { setMeId(uid ?? ''); setMeEmail(mail ?? ''); }
         } catch { /* identitas opsional */ }
-        const [ok, real, frOk, frExp, b5, b5Exp] = await Promise.all([
+        const [ok, real, frOk, frExp, b5, b5Exp, aa] = await Promise.all([
           isAiSignalUnlocked(uid), hasRealAccess(uid),
           isFastReversalUnlocked(uid), getFastReversalExpiry(uid),
           isBlitz5sUnlocked(uid), getBlitz5sExpiry(uid),
+          isAgentAlphaUnlocked(uid),
         ]);
         if (!cancelled) {
           setAiUnlocked(ok); setAiCheckDone(true);
           setRealAccess(real); setRealCheckDone(true);
           setFrUnlocked(frOk); setFrExpiry(frExp); setFrCheckDone(true);
           setBlitz5sUnlocked(b5); setBlitz5sExpiry(b5Exp); setBlitz5sCheckDone(true);
+          setAgentAlphaUnlocked(aa); setAgentAlphaCheckDone(true);
         }
       } catch {
-        if (!cancelled) { setAiCheckDone(true); setRealCheckDone(true); setFrCheckDone(true); setBlitz5sCheckDone(true); } // gagal cek → terkunci (default aman)
+        if (!cancelled) { setAiCheckDone(true); setRealCheckDone(true); setFrCheckDone(true); setBlitz5sCheckDone(true); setAgentAlphaCheckDone(true); } // gagal cek → terkunci (default aman)
       }
     })();
     // Flag 'stc_from_login' di-set halaman login/register tepat sebelum redirect —
@@ -2961,6 +3018,9 @@ export default function DashboardPage() {
     // 5st = kartu penemuan: belum aktivasi → portal; sudah aktivasi → jalankan
     // sebagai Fastrade FTT dengan toggle 5st menyala (eksekusi blitz 5 detik).
     if (m === 'blitz5s' && !blitz5sUnlocked) { setBlitz5sLockOpen(true); return; }
+    // Agent Alpha — mode agentic eksklusif berbayar (Rp 850rb). Belum aktivasi →
+    // tampilkan popup promo WR 85% + arahkan ke portal, JANGAN pindah mode.
+    if (m === 'agentalpha' && !agentAlphaUnlocked) { setAlphaLockOpen(true); return; }
     // Izinkan ganti pilihan mode kapan saja (proteksi start ada di handleStart)
     if(m!==tradingMode) setTradingMode(m);
     setError(null);
@@ -3080,6 +3140,8 @@ export default function DashboardPage() {
     if(tradingMode==='fastreversal' && !frUnlocked){ setFrLockOpen(true); return; }
     // 5st berbayar: toggle aktif tapi akses belum/terkunci → arahkan ke aktivasi
     if((tradingMode==='blitz5s' || (tradingMode==='fastrade' && blitz5s)) && !blitz5sUnlocked){ setBlitz5sLockOpen(true); return; }
+    // Agent Alpha berbayar: belum aktivasi → tampilkan popup promo (backend juga menolak).
+    if(tradingMode==='agentalpha' && !agentAlphaUnlocked){ setAlphaLockOpen(true); return; }
     if(tradingMode==='fastreversal' && reversalSteps.filter(k=>k>=1&&k<=10).length===0){
       setError('Fast Reversal butuh minimal satu langkah K yang dibalik. Isi K di pengaturan sebelum memulai.');
       return;
@@ -3624,6 +3686,7 @@ export default function DashboardPage() {
         <ActivationNoticeModal open={pemberitahuan !== null} onClose={()=>setPemberitahuan(null)} at={pemberitahuan?.at ?? 0} expiresAt={pemberitahuan?.sampai ?? null} featureLabel={pemberitahuan?.label ?? ''}/>
         <AiLockedModal open={aiLockOpen} onClose={()=>setAiLockOpen(false)} lang={language} onActivate={()=>{ setAiLockOpen(false); router.push('/aktivasi-aisignal'); }}/>
         <Blitz5sLockedModal open={blitz5sLockOpen} onClose={()=>setBlitz5sLockOpen(false)} lang={language} onActivate={()=>{ setBlitz5sLockOpen(false); router.push('/aktivasi-5st'); }}/>
+        <AgentAlphaLockedModal open={alphaLockOpen} onClose={()=>setAlphaLockOpen(false)} lang={language} onActivate={()=>{ setAlphaLockOpen(false); router.push('/aktivasi-agentalpha'); }}/>
         <FrLockedModal open={frLockOpen} onClose={()=>setFrLockOpen(false)} lang={language} onActivate={()=>{ setFrLockOpen(false); window.location.href = `mailto:${FAST_REVERSAL_CONTACT_EMAIL}?subject=${encodeURIComponent('Aktivasi Fast Reversal')}&body=${encodeURIComponent('Halo admin, saya ingin mengaktifkan mode Fast Reversal.')}`; }}/>
         <RealLockedModal
           open={realLockOpen}

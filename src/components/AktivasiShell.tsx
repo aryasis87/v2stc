@@ -51,7 +51,7 @@ export interface AktivasiConfig {
   /** 3–4 manfaat yang didapat. */
   benefits: string[];
   /** feature utk body request; kosong = REAL. */
-  apiFeature?: 'aisignal' | 'blitz5s';
+  apiFeature?: 'aisignal' | 'blitz5s' | 'agentalpha';
   /** Nama brand, mis. "STC AutoTrade". */
   brand: string;
 }
