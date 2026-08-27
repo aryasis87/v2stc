@@ -2951,7 +2951,7 @@ export default function DashboardPage() {
   useEffect(() => {
     sessionBeacon.publish({
       running: isAnyModeRunning,
-      modeLabel: {schedule:'Signal',fastrade:'Fastrade FTT',blitz5s:'5st · Blitz 5 Detik',ctc:'Fastrade CTC',aisignal:'AI Signal',indicator:'Indicator',momentum:'Momentum'}[tradingMode] ?? 'Sesi',
+      modeLabel: {schedule:'Signal',fastrade:'Fastrade FTT',blitz5s:'5st · Blitz 5 Detik',ctc:'Fastrade CTC',aisignal:'AI Signal',indicator:'Indicator',momentum:'Momentum',agentalpha:'Agent Alpha'}[tradingMode] ?? 'Sesi',
       pnlCents: sessionPnL,
       currencyUnit: currencyConfig.currencyUnit,
     });
@@ -3805,13 +3805,13 @@ export default function DashboardPage() {
                   <span className="dsh-label">{T('dashboard.mode')}</span>
                   <div style={{position:'relative'}}>
                     <span style={{color:isActiveMode?modeAccent(tradingMode):C.muted}}>
-                      {{schedule:<Calendar style={{width:15,height:15}}/>,fastrade:<Zap style={{width:15,height:15}}/>,blitz5s:<Zap style={{width:15,height:15}}/>,ctc:<Copy style={{width:15,height:15}}/>,aisignal:<Radio style={{width:15,height:15}}/>,indicator:<BarChart style={{width:15,height:15}}/>,momentum:<Waves style={{width:15,height:15}}/>}[tradingMode]}
+                      {{schedule:<Calendar style={{width:15,height:15}}/>,fastrade:<Zap style={{width:15,height:15}}/>,blitz5s:<Zap style={{width:15,height:15}}/>,ctc:<Copy style={{width:15,height:15}}/>,aisignal:<Radio style={{width:15,height:15}}/>,indicator:<BarChart style={{width:15,height:15}}/>,momentum:<Waves style={{width:15,height:15}}/>,agentalpha:<Zap style={{width:15,height:15}}/>}[tradingMode]}
                     </span>
                     {isActiveMode&&<span style={{position:'absolute',top:-3,right:-3,width:7,height:7,borderRadius:'50%',background:modeAccent(tradingMode),animation:'ping 1.6s ease-in-out infinite'}}/>}
                   </div>
                 </div>
                 <p style={{fontSize:22,fontWeight:650,color:C.text,lineHeight:1.15,letterSpacing:'-0.02em',marginBottom:4,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
-                  {{schedule:'Signal',fastrade:'Fastrade FTT',blitz5s:'5st · Blitz 5 Detik',ctc:'CTC',aisignal:'AI Signal',indicator:'Indicator',momentum:'Momentum'}[tradingMode]}
+                  {{schedule:'Signal',fastrade:'Fastrade FTT',blitz5s:'5st · Blitz 5 Detik',ctc:'CTC',aisignal:'AI Signal',indicator:'Indicator',momentum:'Momentum',agentalpha:'Agent Alpha'}[tradingMode]}
                 </p>
                 <p style={{fontSize:12,display:'flex',alignItems:'center',gap:6,color:isActiveMode?modeAccent(tradingMode):C.muted,fontWeight:isActiveMode?600:400}}>
                   <span style={{width:6,height:6,borderRadius:'50%',background:isActiveMode?modeAccent(tradingMode):C.muted,opacity:isActiveMode?1:0.5}}/>
@@ -4066,13 +4066,13 @@ export default function DashboardPage() {
                   <span className="dsh-label">{T('dashboard.mode')}</span>
                   <div style={{position:'relative',flexShrink:0}}>
                     <span style={{color:isActiveMode?modeAccent(tradingMode):C.muted}}>
-                      {{schedule:<Calendar style={{width:14,height:14}}/>,fastrade:<Zap style={{width:14,height:14}}/>,blitz5s:<Zap style={{width:14,height:14}}/>,ctc:<Copy style={{width:14,height:14}}/>,aisignal:<Radio style={{width:14,height:14}}/>,indicator:<BarChart style={{width:14,height:14}}/>,momentum:<Waves style={{width:14,height:14}}/>}[tradingMode]}
+                      {{schedule:<Calendar style={{width:14,height:14}}/>,fastrade:<Zap style={{width:14,height:14}}/>,blitz5s:<Zap style={{width:14,height:14}}/>,ctc:<Copy style={{width:14,height:14}}/>,aisignal:<Radio style={{width:14,height:14}}/>,indicator:<BarChart style={{width:14,height:14}}/>,momentum:<Waves style={{width:14,height:14}}/>,agentalpha:<Zap style={{width:14,height:14}}/>}[tradingMode]}
                     </span>
                     {isActiveMode&&<span style={{position:'absolute',top:-3,right:-3,width:6,height:6,borderRadius:'50%',background:modeAccent(tradingMode),animation:'ping 1.6s ease-in-out infinite'}}/>}
                   </div>
                 </div>
                 <p style={{fontSize:16,fontWeight:650,color:C.text,lineHeight:1.15,letterSpacing:'-0.01em',marginBottom:3,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>
-                  {{schedule:'Signal',fastrade:'Fastrade FTT',blitz5s:'5st · Blitz 5 Detik',ctc:'Fastrade CTC',aisignal:'AI Signal',indicator:'Indicator',momentum:'Momentum'}[tradingMode]}
+                  {{schedule:'Signal',fastrade:'Fastrade FTT',blitz5s:'5st · Blitz 5 Detik',ctc:'Fastrade CTC',aisignal:'AI Signal',indicator:'Indicator',momentum:'Momentum',agentalpha:'Agent Alpha'}[tradingMode]}
                 </p>
                 <p style={{fontSize:11,display:'flex',alignItems:'center',gap:5,color:isActiveMode?modeAccent(tradingMode):C.muted,fontWeight:isActiveMode?600:400}}>
                   <span style={{width:5,height:5,borderRadius:'50%',background:isActiveMode?modeAccent(tradingMode):C.muted,opacity:isActiveMode?1:0.5}}/>
@@ -4332,7 +4332,7 @@ export default function DashboardPage() {
                   >
                     <div style={{display:'flex',alignItems:'center',gap:6,minWidth:0}}>
                       <span style={{fontSize:11,fontWeight:600,color:modeAccent(tradingMode),whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>
-                        {{schedule:'Signal Mode',fastrade:'Fastrade FTT',blitz5s:'5st · Blitz 5 Detik',ctc:'Fastrade CTC',aisignal:'AI Signal Mode',indicator:'Analysis Strategy Mode',momentum:'Momentum Mode'}[tradingMode]}
+                        {{schedule:'Signal Mode',fastrade:'Fastrade FTT',blitz5s:'5st · Blitz 5 Detik',ctc:'Fastrade CTC',aisignal:'AI Signal Mode',indicator:'Analysis Strategy Mode',momentum:'Momentum Mode',agentalpha:'Agent Alpha'}[tradingMode]}
                       </span>
                     </div>
                     <Lock style={{width:11,height:11,color:modeAccent(tradingMode),opacity:0.7,flexShrink:0}}/>

@@ -90,10 +90,11 @@ export const ControlCard: React.FC<{
     aisignal:<Radio style={{width:14,height:14}}/>,
     indicator:<BarChart style={{width:14,height:14}}/>,
     momentum:<Waves style={{width:14,height:14}}/>,
+    agentalpha:<Zap style={{width:14,height:14}}/>,
   }[mode];
 
-  const modeLabel = {schedule:'Signal Mode',fastrade:'Fastrade FTT Mode',ctc:'Fastrade CTC',aisignal:'AI Signal Mode',indicator:'Analysis Strategy Mode',momentum:'Momentum Mode'}[mode];
-  const modeSub = {schedule:'Eksekusi terjadwal',fastrade:'Auto per candle',ctc:'Copy the Candle · 1m',aisignal:'Terima & eksekusi sinyal',indicator:'Analisis teknikal otomatis',momentum:'Deteksi pola candle'}[mode];
+  const modeLabel = {schedule:'Signal Mode',fastrade:'Fastrade FTT Mode',ctc:'Fastrade CTC',aisignal:'AI Signal Mode',indicator:'Analysis Strategy Mode',momentum:'Momentum Mode',agentalpha:'Agent Alpha'}[mode];
+  const modeSub = {schedule:'Eksekusi terjadwal',fastrade:'Auto per candle',ctc:'Copy the Candle · 1m',aisignal:'Terima & eksekusi sinyal',indicator:'Analisis teknikal otomatis',momentum:'Deteksi pola candle',agentalpha:'Agentic reversal-chase'}[mode];
 
   const pnlPos = profit>=0;
   const wins = ftStatus?.totalWins??aiStatus?.totalWins??indicatorStatus?.totalWins??momentumStatus?.totalWins??0;

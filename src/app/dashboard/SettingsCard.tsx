@@ -398,7 +398,7 @@ export const SettingsCard: React.FC<{
   const isNewMode = mode==='aisignal'||mode==='indicator'||mode==='momentum';
   // Nama mode dibuat RINGKAS agar muat satu baris pada label pengaturan
   // (dulu mis. "Fastrade FTT Mode" terlalu panjang & terpotong tak rapi).
-  const modeLabel = mode==='aisignal'?'AI Signal':mode==='indicator'?'Indicator':mode==='momentum'?'Momentum':mode==='ctc'?'Fastrade CTC':mode==='blitz5s'?'5st · Blitz 5 Detik':mode==='fastrade'?'Fastrade FTT':'Signal';
+  const modeLabel = mode==='aisignal'?'AI Signal':mode==='indicator'?'Indicator':mode==='momentum'?'Momentum':mode==='ctc'?'Fastrade CTC':mode==='blitz5s'?'5st · Blitz 5 Detik':mode==='agentalpha'?'Agent Alpha':mode==='fastrade'?'Fastrade FTT':'Signal';
   const acctCol = isDemo ? C.amber : C.cyan;
 
   return (
