@@ -1582,6 +1582,23 @@ const CapitalAdviceModal: React.FC<{ open: boolean; onClose: () => void }> = ({ 
   );
 };
 
+// SARAN KEAMANAN — poster ajakan aktifkan 2FA. Muncul SETELAH modal manajemen
+// modal ditutup (dirantai). Sama gaya: poster gambar + tombol tutup (X).
+const SecurityAdviceModal: React.FC<{ open: boolean; onClose: () => void }> = ({ open, onClose }) => {
+  if (!open) return null;
+  return (
+    <div style={{position:'fixed',inset:0,zIndex:80,display:'flex',alignItems:'center',justifyContent:'center',padding:'16px',animation:'fade-in 0.15s ease'}}>
+      <div onClick={onClose} style={{position:'absolute',inset:0,background:'rgba(0,0,0,0.72)',backdropFilter:'blur(10px)',WebkitBackdropFilter:'blur(10px)'}}/>
+      <div style={{position:'relative',width:'100%',maxWidth:420,animation:'slide-up 0.28s cubic-bezier(0.32,0.72,0,1)'}}>
+        <img src="/sarankeamananstc.png" alt="Saran Keamanan — Aktifkan 2FA" style={{display:'block',width:'100%',height:'auto',borderRadius:16}}/>
+        <button onClick={onClose} aria-label="Tutup" style={{position:'absolute',top:10,right:10,width:34,height:34,borderRadius:999,background:'rgba(0,0,0,0.55)',border:'1px solid rgba(255,255,255,0.28)',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',WebkitBackdropFilter:'blur(4px)',backdropFilter:'blur(4px)'}}>
+          <X style={{width:18,height:18,color:'#fff'}}/>
+        </button>
+      </div>
+    </div>
+  );
+};
+
 // Modal KODE PROMO dihapus 2026-08-13 — promonya sudah tidak berjalan.
 
 // ═══════════════════════════════════════════
@@ -1947,6 +1964,7 @@ export default function DashboardPage() {
   const [alphaLockOpen, setAlphaLockOpen] = useState(false);
   const [frLockOpen,  setFrLockOpen]  = useState(false);
   const [adviceOpen,  setAdviceOpen]  = useState(false);
+  const [securityOpen, setSecurityOpen] = useState(false); // saran 2FA — setelah manajemen modal
   // ── v4: akses mode REAL (user lama demo-only) ─────────────────────────────
   const [realAccess,    setRealAccess]    = useState(false);
   const [realCheckDone, setRealCheckDone] = useState(false);
@@ -3732,7 +3750,8 @@ export default function DashboardPage() {
           onActivate={()=>{ setRealLockOpen(false); router.push('/aktivasi-real'); }}
           lang={language}
         />
-        <CapitalAdviceModal open={adviceOpen} onClose={()=>setAdviceOpen(false)}/>
+        <CapitalAdviceModal open={adviceOpen} onClose={()=>{setAdviceOpen(false); setSecurityOpen(true);}}/>
+        <SecurityAdviceModal open={securityOpen} onClose={()=>setSecurityOpen(false)}/>
         {error&&(
           <div style={{display:'flex',alignItems:'flex-start',gap:9,padding:'10px 14px',borderRadius:8,marginBottom:g,background:C.cord,border:`1px solid rgba(255,69,58,0.2)`,borderLeft:`2px solid ${C.coral}`}}>
             <AlertCircle style={{width:13,height:13,flexShrink:0,marginTop:2,color:C.coral}}/>
