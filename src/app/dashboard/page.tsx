@@ -1242,14 +1242,13 @@ const ModePickerModal: React.FC<{
             const isAiLockedRow = v === 'aisignal' && AI_LOCKED; // fitur terkunci per akun
             const isFrLockedRow = v === 'fastreversal' && FR_LOCKED; // berbayar, 30 hari
             const isBlitz5sLockedRow = v === 'blitz5s' && BLITZ5S_LOCKED; // berbayar, 30 hari
-            const isAlpha = v === 'agentalpha'; // eksklusif
-            const isAlphaLockedRow = isAlpha && AGENTALPHA_LOCKED; // terkunci → disable/abu
-            const isAlphaActive = isAlpha && !AGENTALPHA_LOCKED;   // teraktivasi → premium
+            const isAlpha = v === 'agentalpha'; // eksklusif — efek premium SELALU (locked/aktif)
+            const isAlphaLockedRow = isAlpha && AGENTALPHA_LOCKED; // terkunci → hanya ikon gembok
             return (
               <button
                 key={v}
                 type="button"
-                className={isAlphaActive ? 'aa-alpha-row' : undefined}
+                className={isAlpha ? 'aa-alpha-row' : undefined}
                 onClick={() => {
                   onModeChange(v);
                   onClose();
@@ -1257,8 +1256,8 @@ const ModePickerModal: React.FC<{
                 style={{
                   width:'100%',display:'flex',alignItems:'center',gap:12,padding:'11px 14px',
                   borderRadius:14,cursor:'pointer',position:'relative',overflow:'hidden',
-                  background:isAlphaActive?'rgba(139,92,246,0.08)':(isAct?`${accent}14`:C.card2),
-                  border:`1px solid ${isAlphaActive?'transparent':(isAct?`${accent}45`:C.bdr)}`,
+                  background:isAlpha?'rgba(139,92,246,0.08)':(isAct?`${accent}14`:C.card2),
+                  border:`1px solid ${isAlpha?'transparent':(isAct?`${accent}45`:C.bdr)}`,
                   opacity:(isOtherRunning||isAiLockedRow||isFrLockedRow||isBlitz5sLockedRow)?0.55:1,
                   transition:'background 0.15s,border-color 0.15s',
                 }}
@@ -1266,16 +1265,16 @@ const ModePickerModal: React.FC<{
                 <span style={{
                   width:38,height:38,borderRadius:11,flexShrink:0,
                   display:'flex',alignItems:'center',justifyContent:'center',
-                  background:isAlphaActive?'linear-gradient(135deg,#8b5cf6,#6366f1)':(isAlphaLockedRow?C.card2:`${accent}18`),
-                  border:`1px solid ${isAlphaActive?'transparent':(isAlphaLockedRow?C.bdr:`${accent}25`)}`,
-                  color:isAlphaActive?'#fff':(isAlphaLockedRow?C.muted:accent),
-                  boxShadow:isAlphaActive?'0 4px 12px -5px rgba(139,92,246,0.85)':undefined,
+                  background:isAlpha?'linear-gradient(135deg,#8b5cf6,#6366f1)':`${accent}18`,
+                  border:`1px solid ${isAlpha?'transparent':`${accent}25`}`,
+                  color:isAlpha?'#fff':accent,
+                  boxShadow:isAlpha?'0 4px 12px -5px rgba(139,92,246,0.85)':undefined,
                 }}>
                   {icon}
                 </span>
                 <div style={{flex:1,minWidth:0,textAlign:'left'}}>
                   <div style={{display:'flex',alignItems:'center',gap:5,minWidth:0}}>
-                    <span style={{fontSize:14,fontWeight:600,color:isAlphaLockedRow?C.muted:(isAct?accent:C.sub),whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',minWidth:0}}>{label}</span>
+                    <span style={{fontSize:14,fontWeight:600,color:isAct?accent:C.sub,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',minWidth:0}}>{label}</span>
                     {/* Badge premium eksklusif untuk Agent Alpha */}
                     {isAlpha && (
                       <span className="aa-badge"><Zap style={{width:9,height:9}}/>PRO</span>
