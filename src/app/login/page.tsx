@@ -180,7 +180,9 @@ const LOGIN_STYLES = `
   .field-sep { height: 0.5px; background: var(--hairline); margin-left: 52px; }
 
   .fi {
-    flex: 1; background: transparent; border: none; outline: none;
+    flex: 1; min-width: 0; background: transparent; border: none; outline: none;
+    /* min-width:0 → input flex boleh menyusut di bawah lebar konten, jadi tombol
+       mata tak terdorong keluar & terpotong batas kanan grup (overflow:hidden). */
     /* Minimum 16px on mobile avoids iOS zoom-in */
     padding: 16px 14px 16px 0;
     font-size: 16px; font-weight: 400;
