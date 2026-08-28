@@ -480,10 +480,9 @@ function LoginPageContent() {
   const [otp, setOtp] = useState('');
   // Mode input 2FA: false = 6 digit authenticator, true = kode pemulihan (backup).
   const [recoveryMode, setRecoveryMode] = useState(false);
-  // Login via kode pemulihan DIMATIKAN: Stockity login API hanya terima 6 digit
-  // TOTP (validate/otp); endpoint /backup 404 di namespace publik (pra-login).
-  // Nyalakan lagi setelah endpoint kode pemulihan yang benar dikonfirmasi.
-  const RECOVERY_LOGIN_ENABLED = false;
+  // Login via kode pemulihan: backend rutekan ke /passport/v1/2fa/validate/backup
+  // {backup_code} (dikonfirmasi dari HAR asli Stockity) → 2fa_token.
+  const RECOVERY_LOGIN_ENABLED = true;
   const [verifying, setVerifying] = useState(false);
   const otpRef = useRef<HTMLInputElement>(null);
 
