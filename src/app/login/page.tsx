@@ -478,6 +478,8 @@ function LoginPageContent() {
   // ── 2FA: akun ber-2FA butuh OTP setelah email+password benar ──
   const [twoFa, setTwoFa] = useState<{ deviceId: string; email: string; password: string; native: boolean } | null>(null);
   const [otp, setOtp] = useState('');
+  // Mode input 2FA: false = 6 digit authenticator, true = kode pemulihan (backup).
+  const [recoveryMode, setRecoveryMode] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const otpRef = useRef<HTMLInputElement>(null);
 
@@ -831,7 +833,7 @@ function LoginPageContent() {
         await storage.set('stc_remember_password', twoFa.password);
       }
       updateLastLogin(res.email || twoFa.email).catch(() => {});
-      setTwoFa(null); setOtp('');
+      setTwoFa(null); setOtp(''); setRecoveryMode(false);
       await runSplash(res);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Verifikasi 2FA gagal.');
@@ -840,7 +842,7 @@ function LoginPageContent() {
       setLoginStep('idle');
     }
   };
-  const cancel2fa = () => { setTwoFa(null); setOtp(''); setError(''); setVerifying(false); setLoginStep('idle'); };
+  const cancel2fa = () => { setTwoFa(null); setOtp(''); setRecoveryMode(false); setError(''); setVerifying(false); setLoginStep('idle'); };
 
   // ── Login via Google ───────────────────────────────────────────────────────
   // Native: buka authorization URL di in-app WebView (mode 'oauth'); plugin
@@ -1089,36 +1091,55 @@ function LoginPageContent() {
                 </div>
                 <h2 style={{ fontSize: 19, fontWeight: 800, letterSpacing: -0.2, color: 'var(--text, #fff)', margin: '0 0 7px' }}>{language === 'id' ? 'Verifikasi Dua Langkah' : 'Two-Factor Verification'}</h2>
                 <p style={{ fontSize: 13, lineHeight: 1.55, color: 'var(--muted, #9aa4b2)', margin: '0 0 16px' }}>
-                  {language === 'id' ? 'Masukkan 6 digit kode dari aplikasi authenticator kamu.' : 'Enter the 6-digit code from your authenticator app.'}
+                  {recoveryMode
+                    ? (language === 'id' ? 'Masukkan salah satu kode pemulihan (backup) 2FA kamu.' : 'Enter one of your 2FA recovery (backup) codes.')
+                    : (language === 'id' ? 'Masukkan 6 digit kode dari aplikasi authenticator kamu.' : 'Enter the 6-digit code from your authenticator app.')}
                 </p>
                 {twoFa.email && <div className="tfa-email">{twoFa.email}</div>}
-                <div className="otp-wrap" onClick={() => otpRef.current?.focus()}>
-                  {Array.from({ length: 6 }).map((_, i) => {
-                    const ch = otp[i];
-                    const active = i === otp.length && otp.length < 6;
-                    return (
-                      <div key={i} className={`otp-box${ch ? ' filled' : ''}${active ? ' active' : ''}`}>
-                        {ch ?? (active ? <span className="caret" /> : '')}
-                      </div>
-                    );
-                  })}
+                {recoveryMode ? (
                   <input
-                    ref={otpRef}
-                    className="otp-input"
-                    inputMode="numeric" autoComplete="one-time-code" maxLength={6} autoFocus
+                    className="fi"
+                    style={{ textAlign: 'center', letterSpacing: 1, fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace' }}
+                    autoFocus autoComplete="one-time-code" autoCapitalize="none" spellCheck={false}
+                    placeholder={language === 'id' ? 'mis. abcd-efgh-ijkl-mnop' : 'e.g. abcd-efgh-ijkl-mnop'}
                     value={otp}
-                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    onChange={(e) => setOtp(e.target.value.replace(/[^0-9a-zA-Z-]/g, '').slice(0, 32))}
                     onKeyDown={(e) => { if (e.key === 'Enter') verify2fa(); }}
                   />
-                </div>
+                ) : (
+                  <div className="otp-wrap" onClick={() => otpRef.current?.focus()}>
+                    {Array.from({ length: 6 }).map((_, i) => {
+                      const ch = otp[i];
+                      const active = i === otp.length && otp.length < 6;
+                      return (
+                        <div key={i} className={`otp-box${ch ? ' filled' : ''}${active ? ' active' : ''}`}>
+                          {ch ?? (active ? <span className="caret" /> : '')}
+                        </div>
+                      );
+                    })}
+                    <input
+                      ref={otpRef}
+                      className="otp-input"
+                      inputMode="numeric" autoComplete="one-time-code" maxLength={6} autoFocus
+                      value={otp}
+                      onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                      onKeyDown={(e) => { if (e.key === 'Enter') verify2fa(); }}
+                    />
+                  </div>
+                )}
                 {error && (
                   <div key={errorKey} className="err" style={{ marginTop: 16 }}>
                     <div className="err-dot" /><div><p className="err-txt">{error}</p></div>
                   </div>
                 )}
-                <button className="btn" style={{ marginTop: 18 }} onClick={verify2fa} disabled={verifying || otp.length < 6}>
+                <button className="btn" style={{ marginTop: 18 }} onClick={verify2fa} disabled={verifying || (recoveryMode ? otp.replace(/\s/g, '').length < 8 : otp.length < 6)}>
                   {verifying && <div className="spin" />}
                   {verifying ? (language === 'id' ? 'Memverifikasi…' : 'Verifying…') : (language === 'id' ? 'Verifikasi & Masuk' : 'Verify & Sign in')}
+                </button>
+                <button className="tfa-link" onClick={() => { setRecoveryMode(m => !m); setOtp(''); setError(''); }} disabled={verifying}>
+                  {recoveryMode
+                    ? (language === 'id' ? 'Pakai kode authenticator' : 'Use authenticator code')
+                    : (language === 'id' ? 'Pakai kode pemulihan' : 'Use a recovery code')}
                 </button>
                 <button className="tfa-link" onClick={cancel2fa} disabled={verifying}>
                   {language === 'id' ? 'Batal' : 'Cancel'}
