@@ -480,6 +480,10 @@ function LoginPageContent() {
   const [otp, setOtp] = useState('');
   // Mode input 2FA: false = 6 digit authenticator, true = kode pemulihan (backup).
   const [recoveryMode, setRecoveryMode] = useState(false);
+  // Login via kode pemulihan DIMATIKAN: Stockity login API hanya terima 6 digit
+  // TOTP (validate/otp); endpoint /backup 404 di namespace publik (pra-login).
+  // Nyalakan lagi setelah endpoint kode pemulihan yang benar dikonfirmasi.
+  const RECOVERY_LOGIN_ENABLED = false;
   const [verifying, setVerifying] = useState(false);
   const otpRef = useRef<HTMLInputElement>(null);
 
@@ -1072,24 +1076,24 @@ function LoginPageContent() {
                 @keyframes tfaGlow { 0%,100% { box-shadow: 0 0 0 0 rgba(48,209,88,.34) } 50% { box-shadow: 0 0 0 12px rgba(48,209,88,0) } }
                 @keyframes tfaCaret { 0%,100% { opacity: 1 } 50% { opacity: 0 } }
                 .tfa-overlay { position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center; padding: 20px; background: radial-gradient(130% 130% at 50% -10%, rgba(48,209,88,.10), rgba(0,0,0,.80)); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); animation: tfaFade .22s ease; }
-                .tfa-card { width: 100%; max-width: 384px; position: relative; overflow: hidden; background: linear-gradient(180deg, rgba(30,34,44,.97), rgba(18,20,27,.98)); border: 1px solid rgba(255,255,255,.09); border-radius: 26px; padding: 32px 26px 24px; box-shadow: 0 30px 80px rgba(0,0,0,.62); text-align: center; animation: tfaPop .32s cubic-bezier(.16,1,.3,1); }
-                .tfa-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, rgba(48,209,88,.65), transparent); }
-                .tfa-badge { width: 62px; height: 62px; margin: 0 auto 16px; border-radius: 19px; display: flex; align-items: center; justify-content: center; background: linear-gradient(160deg, rgba(48,209,88,.24), rgba(48,209,88,.05)); border: 1px solid rgba(48,209,88,.4); color: #30d158; animation: tfaGlow 2.6s ease-in-out infinite; }
+                .tfa-card { width: 100%; max-width: 372px; position: relative; overflow: hidden; background: linear-gradient(180deg, rgba(32,36,46,.98), rgba(19,21,28,.99)); border: 1px solid rgba(255,255,255,.08); border-radius: 28px; padding: 34px 28px 22px; box-shadow: 0 24px 70px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.05); text-align: center; animation: tfaPop .32s cubic-bezier(.16,1,.3,1); }
+                .tfa-badge { width: 54px; height: 54px; margin: 2px auto 18px; border-radius: 16px; display: flex; align-items: center; justify-content: center; background: linear-gradient(160deg, rgba(48,209,88,.20), rgba(48,209,88,.04)); border: 1px solid rgba(48,209,88,.28); box-shadow: 0 0 0 5px rgba(48,209,88,.05); color: #30d158; }
                 .tfa-email { display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin: 0 auto 20px; padding: 5px 13px; border-radius: 999px; font-size: 12.5px; font-weight: 600; color: var(--text,#fff); background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1); }
-                .otp-wrap { position: relative; display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin: 2px 0; }
-                .otp-box { aspect-ratio: 1 / 1.18; display: flex; align-items: center; justify-content: center; font-size: 25px; font-weight: 800; color: #fff; border-radius: 14px; background: rgba(255,255,255,.045); border: 1.5px solid rgba(255,255,255,.12); transition: border-color .16s, background .16s, box-shadow .16s; font-variant-numeric: tabular-nums; }
-                .otp-box.filled { background: rgba(48,209,88,.11); border-color: rgba(48,209,88,.5); }
-                .otp-box.active { border-color: #30d158; background: rgba(48,209,88,.09); box-shadow: 0 0 0 3px rgba(48,209,88,.17); }
+                .otp-wrap { position: relative; display: grid; grid-template-columns: repeat(6, 1fr); gap: 9px; margin: 2px 0 4px; }
+                .otp-box { aspect-ratio: 1 / 1.12; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 700; color: #fff; border-radius: 13px; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.1); transition: border-color .18s, background .18s, box-shadow .18s, transform .18s; font-variant-numeric: tabular-nums; }
+                .otp-box.filled { background: rgba(48,209,88,.1); border-color: rgba(48,209,88,.45); }
+                .otp-box.active { border-color: #30d158; background: rgba(48,209,88,.08); box-shadow: 0 0 0 3px rgba(48,209,88,.16); transform: translateY(-1px); }
                 .otp-box .caret { width: 2px; height: 26px; background: #30d158; border-radius: 2px; animation: tfaCaret 1.05s step-end infinite; }
                 .otp-input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; border: none; outline: none; cursor: text; font-size: 16px; }
-                .tfa-link { margin-top: 14px; background: none; border: none; color: var(--muted,#9aa4b2); font-size: 13px; font-weight: 600; }
+                .tfa-link { margin-top: 12px; background: none; border: none; color: var(--muted,#9aa4b2); font-size: 13px; font-weight: 600; letter-spacing: -0.1px; cursor: pointer; transition: color .15s; }
+                .tfa-link:hover:not(:disabled) { color: var(--text,#fff); }
                 .tfa-link:disabled { cursor: not-allowed; opacity: .6; }
               `}</style>
               <div className="tfa-card">
                 <div className="tfa-badge">
                   <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2 4 5v6c0 5 3.4 8.5 8 10 4.6-1.5 8-5 8-10V5l-8-3Z"/><path d="M9 12l2 2 4-4"/></svg>
                 </div>
-                <h2 style={{ fontSize: 19, fontWeight: 800, letterSpacing: -0.2, color: 'var(--text, #fff)', margin: '0 0 7px' }}>{language === 'id' ? 'Verifikasi Dua Langkah' : 'Two-Factor Verification'}</h2>
+                <h2 style={{ fontSize: 20, fontWeight: 700, letterSpacing: -0.3, color: 'var(--text, #fff)', margin: '0 0 7px' }}>{language === 'id' ? 'Verifikasi Dua Langkah' : 'Two-Factor Verification'}</h2>
                 <p style={{ fontSize: 13, lineHeight: 1.55, color: 'var(--muted, #9aa4b2)', margin: '0 0 16px' }}>
                   {recoveryMode
                     ? (language === 'id' ? 'Masukkan salah satu kode pemulihan (backup) 2FA kamu.' : 'Enter one of your 2FA recovery (backup) codes.')
@@ -1136,11 +1140,13 @@ function LoginPageContent() {
                   {verifying && <div className="spin" />}
                   {verifying ? (language === 'id' ? 'Memverifikasi…' : 'Verifying…') : (language === 'id' ? 'Verifikasi & Masuk' : 'Verify & Sign in')}
                 </button>
-                <button className="tfa-link" onClick={() => { setRecoveryMode(m => !m); setOtp(''); setError(''); }} disabled={verifying}>
-                  {recoveryMode
-                    ? (language === 'id' ? 'Pakai kode authenticator' : 'Use authenticator code')
-                    : (language === 'id' ? 'Pakai kode pemulihan' : 'Use a recovery code')}
-                </button>
+                {RECOVERY_LOGIN_ENABLED && (
+                  <button className="tfa-link" onClick={() => { setRecoveryMode(m => !m); setOtp(''); setError(''); }} disabled={verifying}>
+                    {recoveryMode
+                      ? (language === 'id' ? 'Pakai kode authenticator' : 'Use authenticator code')
+                      : (language === 'id' ? 'Pakai kode pemulihan' : 'Use a recovery code')}
+                  </button>
+                )}
                 <button className="tfa-link" onClick={cancel2fa} disabled={verifying}>
                   {language === 'id' ? 'Batal' : 'Cancel'}
                 </button>
