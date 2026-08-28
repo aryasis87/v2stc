@@ -131,6 +131,8 @@ export interface Translations {
     emailVerified: string;
     phoneVerified: string;
     documentsVerified: string;
+    accountDetails: string;
+    seeMore: string;
     fullName: string;
     nickname: string;
     gender: string;
@@ -565,6 +567,8 @@ const translations: Record<Language, Translations> = {
       emailVerified: 'Email Verified',
       phoneVerified: 'Phone Verified',
       documentsVerified: 'Documents Verified',
+      accountDetails: 'Account Details',
+      seeMore: 'See full details',
       fullName: 'Full Name',
       nickname: 'Nickname',
       gender: 'Gender',
@@ -989,6 +993,8 @@ const translations: Record<Language, Translations> = {
       emailVerified: 'Email Terverifikasi',
       phoneVerified: 'Telepon Terverifikasi',
       documentsVerified: 'Dokumen Terverifikasi',
+      accountDetails: 'Detail Akun',
+      seeMore: 'Selengkapnya',
       fullName: 'Nama Lengkap',
       nickname: 'Nama Panggilan',
       gender: 'Jenis Kelamin',
@@ -1413,6 +1419,8 @@ const translations: Record<Language, Translations> = {
       emailVerified: 'Email подтвержден',
       phoneVerified: 'Телефон подтвержден',
       documentsVerified: 'Документы подтверждены',
+      accountDetails: 'Данные аккаунта',
+      seeMore: 'Подробнее',
       fullName: 'Полное имя',
       nickname: 'Никнейм',
       gender: 'Пол',
@@ -1837,6 +1845,8 @@ const translations: Record<Language, Translations> = {
       emailVerified: 'Correo verificado',
       phoneVerified: 'Teléfono verificado',
       documentsVerified: 'Documentos verificados',
+      accountDetails: 'Detalles de la cuenta',
+      seeMore: 'Ver detalles',
       fullName: 'Nombre completo',
       nickname: 'Apodo',
       gender: 'Género',
@@ -2261,6 +2271,8 @@ const translations: Record<Language, Translations> = {
       emailVerified: 'E-mel Disahkan',
       phoneVerified: 'Telefon Disahkan',
       documentsVerified: 'Dokumen Disahkan',
+      accountDetails: 'Butiran Akaun',
+      seeMore: 'Lihat selengkapnya',
       fullName: 'Nama Penuh',
       nickname: 'Nama Samaran',
       gender: 'Jantina',
@@ -2685,6 +2697,8 @@ const translations: Record<Language, Translations> = {
       emailVerified: 'ईमेल सत्यापित',
       phoneVerified: 'फ़ोन सत्यापित',
       documentsVerified: 'दस्तावेज़ सत्यापित',
+      accountDetails: 'खाता विवरण',
+      seeMore: 'पूरा विवरण देखें',
       fullName: 'पूरा नाम',
       nickname: 'उपनाम',
       gender: 'लिंग',
@@ -3109,6 +3123,8 @@ const translations: Record<Language, Translations> = {
       emailVerified: 'ยืนยันอีเมลแล้ว',
       phoneVerified: 'ยืนยันโทรศัพท์แล้ว',
       documentsVerified: 'ยืนยันเอกสารแล้ว',
+      accountDetails: 'รายละเอียดบัญชี',
+      seeMore: 'ดูรายละเอียด',
       fullName: 'ชื่อเต็ม',
       nickname: 'ชื่อเล่น',
       gender: 'เพศ',
@@ -3533,6 +3549,8 @@ const translations: Record<Language, Translations> = {
       emailVerified: 'E-posta Doğrulandı',
       phoneVerified: 'Telefon Doğrulandı',
       documentsVerified: 'Belgeler Doğrulandı',
+      accountDetails: 'Hesap Ayrıntıları',
+      seeMore: 'Tümünü gör',
       fullName: 'Ad Soyad',
       nickname: 'Takma Ad',
       gender: 'Cinsiyet',
