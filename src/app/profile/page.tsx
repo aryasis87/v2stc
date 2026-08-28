@@ -49,16 +49,23 @@ interface UserProfileData {
   lastName?: string;
   nickname?: string;
   phone?: string;
+  phonePrefix?: string;
   emailVerified?: boolean;
   phoneVerified?: boolean;
   gender?: string;
   country?: string;
+  countryName?: string;
+  currency?: string;
   birthday?: string;
   registeredAt?: string;
   registrationCountryIso?: string;
   avatar?: string;
   personalDataLocked?: boolean;
   docsVerified?: boolean;
+  statusGroup?: string;
+  balance?: number;
+  bonus?: number;
+  depositsSum?: number;
 }
 interface CurrencyOption { iso: string; name?: string; symbol?: string; }
 
@@ -2261,14 +2268,32 @@ function ProfilePageContent() {
                     label={t('profile.email')} value={profile?.email}
                     verified={profile?.emailVerified}
                   />
+                  {(profile?.firstName || profile?.lastName) && (
+                    <InfoRow
+                      icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}
+                      label={t('profile.fullName')} value={[profile?.firstName, profile?.lastName].filter(Boolean).join(' ')}
+                    />
+                  )}
+                  {profile?.nickname && (
+                    <InfoRow
+                      icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>}
+                      label={t('profile.nickname')} value={profile?.nickname}
+                    />
+                  )}
                   <InfoRow
                     icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.4 2 2 0 0 1 3.6 1.22h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.83a16 16 0 0 0 5.96 5.96l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>}
                     label={t('profile.phone')} value={profile?.phone || null}
                     verified={profile?.phoneVerified}
                   />
+                  {profile?.gender && (
+                    <InfoRow
+                      icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round"><circle cx="10" cy="14" r="6"/><path d="M14.5 9.5L20 4M20 4h-4M20 4v4"/></svg>}
+                      label={t('profile.gender')} value={profile?.gender === 'male' ? t('profile.genderMale') : profile?.gender === 'female' ? t('profile.genderFemale') : profile?.gender}
+                    />
+                  )}
                   <InfoRow
                     icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>}
-                    label={t('profile.country')} value={profile?.country || profile?.registrationCountryIso || null}
+                    label={t('profile.country')} value={profile?.countryName || profile?.country || profile?.registrationCountryIso || null}
                   />
                   {profile?.registeredAt && (
                     <InfoRow
@@ -2279,6 +2304,43 @@ function ProfilePageContent() {
                   <InfoRow
                     icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}
                     label={t('profile.birthday')} value={profile?.birthday ? formatDate(new Date(profile.birthday), language, { day: '2-digit', month: 'long', year: 'numeric' }) : null}
+                    last
+                  />
+                </>
+              )}
+            </Card>
+          </div>
+
+          {/* Informasi Finansial */}
+          <div>
+            <SectionLabel>{t('profile.financialInfo')}</SectionLabel>
+            <Card>
+              {isLoading ? (
+                <div style={{ padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+                  {[1,2,3].map(i => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <Skel w={32} h={32} r={9} />
+                      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 5 }}><Skel w="40%" h={11} /><Skel w="55%" h={14} /></div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <>
+                  <InfoRow
+                    icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/></svg>}
+                    label={t('profile.totalDeposit')} value={profile?.depositsSum != null ? `${fmtBalance(profile.depositsSum)} ${currencyUnit}` : null}
+                  />
+                  <InfoRow
+                    icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><path d="M12 22V7M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>}
+                    label={t('profile.bonus')} value={profile?.bonus != null ? `${fmtBalance(profile.bonus)} ${currencyUnit}` : null}
+                  />
+                  <InfoRow
+                    icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="8" r="6"/><path d="M8.21 13.89 7 22l5-3 5 3-1.21-8.11"/></svg>}
+                    label={t('profile.accountTier')} value={profile?.statusGroup ? profile.statusGroup.charAt(0).toUpperCase() + profile.statusGroup.slice(1) : null}
+                  />
+                  <InfoRow
+                    icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>}
+                    label={t('profile.documentsVerified')} verified={!!profile?.docsVerified}
                     last
                   />
                 </>

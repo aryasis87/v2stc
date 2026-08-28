@@ -971,10 +971,16 @@ export const api = {
       const m = await import("./engine/stockityAccount");
       const p = await m.getProfile(a);
       if (p) return {
-        id: p.id, email: p.email, firstName: p.first_name, lastName: p.last_name,
-        nickname: p.nickname, phone: p.phone, country: p.country,
+        id: p.id, email: p.email, emailVerified: p.email_verified,
+        firstName: p.first_name, lastName: p.last_name, nickname: p.nickname,
+        avatar: p.avatar, gender: p.gender, birthday: p.birthday,
+        phone: p.phone, phoneVerified: p.phone_verified, phonePrefix: p.phone_prefix,
+        country: p.country, countryName: p.country_name,
         registrationCountryIso: p.registration_country_iso ?? p.country,
-        currency: p.currency, registeredAt: p.created_at,
+        currency: p.currency, registeredAt: p.registered_at ?? p.created_at,
+        docsVerified: p.docs_verified, statusGroup: p.status_group,
+        balance: p.balance, bonus: p.bonus, depositsSum: p.deposits_sum,
+        personalDataLocked: p.personal_data_locked,
       };
     }
     return req<{
@@ -984,16 +990,23 @@ export const api = {
     lastName?: string;
     nickname?: string;
     phone?: string;
+    phonePrefix?: string;
     emailVerified?: boolean;
     phoneVerified?: boolean;
     gender?: string;
     country?: string;
+    countryName?: string;
+    currency?: string;
     birthday?: string;
     registeredAt?: string;
     registrationCountryIso?: string;
     avatar?: string;
     personalDataLocked?: boolean;
     docsVerified?: boolean;
+    statusGroup?: string;
+    balance?: number;
+    bonus?: number;
+    depositsSum?: number;
     }>('GET', '/profile');
   },
 
