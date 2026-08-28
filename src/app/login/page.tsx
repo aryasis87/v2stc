@@ -1084,7 +1084,10 @@ function LoginPageContent() {
                 .otp-box.active { border-color: #30d158; background: rgba(48,209,88,.08); box-shadow: 0 0 0 3px rgba(48,209,88,.16); transform: translateY(-1px); }
                 .otp-box .caret { width: 2px; height: 26px; background: #30d158; border-radius: 2px; animation: tfaCaret 1.05s step-end infinite; }
                 .otp-input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; border: none; outline: none; cursor: text; font-size: 16px; }
-                .tfa-link { margin-top: 12px; background: none; border: none; color: var(--muted,#9aa4b2); font-size: 13px; font-weight: 600; letter-spacing: -0.1px; cursor: pointer; transition: color .15s; }
+                .tfa-alt { margin-top: 16px; width: 100%; padding: 11px 12px; border-radius: 13px; background: transparent; border: 1px solid rgba(255,255,255,.14); color: var(--text,#fff); font-size: 13.5px; font-weight: 600; letter-spacing: -0.1px; cursor: pointer; transition: background .15s, border-color .15s; }
+                .tfa-alt:hover:not(:disabled) { background: rgba(255,255,255,.05); border-color: rgba(255,255,255,.24); }
+                .tfa-alt:disabled { cursor: not-allowed; opacity: .55; }
+                .tfa-link { margin-top: 14px; background: none; border: none; color: var(--muted,#9aa4b2); font-size: 13px; font-weight: 600; letter-spacing: -0.1px; cursor: pointer; transition: color .15s; }
                 .tfa-link:hover:not(:disabled) { color: var(--text,#fff); }
                 .tfa-link:disabled { cursor: not-allowed; opacity: .6; }
               `}</style>
@@ -1140,7 +1143,7 @@ function LoginPageContent() {
                   {verifying ? (language === 'id' ? 'Memverifikasi…' : 'Verifying…') : (language === 'id' ? 'Verifikasi & Masuk' : 'Verify & Sign in')}
                 </button>
                 {RECOVERY_LOGIN_ENABLED && (
-                  <button className="tfa-link" onClick={() => { setRecoveryMode(m => !m); setOtp(''); setError(''); }} disabled={verifying}>
+                  <button className="tfa-alt" onClick={() => { setRecoveryMode(m => !m); setOtp(''); setError(''); }} disabled={verifying}>
                     {recoveryMode
                       ? (language === 'id' ? 'Pakai kode authenticator' : 'Use authenticator code')
                       : (language === 'id' ? 'Pakai kode pemulihan' : 'Use a recovery code')}
