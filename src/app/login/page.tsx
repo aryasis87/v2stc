@@ -578,6 +578,9 @@ function LoginPageContent() {
 
   const runSplash = async (res: { accessToken: string; userId: string; email: string; deviceId: string }) => {
     const { saveUserSession } = await import('@/lib/storage');
+    // Sesi baru saja dibuat — lindungi dari logout akibat 401 transien selama
+    // splash & mount dashboard (cegah "mental" balik ke /login). Lihat api.ts.
+    try { const { beginAuthGrace } = await import('@/lib/api'); beginAuthGrace(); } catch { /* abaikan */ }
 
     // ── Timezone dari browser (bukan hardcode Asia/Bangkok) ──────────────────
     const browserTz = typeof Intl !== 'undefined'
@@ -841,8 +844,17 @@ function LoginPageContent() {
       setTwoFa(null); setOtp(''); setRecoveryMode(false);
       await runSplash(res);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Verifikasi 2FA gagal.');
+      const base = err instanceof Error ? err.message : 'Verifikasi 2FA gagal.';
+      // Kode pemulihan = SEKALI PAKAI. Bila percobaan tadi sempat memakainya,
+      // kode itu hangus → beri tahu + kosongkan input agar user memasukkan kode
+      // BARU, bukan mengulang kode sama (yang pasti gagal 'invalid_2fa').
+      setError(recoveryMode
+        ? base + (language === 'id'
+            ? ' Kode pemulihan sekali pakai — jika kode ini sudah terpakai, gunakan kode pemulihan lain.'
+            : ' Recovery codes are single-use — if this one was used, enter a different one.')
+        : base);
       setErrorKey(k => k + 1);
+      if (recoveryMode) setOtp('');
       setVerifying(false);
       setLoginStep('idle');
     }

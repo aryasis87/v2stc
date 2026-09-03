@@ -59,8 +59,17 @@ async function reauthWithStockityToken(): Promise<string | null> {
 //         akan emit event + sessionLogout → cascade clear localStorage →
 //         semua request lain ikut gagal karena token sudah hilang.
 let _unauthorizedTimer: ReturnType<typeof setTimeout> | null = null;
+// Masa tenggang PASCA-LOGIN: sesaat setelah login berhasil, panggilan splash
+// (getProfile/currencyConfig) atau mount dashboard bisa sekali-sekali balas 401
+// transien padahal sesi baru saja dibuat & valid. Tanpa penjaga ini, 401 itu
+// memicu sessionLogout + lempar balik ke /login ("mental") — dan bila login tadi
+// pakai KODE PEMULIHAN (sekali pakai), kodenya sudah terpakai → percobaan ulang
+// dgn kode sama gagal 'invalid_2fa'. Selama tenggang, 401 TAK melogout.
+let _authGraceUntil = 0;
+export function beginAuthGrace(ms = 25000) { _authGraceUntil = Date.now() + ms; }
 function emitUnauthorized() {
   if (typeof window === 'undefined') return;
+  if (Date.now() < _authGraceUntil) return; // baru login → jangan logout krn 401 transien
   if (_unauthorizedTimer) return; // sudah dijadwalkan, skip
   _unauthorizedTimer = setTimeout(() => {
     _unauthorizedTimer = null;
