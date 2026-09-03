@@ -1936,23 +1936,26 @@ export default function DashboardPage() {
       try {
         const uid = await storage.get(SESSION_KEYS.USER_ID);
         if (!uid) return;
-        const kandidat: { at:number; sampai:number|null; label:string }[] = [];
+        const kandidat: { stamp:number; at:number; sampai:number|null; label:string }[] = [];
         const realAt = await getRealAccessAt(uid);
-        if (realAt) kandidat.push({ at: realAt, sampai: null, label: 'Mode REAL' });
-        const ai = await getAiSignalEntry(uid);
-        if (ai?.sejak) kandidat.push({ at: ai.sejak, sampai: ai.sampai, label: 'AI Signal' });
-
-        const fr = await getFastReversalEntry(uid);
-        if (fr?.sejak) kandidat.push({ at: fr.sejak, sampai: fr.sampai, label: 'Fast Reversal' });
-        const b5 = await getBlitz5sEntry(uid);
-        if (b5?.sejak) kandidat.push({ at: b5.sejak, sampai: b5.sampai, label: '5st · Blitz 5 Detik' });
-        const aa = await getAgentAlphaEntry(uid);
-        if (aa?.sejak) kandidat.push({ at: aa.sejak, sampai: aa.sampai, label: 'Agent Alpha' });
+        if (realAt) kandidat.push({ stamp: realAt, at: realAt, sampai: null, label: 'Mode REAL' });
+        // Grant lama/otomatis menyimpan {id:expiry} → sejak:null. Dulu syaratnya
+        // `if (e?.sejak)` → AI/5st/Agent Alpha/Fast Reversal TAK PERNAH popup
+        // (cuma REAL). Sekarang cukup entri VALID ada; stamp (kunci) sejak↦sampai.
+        const tambah = (e: { sejak:number|null; sampai:number|null } | null, label: string) => {
+          if (!e) return;
+          const stamp = e.sejak ?? e.sampai ?? 0;
+          kandidat.push({ stamp, at: e.sejak ?? Date.now(), sampai: e.sampai, label });
+        };
+        tambah(await getAiSignalEntry(uid), 'AI Signal');
+        tambah(await getFastReversalEntry(uid), 'Fast Reversal');
+        tambah(await getBlitz5sEntry(uid), '5st · Blitz 5 Detik');
+        tambah(await getAgentAlphaEntry(uid), 'Agent Alpha');
         for (const k of kandidat) {
           if (batal) return;
-          const kunci = `stc_notice_${k.label.replace(/\s+/g,'')}_${uid}_${k.at}`;
+          const kunci = `stc_notice_${k.label.replace(/\s+/g,'')}_${uid}_${k.stamp}`;
           if (await storage.get(kunci)) continue;
-          setPemberitahuan(k);
+          setPemberitahuan({ at: k.at, sampai: k.sampai, label: k.label });
           await storage.set(kunci, '1');
           return;
         }
