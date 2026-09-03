@@ -617,3 +617,8 @@ body:not([data-theme="light"]) .admin-root .text-teal-800 { color: #2dd4bf !impo
   .ts-ring { animation: none; opacity: 0; }
   .ts-icon, .ts-title, .ts-sub, .ts-bar-wrap, .ts-bar { animation-duration: 0.01s !important; }
 }
+
+/* Sembunyikan dok navigasi bawah saat ada popup/modal terbuka.
+   Overlay modal diberi atribut [data-app-modal]; dok mengambang cerah
+   tembus ~28% di balik backdrop → disembunyikan penuh agar tampilan bersih. */
+body:has([data-app-modal]) .app-dockwrap { opacity: 0; transform: translateY(26px); pointer-events: none; }

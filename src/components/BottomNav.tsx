@@ -130,6 +130,7 @@ export function BottomNav() {
       )}
 
       <div
+        className="app-dockwrap"
         suppressHydrationWarning
         style={{
           position: 'fixed',
@@ -140,6 +141,7 @@ export function BottomNav() {
           display: 'flex',
           justifyContent: 'center',
           pointerEvents: 'none',
+          transition: 'opacity 0.22s ease, transform 0.22s ease',
         }}
       >
         <nav

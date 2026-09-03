@@ -21,8 +21,8 @@ import { useTradingSettings } from '@/lib/useTradingSettings';
 import { computeBestConfig, type BestConfigResult } from '@/lib/bestConfig';
 import { isAiSignalUnlocked } from '@/lib/aiSignalAccess';
 import { isFastReversalUnlocked, getFastReversalExpiry, getFastReversalEntry, FAST_REVERSAL_CONTACT_EMAIL } from '@/lib/fastReversalAccess';
-import { isBlitz5sUnlocked, getBlitz5sExpiry } from '@/lib/blitz5sAccess';
-import { isAgentAlphaUnlocked } from '@/lib/agentAlphaAccess';
+import { isBlitz5sUnlocked, getBlitz5sExpiry, getBlitz5sEntry } from '@/lib/blitz5sAccess';
+import { isAgentAlphaUnlocked, getAgentAlphaEntry } from '@/lib/agentAlphaAccess';
 import { getAiSignalEntry } from '@/lib/aiSignalAccess';
 import { sessionBeacon } from '@/lib/sessionBeacon';
 import { getRealAccessAt } from '@/lib/realAccess';
@@ -1102,7 +1102,7 @@ const MobileSessionSheet: React.FC<{
   if (!open) return null;
 
   return (
-    <div style={{position:'fixed',inset:0,zIndex:90,display:'flex',alignItems:'center',justifyContent:'center',padding:'16px 16px calc(56px + env(safe-area-inset-bottom, 0px) + 8px) 16px',animation:'fade-in 0.15s ease'}}>
+    <div data-app-modal="1" style={{position:'fixed',inset:0,zIndex:90,display:'flex',alignItems:'center',justifyContent:'center',padding:'16px 16px calc(56px + env(safe-area-inset-bottom, 0px) + 8px) 16px',animation:'fade-in 0.15s ease'}}>
       {/* backdrop */}
       <div
         onClick={onClose}
@@ -1188,7 +1188,7 @@ const ModePickerModal: React.FC<{
   ].filter(m => m.v !== 'fastreversal' || FR_UNLOCKED);
 
   return (
-    <div style={{position:'fixed',inset:0,zIndex:70,display:'flex',alignItems:'center',justifyContent:'center',padding:'16px',animation:'fade-in 0.15s ease'}}>
+    <div data-app-modal="1" style={{position:'fixed',inset:0,zIndex:70,display:'flex',alignItems:'center',justifyContent:'center',padding:'16px',animation:'fade-in 0.15s ease'}}>
       {/* backdrop */}
       <div onClick={onClose} style={{position:'absolute',inset:0,background:'rgba(0,0,0,0.72)',backdropFilter:'blur(10px)',WebkitBackdropFilter:'blur(10px)'}}/>
       {/* sheet */}
@@ -1355,7 +1355,7 @@ const FrLockedModal: React.FC<{ open: boolean; onClose: () => void; lang: string
   if (!open) return null;
   const S = FR_LOCK_STR[lang] ?? FR_LOCK_STR.en;
   return (
-    <div style={{position:'fixed',inset:0,zIndex:80,display:'flex',alignItems:'center',justifyContent:'center',padding:'16px',animation:'fade-in 0.15s ease'}}>
+    <div data-app-modal="1" style={{position:'fixed',inset:0,zIndex:80,display:'flex',alignItems:'center',justifyContent:'center',padding:'16px',animation:'fade-in 0.15s ease'}}>
       <div onClick={onClose} style={{position:'absolute',inset:0,background:'rgba(0,0,0,0.72)',backdropFilter:'blur(10px)',WebkitBackdropFilter:'blur(10px)'}}/>
       <div style={{position:'relative',width:'100%',maxWidth:380,background:C.bg,borderRadius:20,border:`1px solid ${C.bdr}`,padding:'24px 22px',animation:'slide-up 0.28s cubic-bezier(0.32,0.72,0,1)',textAlign:'center'}}>
         <div style={{width:52,height:52,margin:'0 auto 14px',borderRadius:16,display:'flex',alignItems:'center',justifyContent:'center',background:`${C.amber}14`,border:`1px solid ${C.amber}30`}}>
@@ -1385,7 +1385,7 @@ const AiLockedModal: React.FC<{ open: boolean; onClose: () => void; lang: string
   if (!open) return null;
   const S = AI_LOCK_STR[lang] ?? AI_LOCK_STR.en;
   return (
-    <div style={{position:'fixed',inset:0,zIndex:80,display:'flex',alignItems:'center',justifyContent:'center',padding:'16px',animation:'fade-in 0.15s ease'}}>
+    <div data-app-modal="1" style={{position:'fixed',inset:0,zIndex:80,display:'flex',alignItems:'center',justifyContent:'center',padding:'16px',animation:'fade-in 0.15s ease'}}>
       <div onClick={onClose} style={{position:'absolute',inset:0,background:'rgba(0,0,0,0.72)',backdropFilter:'blur(10px)',WebkitBackdropFilter:'blur(10px)'}}/>
       <div style={{position:'relative',width:'100%',maxWidth:380,background:C.bg,borderRadius:20,border:`1px solid ${C.bdr}`,padding:'24px 22px',animation:'slide-up 0.28s cubic-bezier(0.32,0.72,0,1)',textAlign:'center'}}>
         <div style={{width:52,height:52,margin:'0 auto 14px',borderRadius:16,display:'flex',alignItems:'center',justifyContent:'center',background:`${C.amber}14`,border:`1px solid ${C.amber}30`}}>
@@ -1421,7 +1421,7 @@ const Blitz5sLockedModal: React.FC<{ open: boolean; onClose: () => void; lang: s
   if (!open) return null;
   const S = BLITZ5S_LOCK_STR[lang] ?? BLITZ5S_LOCK_STR.en;
   return (
-    <div style={{position:'fixed',inset:0,zIndex:80,display:'flex',alignItems:'center',justifyContent:'center',padding:'16px',animation:'fade-in 0.15s ease'}}>
+    <div data-app-modal="1" style={{position:'fixed',inset:0,zIndex:80,display:'flex',alignItems:'center',justifyContent:'center',padding:'16px',animation:'fade-in 0.15s ease'}}>
       <div onClick={onClose} style={{position:'absolute',inset:0,background:'rgba(0,0,0,0.72)',backdropFilter:'blur(10px)',WebkitBackdropFilter:'blur(10px)'}}/>
       <div style={{position:'relative',width:'100%',maxWidth:380,background:C.bg,borderRadius:20,border:`1px solid ${C.bdr}`,padding:'24px 22px',animation:'slide-up 0.28s cubic-bezier(0.32,0.72,0,1)',textAlign:'center'}}>
         <div style={{width:52,height:52,margin:'0 auto 14px',borderRadius:16,display:'flex',alignItems:'center',justifyContent:'center',background:`${C.sky}14`,border:`1px solid ${C.sky}30`}}>
@@ -1457,7 +1457,7 @@ const AgentAlphaLockedModal: React.FC<{ open: boolean; onClose: () => void; lang
   if (!open) return null;
   const S = ALPHA_LOCK_STR[lang] ?? ALPHA_LOCK_STR.id;
   return (
-    <div style={{position:'fixed',inset:0,zIndex:80,display:'flex',alignItems:'center',justifyContent:'center',padding:'16px',animation:'fade-in 0.15s ease'}}>
+    <div data-app-modal="1" style={{position:'fixed',inset:0,zIndex:80,display:'flex',alignItems:'center',justifyContent:'center',padding:'16px',animation:'fade-in 0.15s ease'}}>
       <div onClick={onClose} style={{position:'absolute',inset:0,background:'rgba(0,0,0,0.72)',backdropFilter:'blur(10px)',WebkitBackdropFilter:'blur(10px)'}}/>
       <style>{`@keyframes aa-num{0%,100%{filter:drop-shadow(0 0 10px rgba(139,92,246,0.35))}50%{filter:drop-shadow(0 0 22px rgba(139,92,246,0.65))}}@keyframes aa-bar{to{background-position:200% 0}}`}</style>
       <div style={{position:'relative',width:'100%',maxWidth:390,overflow:'hidden',background:C.bg,borderRadius:24,border:`1px solid ${ALPHA_ACCENT}3a`,animation:'slide-up 0.3s cubic-bezier(0.32,0.72,0,1)',boxShadow:`0 30px 70px -30px ${ALPHA_ACCENT}dd, 0 2px 8px rgba(0,0,0,0.3)`}}>
@@ -1543,7 +1543,7 @@ const RealLockedModal: React.FC<{ open: boolean; onClose: () => void; onRegister
     ? (APK_LOCK_STR[lang] ?? APK_LOCK_STR.en)
     : (REAL_LOCK_STR[lang] ?? REAL_LOCK_STR.en);
   return (
-    <div style={{position:'fixed',inset:0,zIndex:80,display:'flex',alignItems:'center',justifyContent:'center',padding:'16px',animation:'fade-in 0.15s ease'}}>
+    <div data-app-modal="1" style={{position:'fixed',inset:0,zIndex:80,display:'flex',alignItems:'center',justifyContent:'center',padding:'16px',animation:'fade-in 0.15s ease'}}>
       <div onClick={onClose} style={{position:'absolute',inset:0,background:'rgba(0,0,0,0.72)',backdropFilter:'blur(10px)',WebkitBackdropFilter:'blur(10px)'}}/>
       <div style={{position:'relative',width:'100%',maxWidth:380,background:C.bg,borderRadius:20,border:`1px solid ${C.bdr}`,padding:'24px 22px',animation:'slide-up 0.28s cubic-bezier(0.32,0.72,0,1)',textAlign:'center'}}>
         <div style={{width:52,height:52,margin:'0 auto 14px',borderRadius:16,display:'flex',alignItems:'center',justifyContent:'center',background:`${C.cyan}14`,border:`1px solid ${C.cyan}30`}}>
@@ -1570,7 +1570,7 @@ const RealLockedModal: React.FC<{ open: boolean; onClose: () => void; onRegister
 const CapitalAdviceModal: React.FC<{ open: boolean; onClose: () => void }> = ({ open, onClose }) => {
   if (!open) return null;
   return (
-    <div style={{position:'fixed',inset:0,zIndex:80,display:'flex',alignItems:'center',justifyContent:'center',padding:'16px',animation:'fade-in 0.15s ease'}}>
+    <div data-app-modal="1" style={{position:'fixed',inset:0,zIndex:80,display:'flex',alignItems:'center',justifyContent:'center',padding:'16px',animation:'fade-in 0.15s ease'}}>
       <div onClick={onClose} style={{position:'absolute',inset:0,background:'rgba(0,0,0,0.72)',backdropFilter:'blur(10px)',WebkitBackdropFilter:'blur(10px)'}}/>
       <div style={{position:'relative',width:'100%',maxWidth:420,animation:'slide-up 0.28s cubic-bezier(0.32,0.72,0,1)'}}>
         <img src="/manajemenmodalstc.png" alt="Manajemen Modal" style={{display:'block',width:'100%',height:'auto',borderRadius:16}}/>
@@ -1587,7 +1587,7 @@ const CapitalAdviceModal: React.FC<{ open: boolean; onClose: () => void }> = ({ 
 const SecurityAdviceModal: React.FC<{ open: boolean; onClose: () => void }> = ({ open, onClose }) => {
   if (!open) return null;
   return (
-    <div style={{position:'fixed',inset:0,zIndex:80,display:'flex',alignItems:'center',justifyContent:'center',padding:'16px',animation:'fade-in 0.15s ease'}}>
+    <div data-app-modal="1" style={{position:'fixed',inset:0,zIndex:80,display:'flex',alignItems:'center',justifyContent:'center',padding:'16px',animation:'fade-in 0.15s ease'}}>
       <div onClick={onClose} style={{position:'absolute',inset:0,background:'rgba(0,0,0,0.72)',backdropFilter:'blur(10px)',WebkitBackdropFilter:'blur(10px)'}}/>
       <div style={{position:'relative',width:'100%',maxWidth:420,animation:'slide-up 0.28s cubic-bezier(0.32,0.72,0,1)'}}>
         <img src="/sarankeamananstc.png" alt="Saran Keamanan — Aktifkan 2FA" style={{display:'block',width:'100%',height:'auto',borderRadius:16}}/>
@@ -1854,7 +1854,7 @@ const ActivationNoticeModal: React.FC<{
     day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit',
   });
   return (
-    <div style={{position:'fixed',inset:0,zIndex:80,display:'flex',alignItems:'center',justifyContent:'center',padding:'16px',animation:'fade-in 0.15s ease'}}>
+    <div data-app-modal="1" style={{position:'fixed',inset:0,zIndex:80,display:'flex',alignItems:'center',justifyContent:'center',padding:'16px',animation:'fade-in 0.15s ease'}}>
       <div onClick={onClose} style={{position:'absolute',inset:0,background:'rgba(0,0,0,0.72)',backdropFilter:'blur(10px)'}}/>
       <div style={{position:'relative',width:'100%',maxWidth:380,background:C.bg,borderRadius:20,border:`1px solid ${C.bdr}`,padding:'24px 22px'}}>
         <div style={{display:'flex',flexDirection:'column',alignItems:'center',textAlign:'center',gap:12}}>
@@ -1944,6 +1944,10 @@ export default function DashboardPage() {
 
         const fr = await getFastReversalEntry(uid);
         if (fr?.sejak) kandidat.push({ at: fr.sejak, sampai: fr.sampai, label: 'Fast Reversal' });
+        const b5 = await getBlitz5sEntry(uid);
+        if (b5?.sejak) kandidat.push({ at: b5.sejak, sampai: b5.sampai, label: '5st · Blitz 5 Detik' });
+        const aa = await getAgentAlphaEntry(uid);
+        if (aa?.sejak) kandidat.push({ at: aa.sejak, sampai: aa.sampai, label: 'Agent Alpha' });
         for (const k of kandidat) {
           if (batal) return;
           const kunci = `stc_notice_${k.label.replace(/\s+/g,'')}_${uid}_${k.at}`;
@@ -3398,6 +3402,8 @@ export default function DashboardPage() {
   // yang mengganggu smooth scroll di WebView/Capacitor.
   const dashboardStyles = React.useMemo(() => `
     @keyframes spin        { to { transform: rotate(360deg); } }
+    @keyframes aa-shimmer  { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+    @keyframes aa-pulse    { 0%,100%{opacity:0.55} 50%{opacity:1} }
     @keyframes pulse       { 0%,100%{opacity:1} 50%{opacity:0.5} }
     @keyframes ping        { 0%{transform:scale(1);opacity:1} 80%,100%{transform:scale(2);opacity:0} }
     @keyframes pos-sweep   { 0%{transform:translateX(-130%)} 100%{transform:translateX(330%)} }
@@ -3595,7 +3601,7 @@ export default function DashboardPage() {
   return (
     // ✅ FIX SCROLL: touchAction:'pan-y' → browser langsung tau ini scroll vertikal,
     //    tidak perlu tunggu JS confirm sebelum mulai scroll (passive hint ke WebView).
-    <div style={{minHeight:'100%',background:colors.bg,paddingBottom:'calc(88px + env(safe-area-inset-bottom, 0px))',color:colors.text,transition:'background 0.3s, color 0.3s',touchAction:'pan-y'}}>
+    <div style={{minHeight:'100%',background:tradingMode==='agentalpha'?`radial-gradient(150% 55% at 50% 0%, rgba(139,92,246,0.20), rgba(139,92,246,0.05) 45%, transparent 62%), ${colors.bg}`:colors.bg,paddingBottom:'calc(88px + env(safe-area-inset-bottom, 0px))',color:colors.text,transition:'background 0.3s, color 0.3s',touchAction:'pan-y'}}>
       {/* Asset Picker Modal — top level */}
       <PickerModal
         open={assetPickerOpen}
@@ -3609,7 +3615,7 @@ export default function DashboardPage() {
       />
       {/* Stop Confirmation Modal */}
       {stopConfirmOpen && (
-        <div style={{position:'fixed',inset:0,zIndex:90,display:'flex',alignItems:'center',justifyContent:'center',padding:20,animation:'fade-in 0.18s ease'}}>
+        <div data-app-modal="1" style={{position:'fixed',inset:0,zIndex:90,display:'flex',alignItems:'center',justifyContent:'center',padding:20,animation:'fade-in 0.18s ease'}}>
           <div onClick={()=>setStopConfirmOpen(false)} style={{position:'absolute',inset:0,background:'rgba(0,0,0,0.6)',backdropFilter:'blur(14px)',WebkitBackdropFilter:'blur(14px)'}}/>
           {/* Look baru: dialog radius 20, ikon lingkaran lembut, tombol
               berdampingan — Batal (ghost) + Stop (solid coral) */}
@@ -3659,6 +3665,14 @@ export default function DashboardPage() {
       )}
       <style>{dashboardStyles}</style>
 
+      {/* Efek eksklusif Agent Alpha — bar shimmer atas + halo ungu ambient */}
+      {tradingMode==='agentalpha' && (
+        <>
+          <div style={{position:'fixed',top:0,left:0,right:0,height:3,zIndex:80,pointerEvents:'none',background:'linear-gradient(90deg,transparent,#8B5CF6,#c4b5fd,#8B5CF6,transparent)',backgroundSize:'200% 100%',animation:'aa-shimmer 3.2s linear infinite'}}/>
+          <div style={{position:'fixed',top:0,left:'50%',transform:'translateX(-50%)',width:'min(560px,90vw)',height:180,zIndex:0,pointerEvents:'none',background:'radial-gradient(60% 100% at 50% 0%, rgba(139,92,246,0.22), transparent 70%)',animation:'aa-pulse 4s ease-in-out infinite'}}/>
+        </>
+      )}
+
       <OrderInputModal
         open={orderModalOpen}
         onClose={()=>setOrderModalOpen(false)}
@@ -3698,7 +3712,7 @@ export default function DashboardPage() {
       }}>
         {/* v4: sesi perangkat yang tertunda (aplikasi sempat ditutup) */}
         {resumePrompt && (
-          <div style={{position:'fixed',inset:0,zIndex:80,display:'flex',alignItems:'center',justifyContent:'center',padding:'16px',animation:'fade-in 0.15s ease'}}>
+          <div data-app-modal="1" style={{position:'fixed',inset:0,zIndex:80,display:'flex',alignItems:'center',justifyContent:'center',padding:'16px',animation:'fade-in 0.15s ease'}}>
             <div onClick={()=>{setResumePrompt(null);}} style={{position:'absolute',inset:0,background:'rgba(0,0,0,0.72)',backdropFilter:'blur(10px)',WebkitBackdropFilter:'blur(10px)'}}/>
             <div style={{position:'relative',width:'100%',maxWidth:380,background:C.bg,borderRadius:20,border:`1px solid ${C.bdr}`,padding:'24px 22px',animation:'slide-up 0.28s cubic-bezier(0.32,0.72,0,1)'}}>
               <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:12}}>

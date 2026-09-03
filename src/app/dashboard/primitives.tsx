@@ -123,7 +123,7 @@ export const PickerModal: React.FC<{open:boolean;onClose:()=>void;title:string;o
   const iconColor = isDark ? 'rgba(255,255,255,0.65)' : 'rgba(0,0,0,0.55)';
 
   return (
-    <div style={{position:'fixed',inset:0,zIndex:80,display:'flex',flexDirection:'column',justifyContent:'center',alignItems:'center',padding:'16px 16px calc(env(safe-area-inset-bottom, 0px) + 16px) 16px',animation:'fade-in 0.15s ease'}}>
+    <div data-app-modal="1" style={{position:'fixed',inset:0,zIndex:80,display:'flex',flexDirection:'column',justifyContent:'center',alignItems:'center',padding:'16px 16px calc(env(safe-area-inset-bottom, 0px) + 16px) 16px',animation:'fade-in 0.15s ease'}}>
       <div onClick={onClose} style={{position:'absolute',inset:0,background:'rgba(0,0,0,0.55)',backdropFilter:'blur(10px)',WebkitBackdropFilter:'blur(10px)'}}/>
       <div style={{position:'relative',width:'100%',maxWidth:480,maxHeight:'80%',display:'flex',flexDirection:'column',background:modalBg,borderRadius:20,border:`1px solid ${C.bdr}`,boxShadow:isDark?'0 24px 80px rgba(0,0,0,0.6)':'0 24px 80px rgba(15,23,42,0.25)',overflow:'hidden',animation:'slide-up 0.25s cubic-bezier(0.32,0.72,0,1)'}}>
         {/* Header tanpa garis — title mengambang, tombol tutup polos */}
