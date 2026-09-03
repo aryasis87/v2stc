@@ -120,3 +120,20 @@ export function computeBestConfig({ balance, minAmount }: BestConfigInput): Best
     winsToTarget,
   };
 }
+
+// ─────────────────────────────────────────────────────────────────────
+// Saldo auto-fill per mode — mengisi input "SALDO KAMU" saat modal Best
+// Config dibuka, sesuai profil tiap mode (tetap bisa diubah manual). null =
+// tak diisi (biar manual): Fast Reversal & Agent Alpha diatur per-K/agentic.
+// ─────────────────────────────────────────────────────────────────────
+export const DEFAULT_BALANCE_BY_MODE: Record<string, number | null> = {
+  schedule:     1_800_000, // Signal Mode
+  fastrade:     1_600_000, // Fastrade FTT
+  blitz5s:        600_000, // 5st · Blitz 5 Detik
+  ctc:          1_200_000, // Fastrade CTC
+  fastreversal:      null, // manual
+  aisignal:       800_000, // AI Signal
+  indicator:    2_100_000, // Analysis Strategy
+  momentum:     2_400_000, // Momentum
+  agentalpha:        null, // manual
+};

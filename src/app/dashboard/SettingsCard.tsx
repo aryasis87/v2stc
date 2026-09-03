@@ -16,7 +16,7 @@ import { AlertCircle, ArrowRight, BarChart, Check, ChevronDown, ChevronUp,
          Zap, Wallet, Waves, TrendingUp, TrendingDown, Lock } from 'lucide-react';
 import { ui } from '@/lib/uiText';
 import { useDarkMode } from '@/lib/DarkModeContext';
-import { computeBestConfig, type BestConfigResult } from '@/lib/bestConfig';
+import { computeBestConfig, DEFAULT_BALANCE_BY_MODE, type BestConfigResult } from '@/lib/bestConfig';
 import type { StockityAsset, IndicatorType } from '@/lib/api';
 import { rt, modeAccent } from './runtime';
 import { FT_TF, type TradingMode, type MartingaleConfig, type FastTradeTimeframe } from './theme';
@@ -24,8 +24,8 @@ import { Card, Toggle, PickerModal, AlwaysSignalBadge, FL, type PickerOpt } from
 
 export const FormulaTradingModal: React.FC<{
   open: boolean; onClose: () => void; minAmount: number; currUnit: string;
-  onApply: (r: BestConfigResult) => void;
-}> = ({ open, onClose, minAmount, currUnit, onApply }) => {
+  prefillBalance?: number; onApply: (r: BestConfigResult) => void;
+}> = ({ open, onClose, minAmount, currUnit, prefillBalance, onApply }) => {
   // Dibaca DI SINI, tiap render — jangan dipindah ke tingkat modul.
   const C = rt.C;
   const T = rt.T;
@@ -35,7 +35,13 @@ export const FormulaTradingModal: React.FC<{
   const QUICK_AMOUNTS_DYN = rt.QUICK_AMOUNTS;
   const [balStr, setBalStr] = useState('');
   const [applied, setApplied] = useState(false);
-  useEffect(() => { if (open) { setApplied(false); } }, [open]);
+  useEffect(() => {
+    if (open) {
+      setApplied(false);
+      // Auto-isi saldo sesuai mode (tetap bisa diubah manual).
+      if (prefillBalance && prefillBalance > 0) setBalStr(String(Math.round(prefillBalance)));
+    }
+  }, [open, prefillBalance]);
   if (!open) return null;
 
   const balance = Number(String(balStr).replace(/[^\d]/g, '')) || 0;
@@ -408,6 +414,7 @@ export const SettingsCard: React.FC<{
       <FormulaTradingModal
         open={formulaOpen} onClose={()=>setFormulaOpen(false)}
         minAmount={MIN_AMOUNT} currUnit={CURR_UNIT}
+        prefillBalance={DEFAULT_BALANCE_BY_MODE[mode] ?? undefined}
         onApply={(r)=>{
           onAmountChange(r.baseAmount);
           onMartingaleChange({ enabled:true, maxStep:r.maxStep, multiplier:r.multiplier, alwaysSignal: martingale.alwaysSignal ?? false });

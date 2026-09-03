@@ -1176,12 +1176,12 @@ const ModePickerModal: React.FC<{
 
   const MODES = [
     { v: 'schedule'  as TradingMode, label: 'Signal Mode',           icon: <Calendar  style={{ width: 16, height: 16 }} />, accent: C.cyan,   desc: 'Manual Input Signal' },
-    { v: 'fastrade'  as TradingMode, label: 'Fastrade FTT Mode',    icon: <Zap       style={{ width: 16, height: 16 }} />, accent: C.cyan,   desc: 'Fast Trade Execution' },
-    { v: 'blitz5s'   as TradingMode, label: '5st · Blitz 5 Detik',  icon: <Clock     style={{ width: 16, height: 16 }} />, accent: C.sky,    desc: BLITZ5S_LOCKED ? 'Premium · Rp 85rb — aktivasi' : 'Hasil keluar 5 detik (FTT)' },
+    { v: 'fastrade'  as TradingMode, label: 'Fastrade FTT Mode',    icon: <Zap       style={{ width: 16, height: 16 }} />, accent: C.orange,   desc: 'Fast Trade Execution' },
+    { v: 'blitz5s'   as TradingMode, label: '5st · Blitz 5 Detik',  icon: <Clock     style={{ width: 16, height: 16 }} />, accent: C.amber,    desc: BLITZ5S_LOCKED ? 'Premium · Rp 85rb — aktivasi' : 'Hasil keluar 5 detik (FTT)' },
     { v: 'ctc'       as TradingMode, label: 'Fastrade CTC',         icon: <Copy      style={{ width: 16, height: 16 }} />, accent: C.violet, desc: 'Ultra-Fast Execution' },
     { v: 'fastreversal' as TradingMode, label: 'Fast Reversal',    icon: <Repeat    style={{ width: 16, height: 16 }} />, accent: C.coral,  desc: 'FTT + Balik Arah di K Terpilih' },
     { v: 'aisignal'  as TradingMode, label: 'AI Signal Mode',       icon: <Radio     style={{ width: 16, height: 16 }} />, accent: C.sky,    desc: 'AI Signal Automation' },
-    { v: 'indicator' as TradingMode, label: 'Analysis Strategy Mode', icon: <BarChart style={{ width: 16, height: 16 }} />, accent: C.orange, desc: 'Technical Analysis Based' },
+    { v: 'indicator' as TradingMode, label: 'Analysis Strategy Mode', icon: <BarChart style={{ width: 16, height: 16 }} />, accent: C.blue, desc: 'Technical Analysis Based' },
     { v: 'momentum'  as TradingMode, label: 'Momentum Mode',        icon: <Waves     style={{ width: 16, height: 16 }} />, accent: C.pink,   desc: 'Parallel Momentum Analysis' },
     { v: 'agentalpha' as TradingMode, label: 'Agent Alpha',          icon: <Zap       style={{ width: 16, height: 16 }} />, accent: '#8B5CF6', desc: AGENTALPHA_LOCKED ? 'Eksklusif · WR 90% — aktivasi' : 'Agentic system server' },
   // Fast Reversal EKSKLUSIF — hanya muncul di picker bila akun sudah teraktivasi.
@@ -1675,12 +1675,12 @@ const ModeSessionPanel: React.FC<{
 
   const MODE_LIST = [
     { v: 'schedule'  as TradingMode, label: 'Signal Mode',           icon: <Calendar  style={{ width: 12, height: 12 }} />, accent: C.cyan,   desc: 'Manual Input Signal' },
-    { v: 'fastrade'  as TradingMode, label: 'Fastrade FTT Mode',    icon: <Zap       style={{ width: 12, height: 12 }} />, accent: C.cyan,   desc: 'Fast Trade Execution' },
-    { v: 'blitz5s'   as TradingMode, label: '5st · Blitz 5 Detik',  icon: <Clock     style={{ width: 12, height: 12 }} />, accent: C.sky,    desc: BLITZ5S_LOCKED ? 'Premium · Rp 85rb — aktivasi' : 'Hasil keluar 5 detik (FTT)' },
+    { v: 'fastrade'  as TradingMode, label: 'Fastrade FTT Mode',    icon: <Zap       style={{ width: 12, height: 12 }} />, accent: C.orange,   desc: 'Fast Trade Execution' },
+    { v: 'blitz5s'   as TradingMode, label: '5st · Blitz 5 Detik',  icon: <Clock     style={{ width: 12, height: 12 }} />, accent: C.amber,    desc: BLITZ5S_LOCKED ? 'Premium · Rp 85rb — aktivasi' : 'Hasil keluar 5 detik (FTT)' },
     { v: 'ctc'       as TradingMode, label: 'Fastrade CTC',         icon: <Copy      style={{ width: 12, height: 12 }} />, accent: C.violet, desc: 'Ultra-Fast Execution' },
     { v: 'fastreversal' as TradingMode, label: 'Fast Reversal',    icon: <Repeat    style={{ width: 16, height: 16 }} />, accent: C.coral,  desc: 'FTT + Balik Arah di K Terpilih' },
     { v: 'aisignal'  as TradingMode, label: 'AI Signal Mode',       icon: <Radio     style={{ width: 12, height: 12 }} />, accent: C.sky,    desc: 'AI Signal Automation' },
-    { v: 'indicator' as TradingMode, label: 'Analysis Strategy Mode', icon: <BarChart style={{ width: 12, height: 12 }} />, accent: C.orange, desc: 'Technical Analysis Based' },
+    { v: 'indicator' as TradingMode, label: 'Analysis Strategy Mode', icon: <BarChart style={{ width: 12, height: 12 }} />, accent: C.blue, desc: 'Technical Analysis Based' },
     { v: 'momentum'  as TradingMode, label: 'Momentum Mode',        icon: <Waves     style={{ width: 12, height: 12 }} />, accent: C.pink,   desc: 'Parallel Momentum Analysis' },
     { v: 'agentalpha' as TradingMode, label: 'Agent Alpha',          icon: <Zap       style={{ width: 12, height: 12 }} />, accent: '#8B5CF6', desc: AGENTALPHA_LOCKED ? 'Eksklusif · WR 90% — aktivasi' : 'Agentic system server' },
   ];
@@ -3404,6 +3404,17 @@ export default function DashboardPage() {
     @keyframes spin        { to { transform: rotate(360deg); } }
     @keyframes aa-shimmer  { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
     @keyframes aa-pulse    { 0%,100%{opacity:0.55} 50%{opacity:1} }
+    /* ═══ AGENT ALPHA — skin eksklusif seluruh dashboard ═══ */
+    @keyframes aa-aurora  { 0%{transform:translate3d(-6%,-3%,0) scale(1.05)} 50%{transform:translate3d(6%,4%,0) scale(1.16)} 100%{transform:translate3d(-6%,-3%,0) scale(1.05)} }
+    @keyframes aa-aurora2 { 0%{transform:translate3d(5%,4%,0) scale(1.1)} 50%{transform:translate3d(-5%,-5%,0) scale(1.22)} 100%{transform:translate3d(5%,4%,0) scale(1.1)} }
+    @keyframes aa-breathe { 0%,100%{opacity:.85} 50%{opacity:1} }
+    .aa-aurora{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;animation:aa-breathe 7s ease-in-out infinite}
+    .aa-aurora::before,.aa-aurora::after,.aa-aurora i{content:'';position:absolute;border-radius:50%;will-change:transform}
+    .aa-aurora::before{width:78vw;height:78vw;left:-18vw;top:-24vh;filter:blur(64px);background:radial-gradient(closest-side, rgba(139,92,246,0.40), transparent 70%);animation:aa-aurora 16s ease-in-out infinite}
+    .aa-aurora::after{width:70vw;height:70vw;right:-20vw;top:6vh;filter:blur(66px);background:radial-gradient(closest-side, rgba(217,70,239,0.30), transparent 70%);animation:aa-aurora2 21s ease-in-out infinite}
+    .aa-aurora i{left:16vw;bottom:-22vh;width:66vw;height:66vw;filter:blur(72px);background:radial-gradient(closest-side, rgba(99,102,241,0.30), transparent 70%);animation:aa-aurora 24s ease-in-out infinite reverse}
+    .dash-alpha .ds-card{border-color:rgba(139,92,246,0.30)!important;box-shadow:0 0 0 1px rgba(139,92,246,0.10), 0 12px 36px -18px rgba(139,92,246,0.60)!important;background-image:linear-gradient(180deg, rgba(139,92,246,0.06), rgba(139,92,246,0.015))!important}
+    @media (prefers-reduced-motion:reduce){.aa-aurora,.aa-aurora::before,.aa-aurora::after,.aa-aurora i{animation:none}}
     @keyframes pulse       { 0%,100%{opacity:1} 50%{opacity:0.5} }
     @keyframes ping        { 0%{transform:scale(1);opacity:1} 80%,100%{transform:scale(2);opacity:0} }
     @keyframes pos-sweep   { 0%{transform:translateX(-130%)} 100%{transform:translateX(330%)} }
@@ -3601,7 +3612,7 @@ export default function DashboardPage() {
   return (
     // ✅ FIX SCROLL: touchAction:'pan-y' → browser langsung tau ini scroll vertikal,
     //    tidak perlu tunggu JS confirm sebelum mulai scroll (passive hint ke WebView).
-    <div style={{minHeight:'100%',background:tradingMode==='agentalpha'?`radial-gradient(150% 55% at 50% 0%, rgba(139,92,246,0.20), rgba(139,92,246,0.05) 45%, transparent 62%), ${colors.bg}`:colors.bg,paddingBottom:'calc(88px + env(safe-area-inset-bottom, 0px))',color:colors.text,transition:'background 0.3s, color 0.3s',touchAction:'pan-y'}}>
+    <div className={tradingMode==='agentalpha'?'dash-alpha':undefined} style={{minHeight:'100%',background:tradingMode==='agentalpha'?`radial-gradient(150% 60% at 50% 0%, rgba(139,92,246,0.24), rgba(99,102,241,0.08) 42%, transparent 64%), ${colors.bg}`:colors.bg,paddingBottom:'calc(88px + env(safe-area-inset-bottom, 0px))',color:colors.text,transition:'background 0.3s, color 0.3s',touchAction:'pan-y'}}>
       {/* Asset Picker Modal — top level */}
       <PickerModal
         open={assetPickerOpen}
@@ -3669,7 +3680,7 @@ export default function DashboardPage() {
       {tradingMode==='agentalpha' && (
         <>
           <div style={{position:'fixed',top:0,left:0,right:0,height:3,zIndex:80,pointerEvents:'none',background:'linear-gradient(90deg,transparent,#8B5CF6,#c4b5fd,#8B5CF6,transparent)',backgroundSize:'200% 100%',animation:'aa-shimmer 3.2s linear infinite'}}/>
-          <div style={{position:'fixed',top:0,left:'50%',transform:'translateX(-50%)',width:'min(560px,90vw)',height:180,zIndex:0,pointerEvents:'none',background:'radial-gradient(60% 100% at 50% 0%, rgba(139,92,246,0.22), transparent 70%)',animation:'aa-pulse 4s ease-in-out infinite'}}/>
+          <div className="aa-aurora" aria-hidden><i/></div>
         </>
       )}
 
@@ -3709,6 +3720,8 @@ export default function DashboardPage() {
         // ✅ FIX SCROLL: overscrollBehaviorY:'contain' mencegah scroll chain ke parent
         //    saat sudah mentok atas/bawah — menghilangkan rubber-band jank di Android WebView.
         overscrollBehaviorY:'contain',
+        // Agent Alpha: naikkan konten di atas lapisan aurora (z:0) — hanya saat mode ini.
+        ...(tradingMode==='agentalpha'?{position:'relative' as const,zIndex:1}:{}),
       }}>
         {/* v4: sesi perangkat yang tertunda (aplikasi sempat ditutup) */}
         {resumePrompt && (
