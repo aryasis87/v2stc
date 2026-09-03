@@ -3720,8 +3720,10 @@ export default function DashboardPage() {
         // ✅ FIX SCROLL: overscrollBehaviorY:'contain' mencegah scroll chain ke parent
         //    saat sudah mentok atas/bawah — menghilangkan rubber-band jank di Android WebView.
         overscrollBehaviorY:'contain',
-        // Agent Alpha: naikkan konten di atas lapisan aurora (z:0) — hanya saat mode ini.
-        ...(tradingMode==='agentalpha'?{position:'relative' as const,zIndex:1}:{}),
+        // Agent Alpha: konten di atas lapisan aurora (z:0) lewat position:relative
+        // (z-index AUTO — JANGAN pakai angka/zIndex:1, itu bikin stacking-context
+        // yang menjebak dropdown/popup z:55 di bawah bottom-nav z:40).
+        ...(tradingMode==='agentalpha'?{position:'relative' as const}:{}),
       }}>
         {/* v4: sesi perangkat yang tertunda (aplikasi sempat ditutup) */}
         {resumePrompt && (

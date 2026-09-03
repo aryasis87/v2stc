@@ -393,7 +393,8 @@ export const SettingsCard: React.FC<{
   const amtDisplay = amtStr && parseInt(amtStr,10) > 0
     ? FMT(parseInt(amtStr,10))
     : '';
-  useEffect(()=>{ if(disabled) setOpen(false); },[disabled]);
+  // Auto-collapse saat mode berjalan (disabled), auto-expand lagi saat berhenti.
+  useEffect(()=>{ setOpen(!disabled); },[disabled]);
   const set = (k:keyof MartingaleConfig,v:any) => onMartingaleChange({...martingale,[k]:v});
   const assetOpts: PickerOpt[] = assets.map(a=>({value:a.ric,label:a.name,sub:`${a.ric} · ${a.profitRate}%`,icon:a.iconUrl}));
   const durationOpts = [{value:'60',label:'1 Menit'},{value:'120',label:'2 Menit'},{value:'300',label:'5 Menit'},{value:'600',label:'10 Menit'},{value:'900',label:'15 Menit'},{value:'1800',label:'30 Menit'}];
