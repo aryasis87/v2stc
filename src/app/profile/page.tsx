@@ -2186,6 +2186,20 @@ function ProfilePageContent() {
               </Card>
             )}
             {isSuperAdminUser && <StatusSistemCard />}
+            {/* Aktivasi — ringkasan pembelian/langganan aktif user */}
+            <div>
+              <SectionLabel>Aktivasi</SectionLabel>
+              <Card>
+                <TappableRow
+                  icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h6"/><path d="M9 12l2 2 4-4"/><path d="M16 3h5v5"/></svg>}
+                  iconBg="linear-gradient(135deg,#8B5CF6,#6D28D9)"
+                  label="Aktivasi Saya"
+                  value="Lihat"
+                  onClick={() => router.push('/aktivasi-saya')}
+                  last
+                />
+              </Card>
+            </div>
             <Card>
               <TappableRow
                 icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>}
