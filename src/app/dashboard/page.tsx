@@ -1182,8 +1182,8 @@ const ModePickerModal: React.FC<{
     { v: 'indicator' as TradingMode, label: 'Analysis Strategy Mode', icon: <BarChart style={{ width: 16, height: 16 }} />, accent: C.blue, desc: 'Technical strategy based' },
     { v: 'momentum'  as TradingMode, label: 'Momentum Mode',        icon: <Waves     style={{ width: 16, height: 16 }} />, accent: C.pink,   desc: 'Indicator moment analysis' },
     { v: 'aisignal'  as TradingMode, label: 'AI Signal Mode',       icon: <Radio     style={{ width: 16, height: 16 }} />, accent: C.sky,    desc: 'Automatic signal operation' },
-    { v: 'blitz5s'   as TradingMode, label: '5st · Blitz 5 Detik',  icon: <Clock     style={{ width: 16, height: 16 }} />, accent: C.amber,    desc: BLITZ5S_LOCKED ? 'Premium · Rp 85rb — aktivasi' : 'Execute within 5 seconds.' },
-    { v: 'agentalpha' as TradingMode, label: 'Agent Alpha',          icon: <Zap       style={{ width: 16, height: 16 }} />, accent: '#8B5CF6', desc: AGENTALPHA_LOCKED ? 'Eksklusif · WR 90% — aktivasi' : 'Execution by the server-side agentic system' },
+    { v: 'blitz5s'   as TradingMode, label: '5st · Blitz 5 Detik',  icon: <Clock     style={{ width: 16, height: 16 }} />, accent: C.amber,    desc: 'Execute within 5 seconds.' },
+    { v: 'agentalpha' as TradingMode, label: 'Agent Alpha',          icon: <Zap       style={{ width: 16, height: 16 }} />, accent: '#8B5CF6', desc: 'Execution by the server-side agentic system' },
   // Fast Reversal EKSKLUSIF — hanya muncul di picker bila akun sudah teraktivasi.
   ].filter(m => m.v !== 'fastreversal' || FR_UNLOCKED);
 
@@ -1681,8 +1681,8 @@ const ModeSessionPanel: React.FC<{
     { v: 'indicator' as TradingMode, label: 'Analysis Strategy Mode', icon: <BarChart style={{ width: 12, height: 12 }} />, accent: C.blue, desc: 'Technical strategy based' },
     { v: 'momentum'  as TradingMode, label: 'Momentum Mode',        icon: <Waves     style={{ width: 12, height: 12 }} />, accent: C.pink,   desc: 'Indicator moment analysis' },
     { v: 'aisignal'  as TradingMode, label: 'AI Signal Mode',       icon: <Radio     style={{ width: 12, height: 12 }} />, accent: C.sky,    desc: 'Automatic signal operation' },
-    { v: 'blitz5s'   as TradingMode, label: '5st · Blitz 5 Detik',  icon: <Clock     style={{ width: 12, height: 12 }} />, accent: C.amber,    desc: BLITZ5S_LOCKED ? 'Premium · Rp 85rb — aktivasi' : 'Execute within 5 seconds.' },
-    { v: 'agentalpha' as TradingMode, label: 'Agent Alpha',          icon: <Zap       style={{ width: 12, height: 12 }} />, accent: '#8B5CF6', desc: AGENTALPHA_LOCKED ? 'Eksklusif · WR 90% — aktivasi' : 'Execution by the server-side agentic system' },
+    { v: 'blitz5s'   as TradingMode, label: '5st · Blitz 5 Detik',  icon: <Clock     style={{ width: 12, height: 12 }} />, accent: C.amber,    desc: 'Execute within 5 seconds.' },
+    { v: 'agentalpha' as TradingMode, label: 'Agent Alpha',          icon: <Zap       style={{ width: 12, height: 12 }} />, accent: '#8B5CF6', desc: 'Execution by the server-side agentic system' },
   ];
 
   const active = MODE_LIST.find(m => m.v === mode)!;
