@@ -10,7 +10,7 @@
 import { supabase } from './supabase';
 import { api } from './api';
 import { isPrivilegedUser } from './adminEntitlement';
-import { bacaPetaAkses, masihBerlaku, type PetaAkses, type EntriAkses } from './aksesFitur';
+import { bacaPetaAkses, masihBerlaku, uidAktif, type PetaAkses, type EntriAkses } from './aksesFitur';
 
 const KEY = 'aisignal_access';
 
@@ -38,10 +38,11 @@ export async function getAiSignalAllowlist(): Promise<string[]> {
 export async function isAiSignalUnlocked(userId: string | number | null | undefined): Promise<boolean> {
   // Admin & super admin selalu berhak — lihat lib/adminEntitlement.ts
   if (await isPrivilegedUser()) return true;
-  const uid = String(userId ?? '').trim();
-  if (!uid) return false;
-  const list = await getAiSignalAllowlist();
-  return list.includes(uid);
+  // Tahan SEMUA bentuk: array lama (allowlist) DAN object {id:{sejak,sampai}}
+  // (bila admin memberi masa berlaku). bacaPetaAkses menangani keduanya.
+  const { data, error } = await supabase.from('app_config').select('value').eq('key', KEY).maybeSingle();
+  if (error) return false;
+  return uidAktif(data?.value, userId);
 }
 
 /** Simpan ulang seluruh allowlist (dipanggil dari panel admin) */

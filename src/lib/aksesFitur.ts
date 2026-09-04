@@ -75,6 +75,29 @@ export function masihBerlaku(e: EntriAkses | undefined): boolean {
   return e.sampai === null || e.sampai > Date.now();
 }
 
+// ─────────────────────────────────────────────────────────────────────
+// Pembaca AKSES yang TAHAN SEMUA BENTUK tersimpan (array lama, {id:expiry},
+// {id:{sejak,sampai}}). WAJIB dipakai semua cek kunci fitur — jangan parse
+// sendiri. Bug nyata: `blitz5s_access` tersimpan sebagai ARRAY, tapi pembaca
+// lama menolak array (`if(Array.isArray) return {}`) → user berbayar tetap
+// TERKUNCI. `bacaPetaAkses` sudah menangani semua bentuk, jadi lewat sini.
+// ─────────────────────────────────────────────────────────────────────
+
+/** true bila `userId` punya akses AKTIF dalam nilai app_config, apa pun bentuknya. */
+export function uidAktif(nilai: unknown, userId: string | number | null | undefined): boolean {
+  const uid = String(userId ?? '').trim();
+  if (!uid) return false;
+  return masihBerlaku(bacaPetaAkses(nilai)[uid]);
+}
+
+/** Expiry (epoch ms) `userId` bila aktif; null = selamanya ATAU tidak aktif. */
+export function uidExpiry(nilai: unknown, userId: string | number | null | undefined): number | null {
+  const uid = String(userId ?? '').trim();
+  if (!uid) return null;
+  const e = bacaPetaAkses(nilai)[uid];
+  return masihBerlaku(e) ? e.sampai : null;
+}
+
 /** Buang entri yang sudah lewat, siap disimpan kembali. */
 export function pangkasKedaluwarsa(peta: PetaAkses): PetaAkses {
   const out: PetaAkses = {};

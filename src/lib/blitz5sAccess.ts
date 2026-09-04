@@ -13,7 +13,7 @@
 import { supabase } from './supabase';
 import { api } from './api';
 import { isPrivilegedUser } from './adminEntitlement';
-import { bacaPetaAkses, masihBerlaku, type EntriAkses } from './aksesFitur';
+import { bacaPetaAkses, masihBerlaku, uidAktif, uidExpiry, type EntriAkses } from './aksesFitur';
 
 const KEY = 'blitz5s_access';
 
@@ -57,39 +57,28 @@ export async function getBlitz5sMap(): Promise<Blitz5sAccessMap> {
     .maybeSingle();
 
   if (error || !data?.value) return {};
-  try {
-    const v = typeof data.value === 'string' ? JSON.parse(data.value) : data.value;
-    if (!v || typeof v !== 'object' || Array.isArray(v)) return {};
-    const out: Blitz5sAccessMap = {};
-    for (const [uid, exp] of Object.entries(v)) {
-      const key = String(uid).trim();
-      const ts = typeof exp === 'number' ? exp : Number(exp);
-      if (key && Number.isFinite(ts)) out[key] = ts;
-    }
-    return out;
-  } catch {
-    return {};
-  }
+  // Robust ke SEMUA bentuk (array lama, {id:exp}, {id:{sejak,sampai}}) via bacaPetaAkses.
+  // Tanpa expiry (array lama / sampai=null) → sentinel jauh-depan agar dianggap aktif.
+  const peta = bacaPetaAkses(data.value);
+  const out: Blitz5sAccessMap = {};
+  for (const [uid, e] of Object.entries(peta)) out[uid] = e.sampai ?? Number.MAX_SAFE_INTEGER;
+  return out;
 }
 
-/** Apakah user aktif (terdaftar & belum kedaluwarsa) */
+/** Apakah user aktif (terdaftar & belum kedaluwarsa) — tahan semua bentuk simpan */
 export async function isBlitz5sUnlocked(userId: string | number | null | undefined): Promise<boolean> {
   // Admin & super admin selalu berhak — lihat lib/adminEntitlement.ts
   if (await isPrivilegedUser()) return true;
-  const uid = String(userId ?? '').trim();
-  if (!uid) return false;
-  const map = await getBlitz5sMap();
-  const exp = map[uid];
-  return typeof exp === 'number' && exp > Date.now();
+  const { data, error } = await supabase.from('app_config').select('value').eq('key', KEY).maybeSingle();
+  if (error) return false;
+  return uidAktif(data?.value, userId);
 }
 
-/** expiresAt (epoch ms) bila masih aktif; null bila tidak aktif/kedaluwarsa */
+/** expiresAt (epoch ms) bila masih aktif; null bila selamanya/tidak aktif */
 export async function getBlitz5sExpiry(userId: string | number | null | undefined): Promise<number | null> {
-  const uid = String(userId ?? '').trim();
-  const map = uid ? await getBlitz5sMap() : {};
-  const exp = uid ? map[uid] : undefined;
-  if (typeof exp === 'number' && exp > Date.now()) return exp;
-  return null;
+  const { data, error } = await supabase.from('app_config').select('value').eq('key', KEY).maybeSingle();
+  if (error) return null;
+  return uidExpiry(data?.value, userId);
 }
 
 /** Simpan ulang seluruh peta (dipanggil dari panel admin). Entri kedaluwarsa dipangkas. */
