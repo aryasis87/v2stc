@@ -269,7 +269,11 @@ export class FastradeEngine {
       return;
     }
 
-    const trend: TrendType = detected ?? 'put'; // CTC: harga sama → 'put'
+    // CTC = Counter The Candle → LAWAN arah candle (kebalikan FTT yang mengikuti).
+    // Tanpa pembalikan ini, CTC eksekusinya identik FTT (bug). Harga sama → 'put'.
+    const trend: TrendType = isCtc
+      ? (detected === 'call' ? 'put' : detected === 'put' ? 'call' : 'put')
+      : (detected ?? 'put');
     this.currentTrend = trend;
 
     if (isCtc) {
