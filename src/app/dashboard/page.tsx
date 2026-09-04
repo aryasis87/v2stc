@@ -1175,15 +1175,15 @@ const ModePickerModal: React.FC<{
   if (!open) return null;
 
   const MODES = [
-    { v: 'schedule'  as TradingMode, label: 'Signal Mode',           icon: <Calendar  style={{ width: 16, height: 16 }} />, accent: C.cyan,   desc: 'Manual Input Signal' },
-    { v: 'fastrade'  as TradingMode, label: 'Fastrade FTT Mode',    icon: <Zap       style={{ width: 16, height: 16 }} />, accent: C.orange,   desc: 'Fast Trade Execution' },
-    { v: 'blitz5s'   as TradingMode, label: '5st · Blitz 5 Detik',  icon: <Clock     style={{ width: 16, height: 16 }} />, accent: C.amber,    desc: BLITZ5S_LOCKED ? 'Premium · Rp 85rb — aktivasi' : 'Hasil keluar 5 detik (FTT)' },
-    { v: 'ctc'       as TradingMode, label: 'Fastrade CTC',         icon: <Copy      style={{ width: 16, height: 16 }} />, accent: C.violet, desc: 'Ultra-Fast Execution' },
-    { v: 'fastreversal' as TradingMode, label: 'Fast Reversal',    icon: <Repeat    style={{ width: 16, height: 16 }} />, accent: C.coral,  desc: 'FTT + Balik Arah di K Terpilih' },
-    { v: 'aisignal'  as TradingMode, label: 'AI Signal Mode',       icon: <Radio     style={{ width: 16, height: 16 }} />, accent: C.sky,    desc: 'AI Signal Automation' },
-    { v: 'indicator' as TradingMode, label: 'Analysis Strategy Mode', icon: <BarChart style={{ width: 16, height: 16 }} />, accent: C.blue, desc: 'Technical Analysis Based' },
-    { v: 'momentum'  as TradingMode, label: 'Momentum Mode',        icon: <Waves     style={{ width: 16, height: 16 }} />, accent: C.pink,   desc: 'Parallel Momentum Analysis' },
-    { v: 'agentalpha' as TradingMode, label: 'Agent Alpha',          icon: <Zap       style={{ width: 16, height: 16 }} />, accent: '#8B5CF6', desc: AGENTALPHA_LOCKED ? 'Eksklusif · WR 90% — aktivasi' : 'Agentic system server' },
+    { v: 'schedule'  as TradingMode, label: 'Signal Mode',           icon: <Calendar  style={{ width: 16, height: 16 }} />, accent: C.cyan,   desc: 'Manual input signal' },
+    { v: 'fastrade'  as TradingMode, label: 'Fastrade FTT Mode',    icon: <Zap       style={{ width: 16, height: 16 }} />, accent: C.orange,   desc: 'Follow the trend' },
+    { v: 'ctc'       as TradingMode, label: 'Fastrade CTC',         icon: <Copy      style={{ width: 16, height: 16 }} />, accent: C.violet, desc: 'Counter the candle' },
+    { v: 'fastreversal' as TradingMode, label: 'Fast Reversal',    icon: <Repeat    style={{ width: 16, height: 16 }} />, accent: C.coral,  desc: 'FTT + reverse at chosen K' },
+    { v: 'indicator' as TradingMode, label: 'Analysis Strategy Mode', icon: <BarChart style={{ width: 16, height: 16 }} />, accent: C.blue, desc: 'Technical strategy based' },
+    { v: 'momentum'  as TradingMode, label: 'Momentum Mode',        icon: <Waves     style={{ width: 16, height: 16 }} />, accent: C.pink,   desc: 'Indicator moment analysis' },
+    { v: 'aisignal'  as TradingMode, label: 'AI Signal Mode',       icon: <Radio     style={{ width: 16, height: 16 }} />, accent: C.sky,    desc: 'Automatic signal operation' },
+    { v: 'blitz5s'   as TradingMode, label: '5st · Blitz 5 Detik',  icon: <Clock     style={{ width: 16, height: 16 }} />, accent: C.amber,    desc: BLITZ5S_LOCKED ? 'Premium · Rp 85rb — aktivasi' : 'Execute within 5 seconds.' },
+    { v: 'agentalpha' as TradingMode, label: 'Agent Alpha',          icon: <Zap       style={{ width: 16, height: 16 }} />, accent: '#8B5CF6', desc: AGENTALPHA_LOCKED ? 'Eksklusif · WR 90% — aktivasi' : 'Execution by the server-side agentic system' },
   // Fast Reversal EKSKLUSIF — hanya muncul di picker bila akun sudah teraktivasi.
   ].filter(m => m.v !== 'fastreversal' || FR_UNLOCKED);
 
@@ -1674,15 +1674,15 @@ const ModeSessionPanel: React.FC<{
   const isAnyRunning = !!runningMode;
 
   const MODE_LIST = [
-    { v: 'schedule'  as TradingMode, label: 'Signal Mode',           icon: <Calendar  style={{ width: 12, height: 12 }} />, accent: C.cyan,   desc: 'Manual Input Signal' },
-    { v: 'fastrade'  as TradingMode, label: 'Fastrade FTT Mode',    icon: <Zap       style={{ width: 12, height: 12 }} />, accent: C.orange,   desc: 'Fast Trade Execution' },
-    { v: 'blitz5s'   as TradingMode, label: '5st · Blitz 5 Detik',  icon: <Clock     style={{ width: 12, height: 12 }} />, accent: C.amber,    desc: BLITZ5S_LOCKED ? 'Premium · Rp 85rb — aktivasi' : 'Hasil keluar 5 detik (FTT)' },
-    { v: 'ctc'       as TradingMode, label: 'Fastrade CTC',         icon: <Copy      style={{ width: 12, height: 12 }} />, accent: C.violet, desc: 'Ultra-Fast Execution' },
-    { v: 'fastreversal' as TradingMode, label: 'Fast Reversal',    icon: <Repeat    style={{ width: 16, height: 16 }} />, accent: C.coral,  desc: 'FTT + Balik Arah di K Terpilih' },
-    { v: 'aisignal'  as TradingMode, label: 'AI Signal Mode',       icon: <Radio     style={{ width: 12, height: 12 }} />, accent: C.sky,    desc: 'AI Signal Automation' },
-    { v: 'indicator' as TradingMode, label: 'Analysis Strategy Mode', icon: <BarChart style={{ width: 12, height: 12 }} />, accent: C.blue, desc: 'Technical Analysis Based' },
-    { v: 'momentum'  as TradingMode, label: 'Momentum Mode',        icon: <Waves     style={{ width: 12, height: 12 }} />, accent: C.pink,   desc: 'Parallel Momentum Analysis' },
-    { v: 'agentalpha' as TradingMode, label: 'Agent Alpha',          icon: <Zap       style={{ width: 12, height: 12 }} />, accent: '#8B5CF6', desc: AGENTALPHA_LOCKED ? 'Eksklusif · WR 90% — aktivasi' : 'Agentic system server' },
+    { v: 'schedule'  as TradingMode, label: 'Signal Mode',           icon: <Calendar  style={{ width: 12, height: 12 }} />, accent: C.cyan,   desc: 'Manual input signal' },
+    { v: 'fastrade'  as TradingMode, label: 'Fastrade FTT Mode',    icon: <Zap       style={{ width: 12, height: 12 }} />, accent: C.orange,   desc: 'Follow the trend' },
+    { v: 'ctc'       as TradingMode, label: 'Fastrade CTC',         icon: <Copy      style={{ width: 12, height: 12 }} />, accent: C.violet, desc: 'Counter the candle' },
+    { v: 'fastreversal' as TradingMode, label: 'Fast Reversal',    icon: <Repeat    style={{ width: 16, height: 16 }} />, accent: C.coral,  desc: 'FTT + reverse at chosen K' },
+    { v: 'indicator' as TradingMode, label: 'Analysis Strategy Mode', icon: <BarChart style={{ width: 12, height: 12 }} />, accent: C.blue, desc: 'Technical strategy based' },
+    { v: 'momentum'  as TradingMode, label: 'Momentum Mode',        icon: <Waves     style={{ width: 12, height: 12 }} />, accent: C.pink,   desc: 'Indicator moment analysis' },
+    { v: 'aisignal'  as TradingMode, label: 'AI Signal Mode',       icon: <Radio     style={{ width: 12, height: 12 }} />, accent: C.sky,    desc: 'Automatic signal operation' },
+    { v: 'blitz5s'   as TradingMode, label: '5st · Blitz 5 Detik',  icon: <Clock     style={{ width: 12, height: 12 }} />, accent: C.amber,    desc: BLITZ5S_LOCKED ? 'Premium · Rp 85rb — aktivasi' : 'Execute within 5 seconds.' },
+    { v: 'agentalpha' as TradingMode, label: 'Agent Alpha',          icon: <Zap       style={{ width: 12, height: 12 }} />, accent: '#8B5CF6', desc: AGENTALPHA_LOCKED ? 'Eksklusif · WR 90% — aktivasi' : 'Execution by the server-side agentic system' },
   ];
 
   const active = MODE_LIST.find(m => m.v === mode)!;
