@@ -613,8 +613,18 @@ export class FastradeEngine {
       return;
     }
 
-    // Tanpa martingale → jeda lalu siklus baru
+    // Tanpa martingale.
     this.resetMartingale();
+    // CTC tanpa martingale: KALAH → tetap COUNTER (balik arah) lanjut segera;
+    // MENANG → searah (ditangani onWin). Sesuai sifat "counter the candle".
+    if (this.config.mode === 'CTC') {
+      const reversed = this.reverseTrend(trend);
+      this.currentTrend = reversed;
+      this.callbacks.onStatusChange(`CTC LOSE — COUNTER → ${reversed.toUpperCase()} (tanpa martingale)`);
+      this.afterDelay(NEXT_ORDER_DELAY_MS, () => this.executeWithTrend(reversed, 0));
+      return;
+    }
+    // FTT & lainnya → jeda lalu siklus baru (baca candle lagi)
     this.callbacks.onStatusChange(`${this.config.mode} LOSE — tunggu ${DIRECT_LOSS_DELAY_MS / 1000}s`);
     this.scheduleNewCycle(DIRECT_LOSS_DELAY_MS);
   }
