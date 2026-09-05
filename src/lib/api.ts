@@ -314,6 +314,8 @@ export interface StartFastradePayload {
   currencyIso: string;
   stopLoss?: number;
   stopProfit?: number;
+  trailingStop?: number;      // #4 trailing take-profit harian (unit ×100)
+  overshootGuard?: boolean;   // #2 stop loss harian jadi batas keras
 }
 
 export interface UpdateConfigPayload {

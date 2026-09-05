@@ -2253,6 +2253,8 @@ export default function DashboardPage() {
   const reversalSteps        = _s.reversalSteps ?? [];
   const stopLoss             = _s.stopLoss;
   const stopProfit           = _s.stopProfit;
+  const trailingStop         = _s.trailingStop ?? 0;
+  const overshootGuard       = _s.overshootGuard ?? false;
   const indicatorType        = _s.indicatorType;
   const indicatorPeriod      = _s.indicatorPeriod;
   const indicatorSensitivity = _s.indicatorSensitivity;
@@ -2271,6 +2273,8 @@ export default function DashboardPage() {
   const setReversalSteps        = (v: number[])                                  => _upd('reversalSteps', v);
   const setStopLoss             = (v: number)                                    => _upd('stopLoss', v);
   const setStopProfit           = (v: number)                                    => _upd('stopProfit', v);
+  const setTrailingStop         = (v: number)                                    => _upd('trailingStop', v);
+  const setOvershootGuard       = (v: boolean)                                   => _upd('overshootGuard', v);
   const setIndicatorType        = (v: IndicatorType)                              => _upd('indicatorType', v);
   const setIndicatorPeriod      = (v: number)                                    => _upd('indicatorPeriod', v);
   const setIndicatorSensitivity = (v: number)                                    => _upd('indicatorSensitivity', v);
@@ -3285,6 +3289,7 @@ export default function DashboardPage() {
           martingale:{isEnabled:martingale.enabled,maxSteps:martingale.maxStep,baseAmount:amount*100,multiplierValue:martingale.multiplier,multiplierType:'FIXED',isAlwaysSignal:martingale.alwaysSignal??false},
           isDemoAccount:isDemo,currency:CURR_UNIT,currencyIso:CURR_UNIT,
           stopLoss:stopLoss?stopLoss*100:undefined,stopProfit:stopProfit?stopProfit*100:undefined,
+          trailingStop:trailingStop?trailingStop*100:undefined, overshootGuard:overshootGuard||undefined,
         });
       } else if(tradingMode==='aisignal'){
         await api.aiSignalSetAsset(selectedRic, selectedAsset?.name??selectedRic);
@@ -3548,6 +3553,8 @@ export default function DashboardPage() {
       reversalSteps={reversalSteps} onReversalStepsChange={setReversalSteps} frExpiry={frExpiry}
       stopLoss={stopLoss} onSlChange={setStopLoss}
       stopProfit={stopProfit} onSpChange={setStopProfit}
+      trailingStop={trailingStop} onTrailChange={setTrailingStop}
+      overshootGuard={overshootGuard} onOvershootChange={setOvershootGuard}
       indicatorType={indicatorType} onIndicatorTypeChange={setIndicatorType}
       indicatorPeriod={indicatorPeriod} onIndicatorPeriodChange={setIndicatorPeriod}
       indicatorSensitivity={indicatorSensitivity} onSensitivityChange={setIndicatorSensitivity}

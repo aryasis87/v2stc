@@ -323,6 +323,8 @@ export const SettingsCard: React.FC<{
   reversalSteps:number[]; onReversalStepsChange:(v:number[])=>void; frExpiry?:number|null;
   stopLoss:number; onSlChange:(v:number)=>void;
   stopProfit:number; onSpChange:(v:number)=>void;
+  trailingStop:number; onTrailChange:(v:number)=>void;
+  overshootGuard:boolean; onOvershootChange:(v:boolean)=>void;
   indicatorType:IndicatorType; onIndicatorTypeChange:(v:IndicatorType)=>void;
   indicatorPeriod:number; onIndicatorPeriodChange:(v:number)=>void;
   indicatorSensitivity:number; onSensitivityChange:(v:number)=>void;
@@ -331,7 +333,7 @@ export const SettingsCard: React.FC<{
   momentumPatterns:{candleSabit:boolean;dojiTerjepit:boolean;dojiPembatalan:boolean;bbSarBreak:boolean};
   onMomentumPatternsChange:(p:any)=>void;
   disabled?:boolean;
-}> = ({mode,assets,assetRic,onAssetChange,isDemo,onDemoChange,duration,onDurationChange,amount,onAmountChange,martingale,onMartingaleChange,ftTf,onFtTfChange,blitz5s,onBlitz5sChange,blitz5sLocked,blitz5sExpiry,onActivate5st,reversalSteps,onReversalStepsChange,frExpiry,stopLoss,onSlChange,stopProfit,onSpChange,indicatorType,onIndicatorTypeChange,indicatorPeriod,onIndicatorPeriodChange,indicatorSensitivity,onSensitivityChange,rsiOverbought,onOverboughtChange,rsiOversold,onOversoldChange,momentumPatterns,onMomentumPatternsChange,disabled}) => {
+}> = ({mode,assets,assetRic,onAssetChange,isDemo,onDemoChange,duration,onDurationChange,amount,onAmountChange,martingale,onMartingaleChange,ftTf,onFtTfChange,blitz5s,onBlitz5sChange,blitz5sLocked,blitz5sExpiry,onActivate5st,reversalSteps,onReversalStepsChange,frExpiry,stopLoss,onSlChange,stopProfit,onSpChange,trailingStop,onTrailChange,overshootGuard,onOvershootChange,indicatorType,onIndicatorTypeChange,indicatorPeriod,onIndicatorPeriodChange,indicatorSensitivity,onSensitivityChange,rsiOverbought,onOverboughtChange,rsiOversold,onOversoldChange,momentumPatterns,onMomentumPatternsChange,disabled}) => {
   // Dibaca DI SINI, tiap render — jangan dipindah ke tingkat modul.
   const C = rt.C;
   const T = rt.T;
@@ -351,6 +353,14 @@ export const SettingsCard: React.FC<{
   const [showSpInput, setShowSpInput] = useState(false);
   const [slInputValue, setSlInputValue] = useState(() => stopLoss > 0 ? String(stopLoss) : '');
   const [spInputValue, setSpInputValue] = useState(() => stopProfit > 0 ? String(stopProfit) : '');
+  // Trailing take-profit (#4) — mirror pola Stop Loss/Profit
+  const [trEnabled, setTrEnabled] = useState(() => trailingStop > 0);
+  const [showTrInput, setShowTrInput] = useState(false);
+  const [trInputValue, setTrInputValue] = useState(() => trailingStop > 0 ? String(trailingStop) : '');
+  useEffect(() => {
+    setTrEnabled(trailingStop > 0);
+    setTrInputValue(trailingStop > 0 ? String(trailingStop) : '');
+  }, [trailingStop]);
   // Sync when external stopLoss/stopProfit changes (e.g. reset)
   useEffect(() => {
     setSlEnabled(stopLoss > 0);
@@ -966,6 +976,69 @@ export const SettingsCard: React.FC<{
                       <span style={{ color:C.muted,fontSize:10,lineHeight:1.4 }}>Format: angka biasa, K (ribu), M (juta), B (miliar) · Enter untuk simpan</span>
                     </div>
                   )}
+
+                  {/* ── Baris Trailing Profit (#4) ── */}
+                  <div style={{ display:'flex',alignItems:'center',gap:10,padding:'11px 12px',borderTop:`1px solid ${C.bdr}`,borderBottom:trEnabled&&showTrInput?`1px solid ${C.bdr}`:'none' }}>
+                    <div style={{ width:28,height:28,borderRadius:8,flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center',background:`${C.cyan}14` }}>
+                      <TrendingUp style={{ width:14,height:14,color:C.cyan }}/>
+                    </div>
+                    <button
+                      onClick={()=>{ if(!disabled&&trEnabled) setShowTrInput(v=>!v); }}
+                      disabled={disabled||!trEnabled}
+                      style={{ flex:1,minWidth:0,display:'flex',flexDirection:'column',alignItems:'flex-start',gap:2,background:'transparent',border:'none',padding:0,textAlign:'left',cursor:trEnabled&&!disabled?'pointer':'default' }}
+                    >
+                      <span style={{ fontSize:12.5,fontWeight:600,color:C.text,lineHeight:1 }}>Trailing Profit</span>
+                      {trEnabled&&trailingStop>0
+                        ? <span className="dsh-num" style={{ fontSize:11,fontWeight:600,color:C.cyan }}>{CURR_UNIT} {FMT(trailingStop)}</span>
+                        : <span style={{ fontSize:10.5,color:C.muted }}>Kunci profit saat turun dari puncak</span>
+                      }
+                    </button>
+                    <Toggle
+                      checked={trEnabled}
+                      disabled={disabled}
+                      accent={C.cyan}
+                      onChange={next=>{
+                        setTrEnabled(next);
+                        if(next){ setShowTrInput(true); }
+                        else{ onTrailChange(0); setShowTrInput(false); setTrInputValue(''); }
+                      }}
+                    />
+                  </div>
+                  {trEnabled&&showTrInput&&(
+                    <div style={{ padding:'10px 12px',display:'flex',flexDirection:'column',gap:6 }}>
+                      <div style={{ position:'relative' }}>
+                        <span style={{ position:'absolute',left:10,top:'50%',transform:'translateY(-50%)',fontSize:11,color:C.muted,zIndex:1,pointerEvents:'none' }}>{CURR_UNIT}</span>
+                        <input
+                          className="ds-input"
+                          value={trInputValue}
+                          autoFocus
+                          onChange={e=>setTrInputValue(e.target.value)}
+                          onKeyDown={e=>{ if(e.key==='Enter'){ const v=parseFlexibleInput(trInputValue); if(v&&v>0){ onTrailChange(v); setShowTrInput(false); } } }}
+                          onBlur={()=>{ const v=parseFlexibleInput(trInputValue); if(v&&v>0){ onTrailChange(v); } }}
+                          placeholder="100K, 1M, 500000"
+                          style={{ paddingLeft:30,background:C.card }}
+                        />
+                      </div>
+                      <span style={{ color:C.muted,fontSize:10,lineHeight:1.4 }}>Bot berhenti bila profit harian turun sejauh ini dari puncaknya · Enter untuk simpan</span>
+                    </div>
+                  )}
+
+                  {/* ── Toggle Stop Loss Ketat / Overshoot Guard (#2) ── */}
+                  <div style={{ display:'flex',alignItems:'center',gap:10,padding:'11px 12px',borderTop:`1px solid ${C.bdr}` }}>
+                    <div style={{ width:28,height:28,borderRadius:8,flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center',background:`${C.coral}14` }}>
+                      <span style={{ width:9,height:9,borderRadius:3,background:C.coral,display:'block' }}/>
+                    </div>
+                    <div style={{ flex:1,minWidth:0,display:'flex',flexDirection:'column',gap:2 }}>
+                      <span style={{ fontSize:12.5,fontWeight:600,color:C.text,lineHeight:1 }}>Stop Loss Ketat</span>
+                      <span style={{ fontSize:10.5,color:C.muted }}>Lewati order yang bisa menembus batas rugi harian</span>
+                    </div>
+                    <Toggle
+                      checked={overshootGuard}
+                      disabled={disabled||stopLoss<=0}
+                      accent={C.coral}
+                      onChange={next=>onOvershootChange(next)}
+                    />
+                  </div>
                 </div>
               </div>
             )}

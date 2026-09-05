@@ -49,6 +49,8 @@ export interface TradingSettings {
   reversalSteps:        number[];   // Fast Reversal: langkah K yang arahnya dibalik (maks 3)
   stopLoss:             number;
   stopProfit:           number;
+  trailingStop:         number;   // #4 trailing take-profit harian (0 = nonaktif)
+  overshootGuard:       boolean;  // #2 jadikan stop loss harian batas keras
   indicatorType:        IndicatorType;
   indicatorPeriod:      number;
   indicatorSensitivity: number;
@@ -71,6 +73,8 @@ const DEFAULTS: TradingSettings = {
   reversalSteps:        [],
   stopLoss:             0,
   stopProfit:           0,
+  trailingStop:         0,
+  overshootGuard:       false,
   indicatorType:        'SMA',
   indicatorPeriod:      14,
   indicatorSensitivity: 0.5,
