@@ -334,6 +334,8 @@ export interface UpdateConfigPayload {
   duration?: number;
   stopLoss?: number;
   stopProfit?: number;
+  trailingStop?: number;      // #4 trailing take-profit harian (×100)
+  overshootGuard?: boolean;   // #2 stop loss harian jadi batas keras
 }
 
 // ─────────────────────────────────────────────
@@ -440,6 +442,8 @@ export interface IndicatorConfig {
     isAlwaysSignal: boolean;
     stopLoss?: number;
     stopProfit?: number;
+    trailingStop?: number;    // #4
+    overshootGuard?: boolean; // #2
   };
   [key: string]: unknown;
 }
@@ -1283,6 +1287,8 @@ export const api = {
     isAlwaysSignal?: boolean;
     stopLoss?: number;
     stopProfit?: number;
+    trailingStop?: number;    // #4
+    overshootGuard?: boolean; // #2
   }) => req<MomentumConfig>('PUT', '/momentum/config/martingale', data),
 
   momentumSetAccount:   (isDemoAccount: boolean) =>

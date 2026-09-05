@@ -3244,6 +3244,7 @@ export default function DashboardPage() {
           martingale:{isEnabled:martingale.enabled,maxSteps:martingale.maxStep,baseAmount:amount*100,multiplierValue:martingale.multiplier,multiplierType:'FIXED',isAlwaysSignal:martingale.alwaysSignal??false},
           isDemoAccount:isDemo,currency:CURR_UNIT,currencyIso:CURR_UNIT,duration,
           stopLoss:stopLoss?stopLoss*100:undefined,stopProfit:stopProfit?stopProfit*100:undefined,
+          trailingStop:trailingStop?trailingStop*100:undefined, overshootGuard:overshootGuard||undefined,
         });
         await api.scheduleStart();
       } else if(PAKAI_MESIN_PERANGKAT && isApk && deviceSession.available()){
@@ -3302,7 +3303,7 @@ export default function DashboardPage() {
       } else if(tradingMode==='indicator'){
         await api.indicatorSetAsset(selectedRic, selectedAsset?.name??selectedRic);
         await api.indicatorSetAccount(isDemo);
-        await api.indicatorSetMartingale({isEnabled:martingale.enabled,maxSteps:martingale.maxStep,baseAmount:amount*100,multiplierValue:martingale.multiplier,multiplierType:'FIXED',isAlwaysSignal:martingale.alwaysSignal??false,stopLoss:stopLoss?stopLoss*100:0,stopProfit:stopProfit?stopProfit*100:0});
+        await api.indicatorSetMartingale({isEnabled:martingale.enabled,maxSteps:martingale.maxStep,baseAmount:amount*100,multiplierValue:martingale.multiplier,multiplierType:'FIXED',isAlwaysSignal:martingale.alwaysSignal??false,stopLoss:stopLoss?stopLoss*100:0,stopProfit:stopProfit?stopProfit*100:0,trailingStop:trailingStop?trailingStop*100:0,overshootGuard:overshootGuard||false});
         await api.indicatorUpdateConfig({type:indicatorType,period:indicatorPeriod,sensitivity:indicatorSensitivity,rsiOverbought,rsiOversold,amount:amount*100});
         await api.indicatorStart();
       } else if(tradingMode==='momentum'){
@@ -3313,6 +3314,7 @@ export default function DashboardPage() {
           multiplierValue:martingale.multiplier,multiplierType:'FIXED',
           isAlwaysSignal:martingale.alwaysSignal??false,
           stopLoss:stopLoss?stopLoss*100:0,stopProfit:stopProfit?stopProfit*100:0,
+          trailingStop:trailingStop?trailingStop*100:0,overshootGuard:overshootGuard||false,
         });
         await api.momentumUpdateConfig({
           candleSabitEnabled:true,
