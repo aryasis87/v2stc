@@ -200,6 +200,9 @@ export class FastradeEngine {
     return {
       isRunning: this.isRunning,
       mode: this.config.mode,
+      // Fast Reversal berjalan sbg FTT + reversalSteps; sertakan penanda ini supaya
+      // dashboard MENDETEKSI-nya sbg 'fastreversal' (bukan FTT biasa).
+      reversalSteps: this.config.reversalSteps ?? [],
       phase: this.phase,
       cycleNumber: this.cycleNumber,
       currentTrend: this.currentTrend ?? null,
